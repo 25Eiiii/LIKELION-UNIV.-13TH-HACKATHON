@@ -2,6 +2,58 @@ import * as H from "../styles/pages/styledHome";
 import { Container } from "../styles/common/styledContainer";
 import { FiChevronRight } from "react-icons/fi";
 import NavBar from "../components/Navbar";
+import EventCard from "../components/EventCard";
+import Top3Card from "../components/Top3Card";
+
+const categories = [
+  { label: "공연 / 영화", image: "concert.svg" },
+  { label: "전시 / 미술", image: "art.svg" },
+  { label: "교육 / 체험", image: "edu.svg" },
+  { label: "축제", image: "festival.svg" },
+  { label: "도서", image: "book.svg" },
+  { label: "역사", image: "history.svg" },
+];
+
+export const recommendedEvents = [
+  {
+    name: "성북동 문화 유산 야행",
+    date: "2025. 08. 20 - 2025. 08. 27",
+    image: "post.svg",
+  },
+  {
+    name: "청춘 마이크 페스티벌",
+    date: "2025. 09. 01 - 2025. 09. 03",
+    image: "post.svg",
+  },
+  {
+    name: "도심 속 문화 나들이",
+    date: "2025. 09. 10 - 2025. 09. 17",
+    image: "post.svg",
+  },
+];
+
+// data/topCultures.js
+export const topEvents = [
+  {
+    rank: 1,
+    name: "스테이 성북",
+    date: "2025. 08. 20 - 2025. 08. 27",
+    image: "post2.svg",
+  },
+  {
+    rank: 2,
+    name: "청춘 음악회",
+    date: "2025. 08. 28 - 2025. 09. 01",
+    image: "post2.svg",
+  },
+  {
+    rank: 3,
+    name: "문화가 있는 날",
+    date: "2025. 09. 02 - 2025. 09. 08",
+    image: "post2.svg",
+  },
+];
+
 
 const Home = () => {
   return (
@@ -35,51 +87,17 @@ const Home = () => {
             어떤 문화 활동을 찾고 계신가요?
           </H.Question>
           <H.Categories>
-            <H.Item>
-              공연 / 영화
-              <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
-            <H.Item>
-            전시 / 미술
-            <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
-            <H.Item>
-            교육 / 체험
-            <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
-            <H.Item>
-            축제
-            <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
-            <H.Item>
-            도서
-            <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
-            <H.Item>
-            역사
-            <img 
-              src={`${process.env.PUBLIC_URL}/images/concert.svg`}
-              alt="concert"
-            />
-            </H.Item>
+            {categories.map((cat, idx) => (
+              <H.Item key={idx}>
+                {cat.label}
+                <img 
+                  src={`${process.env.PUBLIC_URL}/images/${cat.image}`}
+                  alt="concert"
+                />
+              </H.Item>
+            ))}
           </H.Categories>
         </H.CategoryWrapper>
-        
         <H.RecContainer>
           <H.TextWrapper>
             <H.Text>
@@ -90,36 +108,9 @@ const Home = () => {
             </H.MoreBtn>
           </H.TextWrapper>
           <H.EventList>
-            <H.EventItem>
-              <H.EventPost>
-                <img 
-              src={`${process.env.PUBLIC_URL}/images/post.svg`}
-              alt="concert"
-            />
-              </H.EventPost>
-              <H.EventName>성북동 문화 유산 야행</H.EventName>
-              <H.EventDate>2025. 08. 20 - 2025. 08. 27</H.EventDate>
-            </H.EventItem>
-            <H.EventItem>
-              <H.EventPost>
-                <img 
-              src={`${process.env.PUBLIC_URL}/images/post.svg`}
-              alt="concert"
-            />
-              </H.EventPost>
-              <H.EventName>성북동 문화 유산 야행</H.EventName>
-              <H.EventDate>2025. 08. 20 - 2025. 08. 27</H.EventDate>
-            </H.EventItem>
-            <H.EventItem>
-              <H.EventPost>
-                <img 
-              src={`${process.env.PUBLIC_URL}/images/post.svg`}
-              alt="concert"
-            />
-              </H.EventPost>
-              <H.EventName>성북동 문화 유산 야행</H.EventName>
-              <H.EventDate>2025. 08. 20 - 2025. 08. 27</H.EventDate>
-            </H.EventItem>
+            {recommendedEvents.map((event, idx) => (
+              <EventCard key={idx} {...event} />
+            ))}
           </H.EventList>
         </H.RecContainer>
         
@@ -128,45 +119,9 @@ const Home = () => {
               이달의 문화 행사 Top3
             </H.Text>
             <H.CultureList>
-              <H.CultureItem>
-                <H.Number>1</H.Number>
-                <H.CulturePost>
-                <img 
-                src={`${process.env.PUBLIC_URL}/images/post2.svg`}
-                alt="concert"
-              />
-                </H.CulturePost>
-                <H.CultureInfo>
-                  <H.CultureName>스테이 성북</H.CultureName>
-                  <H.CultureDate>2025. 08. 20 - 2025. 08. 27</H.CultureDate>
-                </H.CultureInfo>
-              </H.CultureItem>
-              <H.CultureItem>
-                <H.Number>2</H.Number>
-                <H.CulturePost>
-                <img 
-                src={`${process.env.PUBLIC_URL}/images/post2.svg`}
-                alt="concert"
-              />
-                </H.CulturePost>
-                <H.CultureInfo>
-                  <H.CultureName>스테이 성북</H.CultureName>
-                  <H.CultureDate>2025. 08. 20 - 2025. 08. 27</H.CultureDate>
-                </H.CultureInfo>
-              </H.CultureItem>
-              <H.CultureItem>
-                <H.Number>3</H.Number>
-                <H.CulturePost>
-                <img 
-                src={`${process.env.PUBLIC_URL}/images/post2.svg`}
-                alt="concert"
-              />
-                </H.CulturePost>
-                <H.CultureInfo>
-                  <H.CultureName>스테이 성북</H.CultureName>
-                  <H.CultureDate>2025. 08. 20 - 2025. 08. 27</H.CultureDate>
-                </H.CultureInfo>
-              </H.CultureItem>
+              {topEvents.map((event, idx) => (
+                <Top3Card key={idx} {...event}/>
+              ))}
             </H.CultureList>
           </H.Top3>
       </H.EntireWrapper>
