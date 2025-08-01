@@ -1,0 +1,2 @@
+# LIKELION-UNIV.-13TH-HACKATHON
+13기 멋쟁이사자처럼 2025 중앙해커톤
