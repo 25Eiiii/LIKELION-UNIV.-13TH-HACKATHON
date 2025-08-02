@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
 import { Container } from "../../styles/common/styledContainer";
-import * as C from "../../styles/pages/styledChatbot";
+import * as C from "../../styles/pages/styledChatbotIntro";
 import { useNavigate } from "react-router-dom";
+import useChatbotName from "../../hooks/useChatbotName";
 
 const ChatbotStart = () => {
-  const navigate = useNavigate()
-  const [name, setName] = useState("");
-
-  useEffect(() => {
-    const storedName = localStorage.getItem("chatbotName");
-    if (storedName) {
-        setName(storedName);
-    }
-  }, [])
+  const navigate = useNavigate();
+  const name = useChatbotName();
   
   return (
     <Container>

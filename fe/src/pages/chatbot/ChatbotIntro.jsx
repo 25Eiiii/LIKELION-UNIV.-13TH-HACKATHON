@@ -1,5 +1,5 @@
 import { Container } from "../../styles/common/styledContainer";
-import * as C from "../../styles/pages/styledChatbot"
+import * as C from "../../styles/pages/styledChatbotIntro"
 
 const ChatbotIntro = ({ message }) => (
     <Container>
