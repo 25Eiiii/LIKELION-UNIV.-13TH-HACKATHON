@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -21,3 +22,41 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+=======
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 가상환경
+venv/
+myvenv/
+env/
+ENV/
+
+# 환경변수 파일
+.env
+.env.*
+
+# SQLite (로컬 테스트용 DB)
+*.sqlite3
+db.sqlite3
+
+# VS Code
+.vscode/
+
+# macOS / Windows 기본
+.DS_Store
+Thumbs.db
+
+# Migrations (원하는 경우)
+**/migrations/
+!*/migrations/__init__.py
+
+# Log / Temp
+*.log
+*.pot
+*.pyc
+*.swp
+>>>>>>> 6373ce6aaa9893e465c129718e03879a84c7d1cf
