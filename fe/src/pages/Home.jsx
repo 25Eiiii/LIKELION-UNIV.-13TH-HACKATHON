@@ -4,6 +4,7 @@ import { FiChevronRight } from "react-icons/fi";
 import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import Top3Card from "../components/Top3Card";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   { label: "공연 / 영화", image: "concert.svg" },
@@ -32,7 +33,6 @@ export const recommendedEvents = [
   },
 ];
 
-// data/topCultures.js
 export const topEvents = [
   {
     rank: 1,
@@ -56,6 +56,8 @@ export const topEvents = [
 
 
 const Home = () => {
+  const navigate = useNavigate()
+
   return (
     <>
     <Container>
@@ -128,7 +130,7 @@ const Home = () => {
 
         
     </Container>
-    <H.Chatbot>
+    <H.Chatbot onClick={() => navigate('/chatbot-intro')}>
           <img 
               src={`${process.env.PUBLIC_URL}/images/chatbot.svg`}
               alt="search"
