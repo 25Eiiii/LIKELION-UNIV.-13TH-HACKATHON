@@ -24,7 +24,7 @@ margin-bottom: 10px;
 `
 
 export const ChatbotName = styled.div`
-width: 51px;
+padding: 7px;
 height: 19px;
 flex-shrink: 0;
 border-radius: 44px;
