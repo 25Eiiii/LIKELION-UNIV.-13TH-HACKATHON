@@ -18,6 +18,7 @@ from datetime import timedelta
 load_dotenv()
 KAKAO_API_KEY = os.environ.get("KAKAO_API_KEY")
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,11 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
 
-     'core',#연동 테스트용
-     'accounts',#회원가입/로그인
+    'home',
+    'search',
+
+    'core',#연동 테스트용
+    'accounts',#회원가입/로그인
 ]
 
 REST_FRAMEWORK = {
@@ -97,6 +100,8 @@ WSGI_APPLICATION = 'Eiiii.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+print("DB_NAME:", os.getenv("DB_NAME"))
+print("DB_HOST:", os.getenv("DB_HOST"))
 
 DATABASES = {
     #'default': {
@@ -112,6 +117,10 @@ DATABASES = {
         'PORT': os.getenv("DB_PORT"),
     }
 }
+
+# api key
+API_KEY = os.getenv("API_KEY")
+OPENAPI_BASE_URL = os.getenv("OPENAPI_BASE_URL")
 
 
 # Password validation
