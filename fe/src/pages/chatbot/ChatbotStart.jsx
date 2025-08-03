@@ -7,6 +7,18 @@ import useChatbotStore from "../../store/useChatbotStore";
 const ChatbotStart = () => {
   const navigate = useNavigate();
   const chatbotName = useChatbotStore((state) => state.chatbotName)
+
+  useEffect(() => {
+    const handleEnter = (e) => {
+      if (e.key == "Enter") {
+        navigate('/chatbot');
+      }
+    };
+    window.addEventListener("keydown", handleEnter);
+    return () => {
+      window.removeEventListener("keydown", handleEnter)
+    }
+  })
   
   return (
     <Container>
