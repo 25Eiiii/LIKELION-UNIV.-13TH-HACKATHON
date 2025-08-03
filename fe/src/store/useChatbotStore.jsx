@@ -1,19 +1,32 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-const useChatbotStore = create(persist(
+const useChatbotStore = create(
+  persist(
     (set) => ({
-    chatbotName: "",    
-    setChatbotName: (name) => set({ chatbotName: name }),   // chatbotName 설정하는 함수 
-    
-    messages: [],
-    addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] }))   // messages 추가하는 함수 
+      chatbotName: "",
+      setChatbotName: (name) => set({ chatbotName: name }),
+      resetChatbotName: () => set({ chatbotName: "" }),
+
+      messages: [],
+      addMessage: (msg) =>
+        set((state) => ({ messages: [...state.messages, msg] })),
+      resetMessages: () => set({ messages: [] }),
     }),
     {
-      name: "chatbot-storage", // localStorage에 저장되는 key
+      name: "chatbot-storage",
+      storage: {
+        getItem: (key) => {
+          const value = sessionStorage.getItem(key);
+          return value ? JSON.parse(value) : null;
+        },
+        setItem: (key, value) => {
+          sessionStorage.setItem(key, JSON.stringify(value));
+        },
+        removeItem: (key) => sessionStorage.removeItem(key),
+      },
     }
-  ));
+  )
+);
 
 export default useChatbotStore;
-
-

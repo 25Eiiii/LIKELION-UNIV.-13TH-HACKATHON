@@ -2,6 +2,7 @@ import * as T from "../../styles/pages/styledChatting"
 import { useState, useEffect } from "react"
 import useChatbotName from "../../hooks/useChatbotName";
 import useChatbotStore from "../../store/useChatbotStore";
+import Header from "../../components/Header"
 
 
 const Chatting =  () =>  {
@@ -9,6 +10,10 @@ const Chatting =  () =>  {
   const [content, setContent] = useState("");
   const  messages = useChatbotStore((state) => state.messages);
   const { addMessage } = useChatbotStore();
+  
+  // 현재 날짜
+  const today = new Date()
+  const formatDate = `${today.getFullYear()}.${today.getMonth()+1}.${today.getDate()}`
   
   const handleEnter = (e) => {
     if (e.key == "Enter") {
@@ -19,10 +24,9 @@ const Chatting =  () =>  {
 
   return (
     <T.Container>
-        <T.Header>
-            {chatbotName}
-        </T.Header>
-        <T.Date>2025.07.27</T.Date>
+        <Header title={chatbotName}>
+        </Header>
+        <T.Date>{formatDate}</T.Date>
         <T.Guide>
             <T.GuideImg>
                 <img src={`${process.env.PUBLIC_URL}/images/chatbot.svg`} alt="챗봇" />

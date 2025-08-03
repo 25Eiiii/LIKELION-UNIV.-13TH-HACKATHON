@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container } from "../../styles/common/styledContainer";
 import * as C from "../../styles/pages/styledChatbotIntro";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ const ChatbotNameStep = () => {
   const navigate = useNavigate()
   const chatbotName = useChatbotStore((state) => state.chatbotName)
   const setChatbotName = useChatbotStore((state) => state.setChatbotName);
+  const resetChatbotName = useChatbotStore((state) => state.resetChatbotName)
 
   const handleSaveName = ()  =>  {
     if (chatbotName.trim().length>=1 && chatbotName.trim().length<=15) {
@@ -18,6 +19,10 @@ const ChatbotNameStep = () => {
       alert("15글자 이하로 입력해주세요.")
     }
   };
+
+  useEffect(() => {
+    resetChatbotName();
+  }, [])
 
   return (
     <Container>
