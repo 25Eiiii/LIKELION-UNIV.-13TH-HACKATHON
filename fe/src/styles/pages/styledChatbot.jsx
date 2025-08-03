@@ -24,8 +24,9 @@ margin-bottom: 10px;
 `
 
 export const ChatbotName = styled.div`
-padding: 7px;
+padding: 7px 10px;
 height: 19px;
+min-width: 50px;
 flex-shrink: 0;
 border-radius: 44px;
 background: #3B4268;
@@ -134,9 +135,16 @@ font-style: normal;
 font-weight: 400;
 line-height: normal;
 `
-export const SentBtn = styled.button`
+export const SendBtn = styled.button`
 border: none;
 border-radius: 50px;
 width: 44px;
 height: 44px;
+img {
+width: 22px;
+height: 22px;
+}
+display: flex;
+justify-content: center;
+align-items: center;
 `

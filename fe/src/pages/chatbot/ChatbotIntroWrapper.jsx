@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
 import ChatbotIntro from "./ChatbotIntro";
 import ChatbotNameStep from "./ChatbotNameStep";
+import useChatbotStore from "../../store/useChatbotStore";
+import { useNavigate } from "react-router-dom";
 
 const ChatbotIntroWrapper = () => {
   const [step, setStep] = useState(1);
+  const chatbotName = useChatbotStore((state) => state.chatbotName);
+  const storedName = localStorage.getItem("chatbotName")
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (chatbotName.trim().length>=1) {
+      navigate("/chatbot");
+    }
+  },[])
 
   useEffect(() => {
     if (step < 3) {

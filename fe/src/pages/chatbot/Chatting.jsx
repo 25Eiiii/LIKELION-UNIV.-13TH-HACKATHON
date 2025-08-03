@@ -1,24 +1,46 @@
 import * as T from "../../styles/pages/styledChatting"
 import { useState, useEffect } from "react"
 import useChatbotName from "../../hooks/useChatbotName";
+import useChatbotStore from "../../store/useChatbotStore";
+import Header from "../../components/Header"
+import { useNavigate } from "react-router-dom";
 
 
 const Chatting =  () =>  {
-  const name = useChatbotName();
+  const chatbotName = useChatbotStore((state) => state.chatbotName)
   const [content, setContent] = useState("");
+  const  messages = useChatbotStore((state) => state.messages);
+  const { addMessage } = useChatbotStore();
+  const navigate = useNavigate();
+  
+  // 현재 날짜
+  const today = new Date()
+  const formatDate = `${today.getFullYear()}.${today.getMonth()+1}.${today.getDate()}`
+  
+  const handleEnter = (e) => {
+    if (e.key == "Enter") {
+        addMessage({ sender: "user", text: content })
+        setContent("");
+    }
+  }
+  const handleClick = () => {
+    if (content.trim()) {
+      navigate('/chatting');
+    }
+  };
+
   return (
     <T.Container>
-        <T.Header>
-            {name}
-        </T.Header>
-        <T.Date>2025.07.27</T.Date>
+        <Header title={chatbotName}>
+        </Header>
+        <T.Date>{formatDate}</T.Date>
         <T.Guide>
             <T.GuideImg>
                 <img src={`${process.env.PUBLIC_URL}/images/chatbot.svg`} alt="챗봇" />
             </T.GuideImg>
             <T.GuideInro>
                 <p>
-                안녕하세요 ! 성북 가이드 <span style={{ color: "#60C795" }}>{name}</span> 입니다. <br />
+                안녕하세요 ! 성북 가이드 <span style={{ color: "#60C795" }}>{chatbotName}</span> 입니다. <br />
                 <span style={{ 
                     color: "#3F3F3",
                     fontSize: "14px",
@@ -27,14 +49,25 @@ const Chatting =  () =>  {
                 </p>
             </T.GuideInro>
         </T.Guide>
+        <>
+        {messages.map((msg, idx) => (
+            <T.MsgWrapper key={idx} $isUser={msg.sender === "user"}>
+                <T.Message>{msg.text}</T.Message>
+            </T.MsgWrapper>
+        ))}
+
+          
+        </>
         <T.SendWrapper>
             <T.SendInput
                     placeholder="메시지를 입력해주세요"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleEnter}
                 >
             </T.SendInput>
-            <T.SendBtn>
+            <T.SendBtn onClick={handleClick}>
+                <img src={`${process.env.PUBLIC_URL}/images/send.svg`} alt="send" />
             </T.SendBtn>
         </T.SendWrapper>
     </T.Container>
