@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import useChatbotName from "../../hooks/useChatbotName";
 import useChatbotStore from "../../store/useChatbotStore";
 import Header from "../../components/Header"
+import { useNavigate } from "react-router-dom";
 
 
 const Chatting =  () =>  {
@@ -10,6 +11,7 @@ const Chatting =  () =>  {
   const [content, setContent] = useState("");
   const  messages = useChatbotStore((state) => state.messages);
   const { addMessage } = useChatbotStore();
+  const navigate = useNavigate();
   
   // 현재 날짜
   const today = new Date()
@@ -21,6 +23,11 @@ const Chatting =  () =>  {
         setContent("");
     }
   }
+  const handleClick = () => {
+    if (content.trim()) {
+      navigate('/chatting');
+    }
+  };
 
   return (
     <T.Container>
@@ -59,7 +66,8 @@ const Chatting =  () =>  {
                     onKeyDown={handleEnter}
                 >
             </T.SendInput>
-            <T.SendBtn>
+            <T.SendBtn onClick={handleClick}>
+                <img src={`${process.env.PUBLIC_URL}/images/send.svg`} alt="send" />
             </T.SendBtn>
         </T.SendWrapper>
     </T.Container>

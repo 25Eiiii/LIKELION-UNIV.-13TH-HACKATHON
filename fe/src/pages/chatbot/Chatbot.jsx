@@ -58,7 +58,9 @@ const Chatbot = () => {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleEnter}
         />
-        <C.SendBtn onClick={handleClick} />
+        <C.SendBtn onClick={handleClick}>
+            <img src={`${process.env.PUBLIC_URL}/images/send.svg`} alt="send" />
+        </C.SendBtn>
       </C.SendWrapper>
     </C.Container>
   );

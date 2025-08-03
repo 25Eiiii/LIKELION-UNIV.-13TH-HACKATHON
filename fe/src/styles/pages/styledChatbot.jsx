@@ -140,4 +140,11 @@ border: none;
 border-radius: 50px;
 width: 44px;
 height: 44px;
+img {
+width: 22px;
+height: 22px;
+}
+display: flex;
+justify-content: center;
+align-items: center;
 `
