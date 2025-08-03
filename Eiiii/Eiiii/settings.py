@@ -48,9 +48,11 @@ INSTALLED_APPS = [
 
     'home',
     'search',
+    'details',
 
     'core',#연동 테스트용
     'accounts',#회원가입/로그인
+    'category',#카테고리 클릭시 관련 행사 리스트 조회
 ]
 
 REST_FRAMEWORK = {
