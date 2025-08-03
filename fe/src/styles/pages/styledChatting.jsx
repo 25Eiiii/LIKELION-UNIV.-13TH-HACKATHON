@@ -51,7 +51,9 @@ display:  flex;
 flex-direction: column;
 margin-top: 30px;
 width: 100%;
-margin-left: 40px;
+box-sizing: border-box;
+padding: 0px 26px;
+margin-bottom: 10px;
 `
 
 export const GuideImg = styled.div`
@@ -71,6 +73,32 @@ line-height: normal;
     p {
     margin: 0;
     }
+`
+export const MsgWrapper = styled.div`
+width: 90%;
+margin-top: 15px;
+box-sizing: border-box;
+display: flex;
+justify-content: ${(props) => (props.$isUser ? "flex-end" : "flex-start")};
+`
+
+export const Message = styled.div`
+height: 45px;
+flex-shrink: 0;
+border-radius:13px;
+border: 2px solid #D9D9D9;
+background: #FFF;
+color: #454545;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+box-sizing: border-box;
+display: flex;
+align-items: center;
+padding: 0 15px;
+border-top-${(props) => (props.$isUser ? "left" : "right")}-radius: 0;
 `
 
 export const SendWrapper = styled.div`

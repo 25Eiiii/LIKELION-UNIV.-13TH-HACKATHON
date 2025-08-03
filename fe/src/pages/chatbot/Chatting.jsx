@@ -1,15 +1,26 @@
 import * as T from "../../styles/pages/styledChatting"
 import { useState, useEffect } from "react"
 import useChatbotName from "../../hooks/useChatbotName";
+import useChatbotStore from "../../store/useChatbotStore";
 
 
 const Chatting =  () =>  {
-  const name = useChatbotName();
+  const chatbotName = useChatbotStore((state) => state.chatbotName)
   const [content, setContent] = useState("");
+  const  messages = useChatbotStore((state) => state.messages);
+  const { addMessage } = useChatbotStore();
+  
+  const handleEnter = (e) => {
+    if (e.key == "Enter") {
+        addMessage({ sender: "user", text: content })
+        setContent("");
+    }
+  }
+
   return (
     <T.Container>
         <T.Header>
-            {name}
+            {chatbotName}
         </T.Header>
         <T.Date>2025.07.27</T.Date>
         <T.Guide>
@@ -18,7 +29,7 @@ const Chatting =  () =>  {
             </T.GuideImg>
             <T.GuideInro>
                 <p>
-                안녕하세요 ! 성북 가이드 <span style={{ color: "#60C795" }}>{name}</span> 입니다. <br />
+                안녕하세요 ! 성북 가이드 <span style={{ color: "#60C795" }}>{chatbotName}</span> 입니다. <br />
                 <span style={{ 
                     color: "#3F3F3",
                     fontSize: "14px",
@@ -27,11 +38,21 @@ const Chatting =  () =>  {
                 </p>
             </T.GuideInro>
         </T.Guide>
+        <>
+        {messages.map((msg, idx) => (
+            <T.MsgWrapper key={idx} $isUser={msg.sender === "user"}>
+                <T.Message>{msg.text}</T.Message>
+            </T.MsgWrapper>
+        ))}
+
+          
+        </>
         <T.SendWrapper>
             <T.SendInput
                     placeholder="메시지를 입력해주세요"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleEnter}
                 >
             </T.SendInput>
             <T.SendBtn>
