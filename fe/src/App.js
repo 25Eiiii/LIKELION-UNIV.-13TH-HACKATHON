@@ -6,6 +6,7 @@ import ChatbotStart from './pages/chatbot/ChatbotStart';
 import Chatbot from './pages/chatbot/Chatbot';
 import Chatting from './pages/chatbot/Chatting';
 import MyEvent from './pages/mypage/MyEvent';
+import DetailInfo from './pages/DetailInfo';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
         <Route path='/chatbot' element={<Chatbot />}></Route>
         <Route path='/chatting' element={<Chatting />}></Route>
         <Route path='/mypage-myevent' element={<MyEvent />}></Route>
+        <Route path="/detailInfo" element={<DetailInfo/>}/>
       </Routes>
     </BrowserRouter>
   );
