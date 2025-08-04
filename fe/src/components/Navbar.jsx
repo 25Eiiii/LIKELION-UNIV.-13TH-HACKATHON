@@ -10,11 +10,11 @@ const NavBar = () => {
     <N.NavWrapper>
         <N.Line></N.Line>
         <N.Group>
-            <N.Icon onClick={() => navigate("/Home")}>
+            <N.Icon onClick={() => navigate("/home")}>
                 <img
                     id="home"
                     src={`${process.env.PUBLIC_URL}/images/${
-                        location.pathname === "/Home" ? "home_active.svg" : "home.svg"
+                        location.pathname === "/home" ? "home_active.svg" : "home.svg"
                     }`}
                     alt="home"
                     style={{width: "35px", height: "35px", marginBottom: "-3px", marginTop: "-3px"}}
