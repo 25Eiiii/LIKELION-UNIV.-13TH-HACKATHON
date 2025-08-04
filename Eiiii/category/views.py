@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from datetime import date
 from search.models import CulturalEvent
+from django.db.models import Q
 
 # Create your views here.
 class CulturalEventListView(APIView):
@@ -10,12 +11,19 @@ class CulturalEventListView(APIView):
 
     def get(self, request):
         category = request.GET.get("category")
+        search = request.GET.get("search")
         today = date.today()
 
-        if not category:
-            return Response({"error": "category 파라미터를 입력해주세요."}, status=400)
+        # 카테고리별 조회 or 전체 조회
+        if category:
+            events = CulturalEvent.objects.filter(category=category).order_by('start_date')
+        else:
+            events = CulturalEvent.objects.all().order_by('start_date')
 
-        events = CulturalEvent.objects.filter(category=category).order_by('start_date')
+        if search:
+            events = events.filter(
+                Q(title__icontains=search)
+            )
 
         results = []
         for event in events:
@@ -40,7 +48,8 @@ class CulturalEventListView(APIView):
             })
 
         return Response({
-            "category": category,
+            "category": category if category else "전체",
+            "search": search,
             "count": len(results),
             "results": results
         })
