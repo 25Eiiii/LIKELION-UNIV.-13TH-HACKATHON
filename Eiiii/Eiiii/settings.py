@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
 
+    'corsheaders',
+
     'home',
     'search',
     'details',
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'accounts',#회원가입/로그인
     'category',#카테고리 클릭시 관련 행사 리스트 조회
     'profiles',#관심사 입력
+    'surveys',#설문폼
 ]
 
 REST_FRAMEWORK = {
@@ -72,6 +75,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -80,6 +84,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'Eiiii.urls'
 
