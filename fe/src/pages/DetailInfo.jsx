@@ -7,16 +7,14 @@ import axios from "axios";
 
 const DetailInfo = () => {
   const [isClicked, setIsClicked] = useState(false);
-  const [isCouponOpen, setIsCouponOpen] = useState(false);
   const [data,setData] = useState(null);
-  const {id} = useParams()||{id:3};
+  const {id} = useParams();
 
   useEffect(()=>{
-    console.log("id: ",id);
     const fetchdata = async()=>{
         try{
             const response = await axios.get(
-                `/api/details/detail/3/`
+                `/api/details/detail/${id}/`
             );
             console.log("응답 데이터: ",response.data);
             setData(response.data);
@@ -38,10 +36,7 @@ const DetailInfo = () => {
     { label: "신청일 : ", value: data.rgst_date },
   ]
   : [];
-  const coupons = [
-    "관람 완료 시에 받을 수 있는 쿠폰 목록 받을 수 있는",
-    "관람 완료 시에 받을 수 있는 쿠폰 목록 받을 수 있는",
-  ];
+  
   const detailList = data ?
    [
     { label: "관람료 : ", value: data.use_fee },
@@ -89,13 +84,10 @@ const DetailInfo = () => {
           <D.TextBox>
             <D.NameBox>
               <D.Name>{data?.title}</D.Name>
-              <D.Type>{data?.codename}</D.Type>
+              
             </D.NameBox>
-            <D.Explain>
-              성북구의 공공미술관으로 조성되어 대중의 품 안에 자리하게 된
-              성북구립 최만린미술관이 정식 개관을 맞아 &lt;흙의 숨결&gt; 전을
-              개최합니다.
-            </D.Explain>
+            <D.Type>{data?.codename}</D.Type>
+            <D.IconBox>
             {isClicked ? (
               <D.Heart
                 src={`${process.env.PUBLIC_URL}/images/fullheart.svg`}
@@ -109,11 +101,12 @@ const DetailInfo = () => {
                 onClick={() => setIsClicked(true)}
               />
             )}
-
+            
             <D.Share
               src={`${process.env.PUBLIC_URL}/images/share.svg`}
               alt="share"
             />
+            </D.IconBox>
           </D.TextBox>
         </D.Header>
         <D.WhiteContainer>
@@ -140,48 +133,31 @@ const DetailInfo = () => {
             {detailList.map((item) => (
               <D.InfoTextBox>
                 <D.GrayText>{item.label}</D.GrayText>
-                <D.BlackText>{item.value}</D.BlackText>
+                <D.BlackText>
+                    {item.label==="관련 정보 : "?(
+                        <a href={item.value} style={{textDecoration:"none",color:"#575757"}}>
+                            {item.value}
+                        </a>
+                    ):(item.value)}
+                </D.BlackText>
               </D.InfoTextBox>
             ))}
           </D.DetailBox>
-
-          <D.Benefit>받을 수 있는 혜택</D.Benefit>
-          <D.CouponBox>
-            <D.CouponTitle>
-              쿠폰
-              <img
-                src={`${process.env.PUBLIC_URL}/images/dropdown.svg`}
-                alt="dropdown"
-                style={{ marginLeft: "8px" }}
-                onClick={() => setIsCouponOpen((prev) => !prev)}
-              />
-            </D.CouponTitle>
-          </D.CouponBox>
-
-          {isCouponOpen && (
-            <D.CouponList>
-              {coupons.map((text, index) => (
-                <>
-                  <D.CouponItem>
-                    {text}
-                    <img
-                      src={`${process.env.PUBLIC_URL}/images/lock.svg`}
-                      alt="lock"
-                      style={{ marginRight: "12px" }}
-                    />
-                  </D.CouponItem>
-                  {index < coupons.length - 1 && <D.CouponLine></D.CouponLine>}
-                </>
-              ))}
-            </D.CouponList>
-          )}
 
           <D.PointBox>
             <D.PointTitle>포인트</D.PointTitle>
             <D.PointLine></D.PointLine>
             <D.Point>290p</D.Point>
           </D.PointBox>
-
+        
+         <D.QrBox>
+            <img
+                src="/images/qr.svg"
+                alt="QR"
+                style={{marginRight:"16px"}}
+            />
+            설문 큐알 스캔하기
+         </D.QrBox>
          
         </D.WhiteContainer>
         <D.RecommendBox>

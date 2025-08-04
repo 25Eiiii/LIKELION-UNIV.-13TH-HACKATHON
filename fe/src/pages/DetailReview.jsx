@@ -14,7 +14,6 @@ const DetailReview = () => {
     {
       profile: "/images/profile.svg",
       nickname: "닉네임",
-      level: "level3",
       date: "2025.08.31",
       image: "",
       content:
@@ -23,7 +22,6 @@ const DetailReview = () => {
     {
       profile: "/images/profile.svg",
       nickname: "닉네임",
-      level: "level3",
       date: "2025.08.31",
       image: "",
       content:
@@ -32,7 +30,6 @@ const DetailReview = () => {
     {
       profile: "/images/profile.svg",
       nickname: "닉네임",
-      level: "level3",
       date: "2025.08.31",
       image: "",
       content:
@@ -41,7 +38,6 @@ const DetailReview = () => {
     {
       profile: "/images/profile.svg",
       nickname: "닉네임",
-      level: "level3",
       date: "2025.08.31",
       image: ["/images/poster.svg", "/images/poster.svg"],
       content:
@@ -107,7 +103,6 @@ const DetailReview = () => {
                   <D.ReviewGrayBox>
                     <D.UserInfoBox>
                       <D.Nickname>{item.nickname}</D.Nickname>
-                      <D.Level>{item.level}</D.Level>
                       <D.Date>{item.date}</D.Date>
                     </D.UserInfoBox>
                     {item.image && (

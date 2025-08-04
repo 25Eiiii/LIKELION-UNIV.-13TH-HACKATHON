@@ -75,6 +75,9 @@ export const Type = styled.div`
   font-weight: 400;
   line-height: normal;
   text-align: center;
+  position: absolute;
+  top: 300px;
+  right: 16px;
 `;
 
 export const Explain = styled.div`
@@ -104,13 +107,19 @@ export const RecommendBox = styled.div`
   padding-bottom: 70px;
 `;
 
+export const IconBox = styled.div`
+position: absolute;
+display:flex;
+gap: 12px;
+top :332px;
+right: 16px;
+`;
 export const Heart = styled.img`
-  margin-left: 360px;
+ 
 `;
 
 export const Share = styled.img`
-  margin-right: 14px;
-  padding-left: 10px;
+  
 `;
 
 export const Tab = styled.div`
@@ -162,11 +171,13 @@ export const BasicInfo = styled.div`
   line-height: normal;
   margin-left: 15px;
   margin-top: 28px;
+
 `;
 
 export const BasicGrayBox = styled.div`
   width: 403px;
-  height: 193px;
+  min-height: 193px;
+  height: auto;
   flex-shrink: 0;
   border-radius: 7px;
   background: #f3f3f3;
@@ -180,6 +191,7 @@ export const BasicGrayBox = styled.div`
 
 export const GrayText = styled.div`
   width: auto;
+  white-space: nowrap;
   height: 19px;
   color: #a0a0a0;
   font-family: Pretendard;
@@ -197,7 +209,8 @@ export const BlackText = styled.div`
   font-weight: 500;
   line-height: 19px;
   padding: 0;
-  margin-left: 3px;
+  margin-left: 5px;
+  overflow:hidden;
 `;
 
 export const InfoTextBox = styled.div`
@@ -283,7 +296,7 @@ border-radius: 5px;
 border: 1px solid #ABABAB;
 background: #FFF;
 margin-left: 15px;
-margin-top: 23px;
+margin-top: 25px;
 display: flex;
 align-items: center;
 gap: 20px;
@@ -346,8 +359,11 @@ margin-left: 13px;
 width: 403px;
 border-radius: 7px;
 background: #F3F3F3;
-height: 126px;
+min-height: 126px;
+height: auto;
 padding-top: 28px;
+padding-bottom: 10px;
+overflow: hidden;
 `;
 
 export const RecText = styled.div`
@@ -401,4 +417,17 @@ line-height: normal;
 display: flex;
 align-items:center;
 white-space: nowrap;
+`;
+
+export const QrBox = styled.div`
+display: flex;
+align-items: center;
+color: #858585;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+margin-left: 16px;
+margin-top: 25px;
 `;
