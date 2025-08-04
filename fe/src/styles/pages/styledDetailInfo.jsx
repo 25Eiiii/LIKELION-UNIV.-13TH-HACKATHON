@@ -343,6 +343,11 @@ display: flex;
 flex-direction: column;
 gap: 20px;
 margin-left: 13px;
+width: 403px;
+border-radius: 7px;
+background: #F3F3F3;
+height: 126px;
+padding-top: 28px;
 `;
 
 export const RecText = styled.div`

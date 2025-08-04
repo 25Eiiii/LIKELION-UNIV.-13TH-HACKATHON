@@ -1,31 +1,54 @@
-import React, { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState,useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailInfo";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
+import axios from "axios";
 
 const DetailInfo = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [isCouponOpen, setIsCouponOpen] = useState(false);
-  const infoList = [
-    {
-      label: "제목 : ",
-      value: "2025 성북구립 최만린미술관 개관 기념전 <흙의 숨결>",
-    },
-    { label: "기간 : ", value: "2025.08.20(목) - 11.28(토) *매주 월 휴관" },
-    { label: "시간 : ", value: "10:00 - 19:00" },
-    { label: "장소 : ", value: "성북 구립 최만린 미술관 전시실 ( 2F)" },
-  ];
+  const [data,setData] = useState(null);
+  const {id} = useParams()||{id:3};
+
+  useEffect(()=>{
+    console.log("id: ",id);
+    const fetchdata = async()=>{
+        try{
+            const response = await axios.get(
+                `/api/details/detail/3/`
+            );
+            console.log("응답 데이터: ",response.data);
+            setData(response.data);
+        }catch(error){
+            console.error("데이터 불러오기 실패: ",error);
+            if(error.response){
+                console.error("서버 응답: ", error.response);
+            }
+        }
+    }
+    fetchdata();
+  },[id]);
+  const infoList =  data
+   ? [
+    
+    { label: "제목 : ", value: data.title},
+    { label: "기간 : ", value: data.date},
+    { label: "장소 : ", value: data.place },
+    { label: "신청일 : ", value: data.rgst_date },
+  ]
+  : [];
   const coupons = [
     "관람 완료 시에 받을 수 있는 쿠폰 목록 받을 수 있는",
     "관람 완료 시에 받을 수 있는 쿠폰 목록 받을 수 있는",
   ];
-  const detailList = [
-    { label: "관람료 : ", value: "없음(무료)" },
-    { label: "관람 연령 : ", value: "전체 관람" },
-    { label: "문의 : ", value: "02-717-9997" },
-    { label: "상세 정보 : ", value: "http /dbxncjdbf/ djxnwdhufgnd .com" },
-  ];
+  const detailList = data ?
+   [
+    { label: "관람료 : ", value: data.use_fee },
+    { label: "관람 연령 : ", value: data.use_trgt },
+    { label: "관련 정보 : ", value: data.hmpg_addr },
+  ]
+  : [];
   const stores = [
     {
         name:"제휴 가게명",
@@ -48,21 +71,25 @@ const DetailInfo = () => {
         link: ""
     },
   ];
+  const navigate = useNavigate();
+  const goReview = () =>{
+    navigate("/detailReview")
+  };
   return (
     <>
     <Container>
       <D.InnerWrapper>
         <D.Header>
           <img
-            src={`${process.env.PUBLIC_URL}/images/poster.svg`}
+            src={data?.main_img}
             alt="poster"
             width="428px"
           />
           <D.CloudyBox></D.CloudyBox>
           <D.TextBox>
             <D.NameBox>
-              <D.Name>흙의 숨결</D.Name>
-              <D.Type>전시/미술</D.Type>
+              <D.Name>{data?.title}</D.Name>
+              <D.Type>{data?.codename}</D.Type>
             </D.NameBox>
             <D.Explain>
               성북구의 공공미술관으로 조성되어 대중의 품 안에 자리하게 된
@@ -91,11 +118,11 @@ const DetailInfo = () => {
         </D.Header>
         <D.WhiteContainer>
           <D.Tab>
-            <D.EventInfo>
+            <D.EventInfo style={{cursor:"default"}}>
               행사 정보
               <D.MiniLine></D.MiniLine>
             </D.EventInfo>
-            <D.Review>참여 후기</D.Review>
+            <D.Review onClick={goReview} style={{cursor:"pointer"}}>참여 후기</D.Review>
           </D.Tab>
           <D.Line></D.Line>
           <D.BasicInfo>기본 정보</D.BasicInfo>
@@ -107,6 +134,17 @@ const DetailInfo = () => {
               </D.InfoTextBox>
             ))}
           </D.BasicGrayBox>
+
+           <D.DetailInfo>상세 정보</D.DetailInfo>
+          <D.DetailBox>
+            {detailList.map((item) => (
+              <D.InfoTextBox>
+                <D.GrayText>{item.label}</D.GrayText>
+                <D.BlackText>{item.value}</D.BlackText>
+              </D.InfoTextBox>
+            ))}
+          </D.DetailBox>
+
           <D.Benefit>받을 수 있는 혜택</D.Benefit>
           <D.CouponBox>
             <D.CouponTitle>
@@ -144,15 +182,7 @@ const DetailInfo = () => {
             <D.Point>290p</D.Point>
           </D.PointBox>
 
-          <D.DetailInfo>상세 정보</D.DetailInfo>
-          <D.DetailBox>
-            {detailList.map((item) => (
-              <D.InfoTextBox>
-                <D.GrayText>{item.label}</D.GrayText>
-                <D.BlackText>{item.value}</D.BlackText>
-              </D.InfoTextBox>
-            ))}
-          </D.DetailBox>
+         
         </D.WhiteContainer>
         <D.RecommendBox>
            <D.RecText>
@@ -161,7 +191,7 @@ const DetailInfo = () => {
            </D.RecText>
            <D.AlarmText>
                 <img
-                    src={`${process.env.PUBLIC_URL}/images/greencircle.svg`}
+                    src={`${process.env.PUBLIC_URL}/images/greenalarm.svg`}
                     alt="greencircle"
                     style={{marginRight:"6px"}}                   
                 />
