@@ -76,3 +76,42 @@ align-items: center;
 justify-content: center;
 border-radius: 50px;
 `
+
+export const Tab2 = styled.div`
+  display: flex;
+  justify-content: space-around;
+  border-bottom: 1px solid #ddd;
+`
+export const Tab2Item = styled.div`
+  position: relative;
+  padding: 8px 0;
+  font-size: 16px;
+  font-weight: ${(props) => (props.isActive ? "500" : "400")};
+  color: ${(props) => (props.isActive ? "#14284D" : "#616161")};
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: ${(props) => (props.isActive ? "73px" : "0")}; // 💡 더 짧게!
+    height: 2px;
+    background-color: #1F2D6A;
+    transition: all 0.2s ease;
+  }
+`;
+
+export const ReviewBtn = styled.button`
+width: 95px;
+height: 27px;
+flex-shrink: 0;
+border-radius: 8px;
+border: 1px solid #BCBCBC;
+width: 100%
+display: flex;
+justify-content: flex-start;
+`
