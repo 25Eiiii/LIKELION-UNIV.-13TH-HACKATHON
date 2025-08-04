@@ -2,6 +2,7 @@ from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import SurveySubmission, SurveyReview
 from search.models import CulturalEvent
+from point.utils import adjust_point
 from .serializers import (
     SurveySubmissionSerializer, 
     MyCulturalEventSerializer, SurveyReviewSerializer,
@@ -34,6 +35,17 @@ class SubmitReviewView(generics.CreateAPIView):
     serializer_class = SurveyReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        review = serializer.save(user=self.request.user)
+
+        user = self.request.user
+        event = review.event
+        photo_attached = bool(review.photo)
+
+        # 후기 포인트 = 기본 50 + 사진 있으면 50 추가
+        base_point = 50 + (50 if photo_attached else 0)
+        adjust_point(user, base_point, f"{event.title} 후기 작성 보상")
 
 #내가 쓴 후기 리스트 조회
 class MyReviewListView(generics.ListAPIView):
