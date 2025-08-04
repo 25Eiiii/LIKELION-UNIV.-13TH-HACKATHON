@@ -6,7 +6,7 @@ export const NavWrapper = styled.div`
     gap: 10px;
     align-items: center;
     bottom: 50px;
-    width: 428px;
+    width: 428.5px;
     justify-self: center;
     position: fixed;
     justify-content: space-around;
