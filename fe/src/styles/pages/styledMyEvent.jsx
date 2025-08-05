@@ -105,13 +105,4 @@ export const Tab2Item = styled.div`
   }
 `;
 
-export const ReviewBtn = styled.button`
-width: 95px;
-height: 27px;
-flex-shrink: 0;
-border-radius: 8px;
-border: 1px solid #BCBCBC;
-width: 100%
-display: flex;
-justify-content: flex-start;
-`
+

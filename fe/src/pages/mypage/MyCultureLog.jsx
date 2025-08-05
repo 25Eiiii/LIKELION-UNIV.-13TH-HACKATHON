@@ -14,22 +14,22 @@ const MyCultureLog = () => {
     
   return (
     <Wrapper>
-        {events.map((event, idx) => (
-            <CardGroup key={idx}>
-              <CultureItem>
-                  <CultureThumbnail 
-                    src={event.main_img}
-                    alt={event.title}
-                  />
-                  <CultureInfo>
-                      <CultureTitle>{event.title}</CultureTitle>
-                      <CultureDate>{event.date}</CultureDate>
-                      <CultureLocation>{event.place}</CultureLocation>
-                  </CultureInfo>
-              </CultureItem>
-            <ReviewBtn>후기 작성하기</ReviewBtn>
-            </CardGroup>
-        ))}
+      {events.map((event, idx) => (
+        <CardGroup key={idx}>
+          <CultureItem>
+            <CultureThumbnail 
+              src={event.main_img}
+              alt={event.title}
+            />
+            <CultureInfo>
+                <CultureTitle>{event.title}</CultureTitle>
+                <CultureDate>{event.date}</CultureDate>
+                <CultureLocation>{event.place}</CultureLocation>
+            </CultureInfo>
+          </CultureItem>
+        <ReviewBtn>후기 작성하기</ReviewBtn>
+        </CardGroup>
+      ))}
     </Wrapper>
   )
 };

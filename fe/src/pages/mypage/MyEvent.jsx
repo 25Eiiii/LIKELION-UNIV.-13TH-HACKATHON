@@ -5,9 +5,13 @@ import  * as E from '../../styles/pages/styledMyEvent'
 import PointBar from '../../components/PointBar';
 import MyCultureLog from './MyCultureLog';
 import MyReview from './MyReview';
+import { usePoint } from '../../hooks/usePoint';
+import usePointStore from '../../store/usePointStore';
 
 const MyEvent = () => {
   const [activeTab, setActiveTab] = useState("log");
+  usePoint();
+  const point = usePointStore((state) => state.point);
 
   return (
     <>
@@ -16,7 +20,7 @@ const MyEvent = () => {
             <E.LvWrapper>
                 <E.LvName>문화시민</E.LvName>
                 <E.Lv>Lv. 3</E.Lv>
-                <PointBar currentPoint={2244}></PointBar>
+                <PointBar currentPoint={point}></PointBar>
             </E.LvWrapper>
         </E.Header>
         <E.Wrapper>
