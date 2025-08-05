@@ -7,6 +7,7 @@ import Chatbot from './pages/chatbot/Chatbot';
 import Chatting from './pages/chatbot/Chatting';
 import DetailInfo from './pages/DetailInfo';
 import DetailReview from './pages/DetailReview';
+import SignUp from './pages/SignUp';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
         <Route path='/chatting' element={<Chatting />}></Route>
         <Route path="/detailInfo/:id" element={<DetailInfo/>}/>
         <Route path="/detailReview" element={<DetailReview/>}/>
+        <Route path='/signup'element={<SignUp/>}/>
       </Routes>
     </BrowserRouter>
   );
