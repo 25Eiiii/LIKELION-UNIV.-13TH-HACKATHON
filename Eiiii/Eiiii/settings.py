@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'category',#카테고리 클릭시 관련 행사 리스트 조회
     'profiles',#관심사 입력
     'surveys',#설문폼
+    'point'#포인트
 ]
 
 REST_FRAMEWORK = {

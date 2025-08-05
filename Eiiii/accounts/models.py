@@ -8,3 +8,4 @@ class CustomUser(AbstractUser):
     address = models.CharField(max_length=100)  # 거주지
     latitude = models.FloatField(null=True, blank=True)#위도
     longitude = models.FloatField(null=True, blank=True)#경도
+    point = models.IntegerField(default=0)#포인트
