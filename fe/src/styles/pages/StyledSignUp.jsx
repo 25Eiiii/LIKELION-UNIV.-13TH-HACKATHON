@@ -21,11 +21,13 @@ export const InnerWrapper = styled.div`
 width: 428px;
 min-height: 926px;
 background: linear-gradient(180deg, #FFF 0%, #F0FFF8 100%), #FFF;
+z-index: 1;
 `;
 
 export const BackGround = styled.div`
 position: absolute;
 z-index: -1;
+margin-top: 68px;
 `;
 
 export const Label = styled.div`
@@ -198,5 +200,43 @@ font-style: normal;
 font-weight: 600;
 line-height: normal;
 margin-left: 19px;
-margin-top: 228px;
+margin-top: 128px;
 `;
+
+export const Error = styled.div`
+font-family: Pretendard;
+font-size: 12px;
+font-style: normal;
+font-weight: 300;
+line-height: normal;
+margin-left: 19px;
+margin-top: -20px;
+margin-bottom: 10px;
+`;
+
+export const Address = styled.input`
+width: 376px;
+height: 55px;
+background: #FFF;
+border: 2px solid #ABABAB;
+outline: none;
+border-radius: 8px;
+padding-left: 14px;
+margin-left: 19px;
+color: #2C2C2C
+font-family: Pretendard;
+font-size: 17px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+
+::placeholder{
+color: #8A8A8A;
+font-family: Pretendard;
+font-size: 17px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+};
+`;
+
