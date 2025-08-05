@@ -8,6 +8,8 @@ import Chatting from './pages/chatbot/Chatting';
 import MyEvent from './pages/mypage/MyEvent';
 import DetailInfo from './pages/DetailInfo';
 import DetailReview from './pages/DetailReview';
+import Step1 from './pages/interest/Step1';
+import Step2 from './pages/interest/Step2';
 
 function App() {
 
@@ -23,6 +25,8 @@ function App() {
         <Route path="/detailInfo" element={<DetailInfo/>}/>
         <Route path="/detailInfo/:id" element={<DetailInfo/>}/>
         <Route path="/detailReview" element={<DetailReview/>}/>
+        <Route path="/survey/step1" element={<Step1/>}/>
+        <Route path="/survey/step2" element={<Step2/>}/>
       </Routes>
     </BrowserRouter>
   );
