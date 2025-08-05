@@ -6,8 +6,8 @@ const MyReview = () => {
   const { isLoading, isError } = useMyReviews();
   const reviews = useMyReviewStore(state => state.reviews);
 
-  if (isLoading) return <Wrapper>불러오는 중</Wrapper>;
-  if (isError) return <Wrapper>오류 발생</Wrapper>
+  if (isLoading) return <Wrapper style={{marginLeft: "13px"}}>불러오는 중</Wrapper>;
+  if (isError) return <Wrapper style={{marginLeft: "13px"}}>오류 발생</Wrapper>
     
   return (
     <Wrapper>
