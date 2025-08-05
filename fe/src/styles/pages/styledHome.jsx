@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import Top3Card from "../../components/EventCardS";
 
 export const Header = styled.div`
   background-image: url(${process.env.PUBLIC_URL}/images/header.svg);

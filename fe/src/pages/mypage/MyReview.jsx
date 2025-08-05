@@ -1,40 +1,25 @@
 import styled from "styled-components"
-
-import React from 'react';
+import useMyReviewStore from "../../store/useMyReviewStore";
+import { useMyReviews } from "../../hooks/useMyReview";
 
 const MyReview = () => {
-  const logs = [
-    {
-        title: "스테이 성북",
-        date: "2025.08.31",
-        review: "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄 좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-        thumbnail: "post2.svg",
-    },
-    {
-        title: "한옥 쉼표, 싱잉볼 테라피",
-        date: "2025.08.31",
-        review: "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄 좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-        thumbnail: "post3.svg",
-    },
-    {
-        title: "한옥 쉼표, 싱잉볼 테라피",
-        date: "2025.08.31",
-        review: "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄 좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-        thumbnail: "post3.svg",
-    },
-    ];
+  const { isLoading, isError } = useMyReviews();
+  const reviews = useMyReviewStore(state => state.reviews);
+
+  if (isLoading) return <Wrapper>불러오는 중</Wrapper>;
+  if (isError) return <Wrapper>오류 발생</Wrapper>
     
   return (
     <Wrapper>
-        {logs.map((log, idx) => (
+        {reviews.map((review, idx) => (
             <Card key={idx}>
-                <Thumbnail src={`${process.env.PUBLIC_URL}/images/${log.thumbnail}`} />
+                <Thumbnail src={review.main_img} />
                 <Info>
                   <Top>
-                    <Title>{log.title}</Title>
-                    <Date>{log.date}</Date>
+                    <Title>{review.title}</Title>
+                    <Date>{review.created_at}</Date>
                   </Top>
-                  <Review>{log.review}</Review>
+                  <Review>{review.content}</Review>
                   <DelBtn>
                     <img
                     src={`${process.env.PUBLIC_URL}/images/trash.svg`}
