@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import SurveySubmission, SurveyReview
 from accounts.models import CustomUser
 from search.models import CulturalEvent
+from point.utils import adjust_point
 
 #설문제출인증
 class SurveySubmissionSerializer(serializers.ModelSerializer):
@@ -17,7 +18,14 @@ class SurveySubmissionSerializer(serializers.ModelSerializer):
         if SurveySubmission.objects.filter(user=user, event=event).exists():
             raise serializers.ValidationError("이미 설문을 제출하셨습니다.")
 
-        return SurveySubmission.objects.create(user=user, event=event)
+        submission = SurveySubmission.objects.create(user=user, event=event)
+
+        #포인트 지급 로직
+        is_free = event.is_free.strip() if event.is_free else ""
+        point = 100 if is_free == "무료" else 300
+        adjust_point(user, point, f"{event.title} 참여 인증 보상")
+
+        return submission
 
 
 #설문한 행사 정보
@@ -63,8 +71,10 @@ class SurveyReviewSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        return SurveyReview.objects.create(user=self.context['request'].user, **validated_data)
-    
+        user = self.context['request'].user
+        validated_data.pop('user', None)  
+        return SurveyReview.objects.create(user=user, **validated_data)
+
 #내가 쓴 후기 리스트 조회
 class MyReviewSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='event.title')
