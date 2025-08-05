@@ -131,7 +131,6 @@ const Home = () => {
           </H.Top3>
       </H.EntireWrapper>
 
-        
     </Container>
     <H.Chatbot onClick={() => navigate('/chatbot-intro')}>
           <img 
