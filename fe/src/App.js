@@ -10,6 +10,7 @@ import DetailInfo from './pages/DetailInfo';
 import DetailReview from './pages/DetailReview';
 import Step1 from './pages/interest/Step1';
 import Step2 from './pages/interest/Step2';
+import SignUp from './pages/SignUp';
 
 function App() {
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/detailReview" element={<DetailReview/>}/>
         <Route path="/survey/step1" element={<Step1/>}/>
         <Route path="/survey/step2" element={<Step2/>}/>
+        <Route path='/signup'element={<SignUp/>}/>
       </Routes>
     </BrowserRouter>
   );
