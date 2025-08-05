@@ -1,6 +1,22 @@
 import styled from "styled-components"
 import useMyReviewStore from "../../store/useMyReviewStore";
 import { useMyReviews } from "../../hooks/useMyReview";
+import axios from "axios";
+
+const deleteReview = async (reviewId) => {
+  const token = localStorage.getItem("accessToken");
+  
+  try {
+    await axios.delete(`/api/surveys/my-reviews/${reviewId}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    alert("후기가 삭제되었습니다.");
+  } catch (error) {
+    alert("삭제 실패");
+  }
+}
 
 const MyReview = () => {
   const { isLoading, isError } = useMyReviews();
@@ -20,7 +36,7 @@ const MyReview = () => {
                     <Date>{review.created_at}</Date>
                   </Top>
                   <Review>{review.content}</Review>
-                  <DelBtn>
+                  <DelBtn onClick={() => deleteReview(review.id)}>
                     <img
                     src={`${process.env.PUBLIC_URL}/images/trash.svg`}
                       alt="trash"
