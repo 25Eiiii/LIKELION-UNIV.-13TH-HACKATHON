@@ -160,6 +160,66 @@ def get_unrated_events(user_id, ratings_df, all_event_ids):
 
     return unrated_events
 
+#협업 필터링 기반 추천
+def collaborative_filtering_recommend(user_id, top_n=5):
+    # 평점 데이터 로드
+    ratings_df = load_ratings()
+
+    if ratings_df.empty:
+        print("⚠️ 평점 데이터가 없습니다. 협업 필터링을 수행할 수 없습니다.")
+        return []
+
+    # Surprise 데이터 준비
+    data = prepare_dataset(ratings_df)
+    trainset, _ = train_test_split(data, test_size=0.2)
+
+    # KNNBasic 모델 (사용자 기반)
+    sim_options = {
+        'name': 'cosine',
+        'user_based': True
+    }
+    algo = KNNBasic(sim_options=sim_options)
+    algo.fit(trainset)
+
+    # 평가하지 않은 행사 찾기
+    all_event_ids = ratings_df['event_id'].unique()
+    unrated_items = get_unrated_events(user_id, ratings_df, all_event_ids)
+
+    if not unrated_items:
+        print(f"⚠️ user_id={user_id}는 모든 이벤트를 평가했습니다.")
+        return []
+
+    # 각 미평가 행사에 대한 평점 예측
+    predictions = []
+    for event_id in unrated_items:
+        pred = algo.predict(user_id, event_id)
+        predictions.append((event_id, pred.est))  # (행사 ID, 예측 평점)
+
+    # 높은 평점 순으로 정렬 후 top_n 반환
+    top_preds = sorted(predictions, key=lambda x: x[1], reverse=True)[:top_n]
+
+    # DB에서 행사 상세정보 가져오기
+    if top_preds:
+        engine = get_db_engine()
+        top_event_ids = [int(p[0]) for p in top_preds]
+        placeholders = ', '.join(['%s'] * len(top_event_ids))
+        query = f"""
+            SELECT id, title, category, guname, use_fee, main_img, place, start_date, end_date
+            FROM search_culturalevent
+            WHERE id IN ({placeholders})
+        """
+        event_df = pd.read_sql(query, engine, params=tuple(top_event_ids))
+
+        # 예측 평점 붙이기
+        pred_df = pd.DataFrame(top_preds, columns=['id', 'pred_rating'])
+        result_df = event_df.merge(pred_df, on='id')
+
+        # 평점 높은 순 정렬
+        result_df = result_df.sort_values('pred_rating', ascending=False)
+        return result_df
+
+    return []
+
 def recommend_for_user(user_id, ratings_df, algo, top_n=5):
     all_event_ids = ratings_df['event_id'].unique()
     unrated_items = get_unrated_events(user_id, ratings_df, all_event_ids)
@@ -191,3 +251,11 @@ if __name__ == "__main__":
     user_id = 1
     recs = behavior_adjusted_recommend(user_id, user_interest, top_n=5)
     print_behavior_results(recs)
+    
+    print("@@@@@@@@@@@@@@@@@@@@3번 코드 테스트@@@@@@@@@@")
+    user_id = 1
+    recs_cf = collaborative_filtering_recommend(user_id, top_n=5)
+
+    print("[3번] 협업 필터링 추천 결과\n")
+    for rank, row in enumerate(recs_cf.itertuples(), start=1):
+        print(f"{rank}위. [{row.title}] - 예측 평점: {row.pred_rating:.2f}")
