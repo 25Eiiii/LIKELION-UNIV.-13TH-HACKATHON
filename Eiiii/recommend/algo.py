@@ -15,7 +15,7 @@ from surprise import KNNBasic
 
 # DB 연결
 def get_db_engine():
-    return create_engine(f'postgresql://postgres:YEPIqooeoqbpRqXtECPZJkUHRICyRNHt@mainline.proxy.rlwy.net:20700/railway')
+    return create_engine(f'')
 
 # 문화 행사 데이터를 문자열 벡터로 변환
 def load_event_data():
