@@ -26,5 +26,7 @@ class SurveyReview(models.Model):
 
     photo = models.ImageField(upload_to='review_photos/', blank=True, null=True)
 
+    rating = models.IntegerField(default=5)  #추가: 1~5 평점
+
     class Meta:
         unique_together = ('user', 'event')  # 하나의 행사에 하나의 후기만

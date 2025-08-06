@@ -44,9 +44,11 @@ class ReviewEventInfoSerializer(serializers.ModelSerializer):
 
 #행사 리뷰 작성
 class SurveyReviewSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(min_value=1, max_value=5)
+
     class Meta:
         model = SurveyReview
-        fields = ['event', 'content', 'extra_feedback', 'photo']
+        fields = ['event', 'content', 'extra_feedback', 'photo', 'rating']
 
     def validate(self, data):
         user = self.context['request'].user
@@ -72,10 +74,12 @@ class MyReviewSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y.%m.%d")  
 
     photo = serializers.ImageField()
+
+    rating = serializers.IntegerField()
     
     class Meta:
         model = SurveyReview
-        fields = ['id', 'title', 'main_img', 'content', 'created_at', 'photo']
+        fields = ['id', 'title', 'main_img', 'content', 'created_at', 'photo', 'rating']
 
     def get_photo(self, obj):
         submission = SurveySubmission.objects.filter(user=obj.user, event=obj.event).first()
@@ -88,10 +92,11 @@ class PublicReviewSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='user.nickname')
     created_at = serializers.DateTimeField(format="%Y.%m.%d")
     photo = serializers.ImageField()
+    rating = serializers.IntegerField()
 
     class Meta:
         model = SurveyReview
-        fields = ['nickname', 'content', 'created_at', 'photo']
+        fields = ['nickname', 'content', 'created_at', 'photo', 'rating']
 
 #내가 인증한 문화 행사 리스트 조회
 class MyCertifiedEventSerializer(serializers.ModelSerializer):
