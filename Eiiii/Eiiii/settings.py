@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'profiles',#관심사 입력
     'surveys',#설문폼
     'point'#포인트
+    'recommend',#추천로직
 ]
 
 REST_FRAMEWORK = {

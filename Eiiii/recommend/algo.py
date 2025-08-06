@@ -6,6 +6,16 @@ from surprise import Dataset, Reader
 from surprise.model_selection import train_test_split
 from surprise import KNNBasic
 
+from behavior_based import calculate_activity_scores
+
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+env_path = Path(__file__).resolve().parent.parent / "Eiiii" / ".env"
+print("찾는 경로:", env_path)  # 확인용
+
+load_dotenv(dotenv_path=env_path)
+print("PORT:", os.getenv("DB_PORT")) # 확인용
 # 1. 회원가입 초기: 콘텐츠 기반 필터링
 #    데이터: 카테고리 / 지역 / 유, 무료 / 테마
 #    (1) 이벤트 데이터와 사용자 정보 데이터를 벡터화 하고
@@ -15,7 +25,10 @@ from surprise import KNNBasic
 
 # DB 연결
 def get_db_engine():
-    return create_engine(f'')
+    return create_engine(
+        f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
 
 # 문화 행사 데이터를 문자열 벡터로 변환
 def load_event_data():
@@ -63,6 +76,48 @@ def content_based_recommend(user_interests: dict, top_n=10):
 
 
 # 2. 행동 기반 콘텐츠 필터링
+def behavior_adjusted_recommend(user_id, user_interests, top_n=10):
+    event_df = load_event_data()
+    user_profile = load_user_data(user_interests)
+
+    # TF-IDF 벡터화
+    corpus = event_df['meta'].tolist() + [user_profile]
+    tfidf = TfidfVectorizer()
+    tfidf_matrix = tfidf.fit_transform(corpus)
+
+    # 유사도 계산
+    event_vectors = tfidf_matrix[:-1]
+    user_vector = tfidf_matrix[-1]
+    cosine_sim = cosine_similarity(event_vectors, user_vector).flatten()
+    event_df['similarity'] = cosine_sim.round(4)
+
+    # 행동 점수 계산
+    scores, _ = calculate_activity_scores(user_id)
+
+
+    # 행동 점수 반영 (예: 유사도 × (1 + 행동 점수))
+    def apply_behavior_score(row):
+        base_sim = row['similarity']
+        event_id = row['id']
+        activity_score = scores.get(event_id, 0)
+        return round(base_sim * (1 + activity_score), 4)
+
+    event_df['adjusted_similarity'] = event_df.apply(apply_behavior_score, axis=1)
+
+    # adjusted_similarity 기준 정렬하되
+    # similarity 점수가 너무 낮은 건 걸러주기 (예: 관심사가 너무 다르면 제외)
+    filtered_df = event_df[event_df['similarity'] > 0.2]
+    result = filtered_df.sort_values('adjusted_similarity', ascending=False).head(top_n)
+
+    return result
+
+#2번 테스트 출력 포맷용
+def print_behavior_results(df):
+    print("[2번] 행동 기반 콘텐츠 필터링 추천 결과\n")
+    for rank, (_, row) in enumerate(df.iterrows(), start=1):
+        print(f"{rank}위. [{row['title']}]")
+        print(f"      유사도(TF-IDF): {row['similarity']:.4f}")
+        print(f"      가중 유사도(행동 반영): {row['adjusted_similarity']:.4f}\n")
 
 # 3. 협업 필터링 함수
 #    (1) 데이터 형식 변환하고 (Surprise)
@@ -115,7 +170,9 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
         pred = algo.predict(user_id, id)
         predictions.append((id, pred.est))
 
-    top_preds = sorted(predictions, key=lambda x: x[1], reverse=True[:top_n])
+    #top_preds = sorted(predictions, key=lambda x: x[1], reverse=True[:top_n])
+    top_preds = sorted(predictions, key=lambda x: x[1], reverse=True)[:top_n]
+
     return top_preds
 
 
@@ -129,3 +186,8 @@ if __name__ == "__main__":
 
     recs = content_based_recommend(user_interest, top_n=5)
     print(recs[['title', 'similarity', 'start_date']])
+
+    print("@@@@@@@@@@@@@@@@@@@@2번 코드 테스트@@@@@@@@@@")
+    user_id = 1
+    recs = behavior_adjusted_recommend(user_id, user_interest, top_n=5)
+    print_behavior_results(recs)
