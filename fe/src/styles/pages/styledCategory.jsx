@@ -10,6 +10,11 @@ padding-top: 43px
 export const InnerWrapper = styled.div`
 width: 428px;
 min-height: 926px;
+
+`;
+
+export const Box = styled.div`
+height: 80px;
 `;
 
 export const Back = styled.div`
@@ -120,6 +125,9 @@ margin-top: 8px;
 
 export const ItemBox = styled.div`
 display: flex;
+height: 170px;
+align-items: center;
+margin-bottom: 10px;
 `;
 
 export const ItemImg = styled.img`
@@ -159,7 +167,9 @@ justify-content: center;
 `;
 
 export const Type = styled.div`
-width: 51px;
+min-width: 51px;
+padding-left: 2px;
+padding-right: 2px;
 height: 25px;
 flex-shrink: 0;
 border-radius: 12.5px;
@@ -176,8 +186,8 @@ justify-content: center;
 `;
 
 export const Title = styled.div`
-width: auto;
-height: 28px;
+width: 240px;
+height: auto;
 color: #3C3C3C;
 font-family: Pretendard;
 font-size: 20px;
@@ -185,10 +195,15 @@ font-style: normal;
 font-weight: 600;
 line-height: normal;
 margin-bottom: 6px;
+display: -webkit-box;
+-webkit-line-clamp: 2;  
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
 `;
 
 export const Place = styled.div`
-width: auto;
+width: 240px;
 height: 28px;
 color: #000;
 font-family: Pretendard;
@@ -196,6 +211,9 @@ font-size: 17px;
 font-style: normal;
 font-weight: 400;
 line-height: normal;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
 `;
 
 export const Date = styled.div`

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams} from "react-router-dom";
 import * as C from "../styles/pages/styledCategory";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
@@ -7,23 +7,34 @@ import axios from "axios";
 
 const Category = () => {
   const categoryList = [
-    "전체",
-    "무대/공연",
-    "전시/미술",
-    "교육/체험",
-    "축제",
-    "음악/콘서트",
-    "기타",
+    { label: "전체", query: "" },
+    { label: "무대/공연", query: "무대/공연" },
+    { label: "전시/미술", query: "전시/미술" },
+    { label: "교육/체험", query: "교육/체험" },
+    { label: "축제", query: "축제" },
+    { label: "음악/콘서트", query: "음악/콘서트" },
+    { label: "기타", query: "기타" },
   ];
-  const [isSelected, setIsSelected] = useState();
+  
+  const [searchParams,setSearchParams] = useSearchParams();
+  const initialCategory = searchParams.get("category");
+  const initialSelected = categoryList.find(item=>item.label===initialCategory) || categoryList[0];
+  const [isSelected, setIsSelected] = useState(initialSelected);
   const [search, setSearch] = useState("");
   const [data, setData] = useState();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isSelected) {
+      SearchCategory();
+    }
+  }, [isSelected]);
 
   const SearchCategory = async () => {
     try {
-      const response = await axios.get(
-        `/api/events/events-category/?category=${isSelected}&search=${search}`
-      );
+      const categoryQuery = isSelected.query;
+      const url = categoryQuery ? `/api/events/events-category/?category=${categoryQuery}&search=${search}` : `/api/events/events-category/?search=${search}`
+      const response = await axios.get(url);
       setData(response.data);
     } catch (error) {
       console.log(error.response.data);
@@ -34,13 +45,13 @@ const Category = () => {
       <Container>
         <C.InnerWrapper>
           <C.Header>
-            <C.Back>
+            <C.Back onClick={() => navigate("/home")}>
               <img
                 src={`${process.env.PUBLIC_URL}/images/backbtn.svg`}
                 alt="back"
               />
             </C.Back>
-            <C.Category>{isSelected}</C.Category>
+            <C.Category>{isSelected.label}</C.Category>
           </C.Header>
 
           <C.SearchBox>
@@ -59,19 +70,21 @@ const Category = () => {
                   SearchCategory();
                 }
               }}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </C.SearchBox>
           <C.AllCategory>
             {categoryList.map((item) => (
-              <C.CategoryItem 
-                    onClick={() => {
-                        setIsSelected(item);
-                        SearchCategory();
-                    }}>
-                {item}
+              <C.CategoryItem
+                onClick={() => {
+                  setIsSelected(item);
+                  setSearchParams({category: item.label});
+                }}
+              >
+                {item.label}
                 <C.MiniLine
                   style={{
-                    visibility: isSelected === item ? "visible" : "hidden",
+                    visibility: isSelected.query === item.query ? "visible" : "hidden",
                   }}
                 ></C.MiniLine>
               </C.CategoryItem>
@@ -93,6 +106,7 @@ const Category = () => {
               </C.TextBox>
             </C.ItemBox>
           ))}
+          <C.Box></C.Box>
         </C.InnerWrapper>
       </Container>
       <NavBar></NavBar>
