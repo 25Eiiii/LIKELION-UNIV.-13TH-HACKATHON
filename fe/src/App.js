@@ -10,6 +10,7 @@ import DetailReview from './pages/DetailReview';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Category from './pages/Category';
+import Search from './pages/Search';
 
 function App() {
 
@@ -26,6 +27,7 @@ function App() {
         <Route path='/signup'element={<SignUp/>}/>
         <Route path='/login' element={<Login/>}/>
         <Route path='/category'element={<Category/>}/>
+        <Route path='/search' element={<Search/>}/>
       </Routes>
     </BrowserRouter>
   );
