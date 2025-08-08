@@ -9,7 +9,7 @@ margin-top: 66px;
 `
 
 export const StepBar = styled.div`
-width: 364px;
+width: 366px;
 height: 5px;
 flex-shrink: 0;
 border-radius: 20px;
@@ -24,7 +24,7 @@ margin-bottom: 0;
 `
 
 export const StepBarFill = styled.div`
-width: 123px;
+width: 68px;
 height: 5px;
 flex-shrink: 0;
 border-radius: 20px;
@@ -32,13 +32,27 @@ background: #282F56;
 `
 
 export const Step2BarFill = styled.div`
-width: 246px;
+width: 179px;
 height: 5px;
 flex-shrink: 0;
 border-radius: 20px;
 background: #282F56;
 `
 
+export const Step3BarFill = styled.div`
+width: 289px;
+height: 5px;
+flex-shrink: 0;
+border-radius: 20px;
+background: #282F56;
+`
+export const Step4BarFill = styled.div`
+width: 366px;
+height: 5px;
+flex-shrink: 0;
+border-radius: 20px;
+background: #282F56;
+`
 export const TextWrapper = styled.div`
 display: flex;
 flex-direction: column;

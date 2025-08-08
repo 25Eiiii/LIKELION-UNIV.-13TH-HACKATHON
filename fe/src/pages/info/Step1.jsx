@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Container } from "../../styles/common/styledContainer";
 import * as S from "../../styles/pages/styledStep"
 import { useState } from 'react';
-import useInterestStore from '../../store/useSurveyStore';
+import useInterestStore from '../../store/useInfoStore';
 import { useNavigate } from 'react-router-dom';
 
 const Step1 = () => {
@@ -21,7 +21,7 @@ const Step1 = () => {
   }, [selectedInterests, navigate]);
 
   return (
-    <Container>
+    <Container style={{background: "linear-gradient(180deg, #FFF 0%, #F0FFF8 100%)"}}>
         <S.StepWrapper>
             <S.StepBar>
                 <S.StepBarFill></S.StepBarFill>

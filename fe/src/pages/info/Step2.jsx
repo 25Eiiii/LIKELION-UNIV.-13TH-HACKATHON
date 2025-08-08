@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Container } from '../../styles/common/styledContainer';
 import * as S from "../../styles/pages/styledStep"
-import { useTogetherStore } from '../../store/useSurveyStore';
+import { useTogetherStore } from '../../store/useInfoStore';
 import { useNavigate } from 'react-router-dom';
 
 const Step2 = () => {
@@ -11,20 +11,20 @@ const Step2 = () => {
   useEffect(() => {
     if (selectedTogether !== null) {
         const timer = setTimeout(() => {
-            navigate("/home");
+            navigate("/survey/step3");
         }, 500);
         return () => clearTimeout(timer);
     }
   },[selectedTogether, navigate]);
 
   return (
-    <Container>
+    <Container style={{background: "linear-gradient(180deg, #FFF 0%, #F0FFF8 100%)"}}>
         <S.StepWrapper>
             <S.StepBar>
                 <S.Step2BarFill></S.Step2BarFill>
             </S.StepBar>
             <S.StepNum>
-                2 / 3
+                2 / 4
             </S.StepNum>
         </S.StepWrapper>
         <S.TextWrapper>
