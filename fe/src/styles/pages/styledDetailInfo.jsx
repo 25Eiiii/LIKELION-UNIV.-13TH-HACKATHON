@@ -63,7 +63,7 @@ export const Name = styled.div`
 `;
 
 export const Type = styled.div`
-  width: 83px;
+  width: auto;
   height: 22px;
   flex-shrink: 0;
   border-radius: 12.5px;
@@ -78,6 +78,8 @@ export const Type = styled.div`
   position: absolute;
   top: 300px;
   right: 16px;
+  padding-left: 3px;
+  padding-right: 3px;
 `;
 
 export const Explain = styled.div`
