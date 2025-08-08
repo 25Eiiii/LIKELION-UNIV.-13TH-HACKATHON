@@ -35,3 +35,9 @@ export const useTypeStore = create((set) => ({
   setSelectedType: (typeIdx) =>
     set({ selectedType: typeIdx })
 }))
+
+export const useFeeStore = create((set) => ({
+  selectedFee: null,
+  setSelectedFee: (FeeIdx) =>
+    set({ selectedFee: FeeIdx })
+}))
