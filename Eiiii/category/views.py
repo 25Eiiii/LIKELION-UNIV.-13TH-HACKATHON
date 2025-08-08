@@ -39,6 +39,7 @@ class CulturalEventListView(APIView):
                 status = "정보 없음"
 
             results.append({
+                "id": event.id, 
                 "title": event.title,
                 "date": event.date,
                 "place": event.place,

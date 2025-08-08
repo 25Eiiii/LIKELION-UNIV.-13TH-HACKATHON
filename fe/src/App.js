@@ -8,6 +8,9 @@ import Chatting from './pages/chatbot/Chatting';
 import MyEvent from './pages/mypage/MyEvent';
 import DetailInfo from './pages/DetailInfo';
 import DetailReview from './pages/DetailReview';
+import SignUp from './pages/SignUp';
+import Login from './pages/Login';
+import Category from './pages/Category';
 
 function App() {
 
@@ -23,6 +26,9 @@ function App() {
         <Route path="/detailInfo" element={<DetailInfo/>}/>
         <Route path="/detailInfo/:id" element={<DetailInfo/>}/>
         <Route path="/detailReview" element={<DetailReview/>}/>
+        <Route path='/signup'element={<SignUp/>}/>
+        <Route path='/login' element={<Login/>}/>
+        <Route path='/category'element={<Category/>}/>
       </Routes>
     </BrowserRouter>
   );
