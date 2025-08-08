@@ -1,21 +1,21 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container } from "../../styles/common/styledContainer";
-import { useTypeStore } from "../../store/useInfoStore";
+import { useAreaStore } from "../../store/useInfoStore";
 import * as S from "../../styles/pages/styledStep"
 
 const Step3 = () => {
-  const { selectedType, setSelectedType }= useTypeStore();
+  const { selectedArea, setSelectedArea }= useAreaStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (selectedType !== null) {
+    if (selectedArea !== null) {
         const timer = setTimeout(() => {
             navigate("/survey/step4");
         }, 500);
         return () => clearTimeout(timer);
     }
-  }, [selectedType, navigate]);
+  }, [selectedArea, navigate]);
 
   return (
     <Container style={{background: "linear-gradient(180deg, #FFF 0%, #F0FFF8 100%)"}}>
@@ -37,8 +37,8 @@ const Step3 = () => {
             {type.map((item, idx) => (
                 <S.TogetherItem
                     key={idx}
-                    isSelected={selectedType === idx}
-                    onClick={() => setSelectedType(idx)}
+                    isSelected={selectedArea === idx}
+                    onClick={() => setSelectedArea(idx)}
                 >
                     {item}
                 </S.TogetherItem>

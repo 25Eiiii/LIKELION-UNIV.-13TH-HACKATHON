@@ -30,10 +30,10 @@ export const useTogetherStore = create((set) => ({
         set({ selectedTogether: togetherIdx })
 }));
 
-export const useTypeStore = create((set) => ({
-  selectedType: null,
-  setSelectedType: (typeIdx) =>
-    set({ selectedType: typeIdx })
+export const useAreaStore = create((set) => ({
+  selectedArea: null,
+  setSelectedArea: (areaIdx) =>
+    set({ selectedArea: areaIdx })
 }))
 
 export const useFeeStore = create((set) => ({

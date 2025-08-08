@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Container } from "../../styles/common/styledContainer";
 import { useFeeStore } from "../../store/useInfoStore";
 import useInterestStore from "../../store/useInfoStore";
-import { useTypeStore } from "../../store/useInfoStore";
+import { useAreaStore } from "../../store/useInfoStore";
 import { useTogetherStore } from "../../store/useInfoStore";
 import useCreateProfile from "../../hooks/useCreateProfile";
 import * as S from "../../styles/pages/styledStep"
 
 const Step4 = () => {
   const { selectedInterests, toggleInterest }= useInterestStore();
-  const { selectedType, setSelectedType }= useTypeStore();
+  const { selectedArea, setSelectedArea }= useAreaStore();
   const { selectedTogether, setSelectedTogether }= useTogetherStore();
   const { selectedFee, setSelectedFee }= useFeeStore();
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const Step4 = () => {
       const profileData = {
         interests: selectedInterests.map(idx => interestsData[idx].name),
         together: togetherData[selectedTogether],
-        area: "성북구",
+        area: area[selectedArea],
         fee_type: type[selectedFee]
       };
       console.log("보내는 데이터:", profileData);
@@ -78,6 +78,14 @@ const type = [
     "유료 행사도 괜찮아요",
     "둘 다 좋아요",
 ]
+
+const area = [
+    "성북구",
+    "동대문문구",
+    "종로구",
+    "강북구"
+]
+
 
 const interestsData = [
     { name: "연극" },
