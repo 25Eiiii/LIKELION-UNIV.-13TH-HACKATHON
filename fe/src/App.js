@@ -13,6 +13,8 @@ import Step2 from './pages/info/Step2';
 import Step3 from './pages/info/Step3';
 import Step4 from './pages/info/Step4';
 import SignUp from './pages/SignUp';
+import Login from './pages/Login';
+import Category from './pages/Category';
 
 function App() {
 
@@ -33,6 +35,8 @@ function App() {
         <Route path="/survey/step3" element={<Step3/>}/>
         <Route path="/survey/step4" element={<Step4/>}/>
         <Route path='/signup'element={<SignUp/>}/>
+        <Route path='/login' element={<Login/>}/>
+        <Route path='/category'element={<Category/>}/>
       </Routes>
     </BrowserRouter>
   );
