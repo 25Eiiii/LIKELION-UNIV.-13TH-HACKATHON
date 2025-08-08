@@ -9,10 +9,13 @@ from surprise import KNNBasic
 from behavior_based import calculate_activity_scores
 
 import os
+from konlpy.tag import Okt
+import re
 from dotenv import load_dotenv
 from pathlib import Path
 
 # ===== 공통 설정 =====
+# env_path = Path(__file__).resolve().parent.parent / ".env"
 env_path = Path(__file__).resolve().parent.parent / "Eiiii" / ".env"
 load_dotenv(dotenv_path=env_path)
 
@@ -31,7 +34,47 @@ def get_db_engine():
 #    (3) 이벤트 데이터와 사용자 데이터 간 유사도를 계산한다. (cosine-similarity)
 #    (4) 유사도가 높은 이벤트를 사용자에게 추천한다. 
 
+okt = Okt()
 
+# 전처리 함수
+def preprocess_text(text):
+    # 한글, 숫자, 공백만 남기기
+    text = re.sub(r'[^ㄱ-ㅎ가-힣0-9\s]', ' ', text)
+
+    # 형태소 분석 후 명사/형용사만 추출
+    tokens = [word for word, pos in okt.pos(text) if pos in ['Noun', 'Adjective']]
+
+    # 동의어/표현 통일
+    # synonym_map = {
+    #     '전석': '',
+    #     '관람료': '', '이상': '', '누구나': '',
+    # }
+    # tokens = [synonym_map.get(tok, tok) for tok in tokens if tok]
+
+    #use_trgk을 어떻게 할 지 더 생각해봐야 할 듯....
+
+    # 불용어 제거
+    stopwords = {'관람', '가능', '포함', '일반시민', '관람가능'}
+    tokens = [tok for tok in tokens if tok not in stopwords]
+
+    return ' '.join(tokens)
+
+# category 멀티태그 분리 함수
+def split_category_tags(category_str):
+    # 예: "음악 콘서트" → ["음악", "콘서트"]
+    if not category_str:
+        return ''
+    # 공백, 쉼표, 슬래시 기준 분리
+    tags = re.split(r'[\s,/]+', category_str.strip())
+    tags = [tag for tag in tags if tag]
+    return ' '.join(tags)
+
+# DB 연결
+def get_db_engine():
+    return create_engine(
+        f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
 
 # 문화 행사 데이터를 문자열 벡터로 변환
 def load_event_data():
@@ -39,20 +82,44 @@ def load_event_data():
     query = "SELECT * FROM search_culturalevent"
     df = pd.read_sql(query, engine)
 
+    # use_fee 전처리 시작 (공백, 무료 -> 무료, 나머지 -> 유료)
+    def normalize_fee(fee):
+        if not fee or str(fee).strip() == "" or pd.isna(fee):
+            return "무료"
+        fee_str = str(fee).strip()
+        # 무료 관련 키워드
+        free_keywords = ["무료", "0원", "무료관람"]
+        if any(keyword in fee_str for keyword in free_keywords):
+            return "무료"
+        return "유료"
+
+    df["use_fee"] = df["use_fee"].apply(normalize_fee)
+
     # 메타 칼럼 합쳐서 텍스트 벡터로 만들기
     # 텍스트 벡터로 만들어야 tfidf vectorizer 적용 가능함
-    df['meta'] = df[['category', 'guname', 'use_fee', 'use_trgt']].astype(str).agg(' '.join, axis=1)
+    # category 멀티태그 분리
+    df['category_clean'] = df['category'].apply(split_category_tags)
+
+    # 메타 데이터 합치기
+    df['meta'] = df[['category_clean', 'guname', 'use_fee', 'use_trgt']].astype(str).agg(' '.join, axis=1)
+
+    # 형태소 분석 + 클린 텍스트 적용
+    df['meta'] = df['meta'].apply(preprocess_text)
 
     return df
 
 # 사용자 관심사를 문자열 벡터로 변환
 def load_user_profile(user_interest: dict):
-    return ' '.join([
-        user_interest.get('interests', ''),
-        user_interest.get('area', ''),
-        user_interest.get('fee_type', ''),
-        user_interest.get('together', '')
-    ])
+    # category 멀티태그 분리 적용
+    category_clean = split_category_tags(user_interest.get('interests', ''))
+
+    user_mapped = {
+        'category': category_clean,
+        'guname': user_interest.get('area', ''),
+        'use_fee': user_interest.get('fee_type', ''),
+        'use_trgt': user_interest.get('together', '')
+    }
+    return preprocess_text(' '.join(user_mapped.values()))
 
 #TF-IDF로 사용자와 행사 유사도 계산
 def calculate_similarity(event_df, user_profile):
@@ -175,10 +242,10 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
 if __name__ == "__main__":
     user_interest = {
-        "interests": "체험",
-        "area": "동대문구",
+        "interests": "전시",
+        "area": "성북구",
         "fee_type": "무료",
-        "together": "연인과"
+        "together": "연인"
     }
 
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
