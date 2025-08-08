@@ -93,7 +93,7 @@ const Category = () => {
           <C.Line></C.Line>
 
           {data?.results?.map((item) => (
-            <C.ItemBox>
+            <C.ItemBox onClick={()=>navigate(`/detailInfo/${item.id}`)}>
               <C.ItemImg src={item.main_img} />
               <C.TextBox>
                 <C.TypeBox>
