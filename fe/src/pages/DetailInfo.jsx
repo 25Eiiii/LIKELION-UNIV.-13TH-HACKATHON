@@ -10,15 +10,18 @@ const DetailInfo = () => {
   const [data, setData] = useState(null);
   const { id } = useParams();
   const [dropdown, setDropDown] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
+  const [isClicked, setIsClicked] = useState();
 
   useEffect(() => {
     const fetchdata = async() => {
       try {
-        const response = await axios.get(`/api/details/detail/${id}/`);
-        console.log("응답 데이터: ", response.data);
+        const accessToken = localStorage.getItem("accessToken");
+        const response = await axios.get(
+          `/api/details/detail/${id}/`,
+          {headers : accessToken ? {Authorization : `Bearer ${accessToken}`} : {}}
+        );
         setData(response.data);
-        setIsClicked(data.is_liked);
+        setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
         if (error.response) {
@@ -29,17 +32,18 @@ const DetailInfo = () => {
     fetchdata();
   }, [id]);
     const toggleLike = async() => {
-
-      const nextStatus = !isClicked;
-      setIsClicked(nextStatus);
+      const accessToken = localStorage.getItem("accessToken");
+      if(!accessToken) {
+        alert("로그인 후 사용 가능합니다.");
+        navigate("/login");
+        return;
+      }
+      const prev = isClicked;
+      setIsClicked(!prev);
       try{
-        const accessToken = localStorage.getItem("accessToken");
         const response = await axios.post(
           `/api/details/detail/${id}/like/`,
-          {
-              "liked": nextStatus,
-              "like_count": 2
-          },
+          {},
           {
             headers: {
               Authorization : `Bearer ${accessToken}`,
@@ -47,6 +51,7 @@ const DetailInfo = () => {
             }
           }
         );
+        setIsClicked(response.data.liked);
       }catch(error){
         console.error(error.response.data);
       }
@@ -106,7 +111,6 @@ const DetailInfo = () => {
               </D.NameBox>
               <D.Type>{data?.codename}</D.Type>
               <D.IconBox>
-               
                 <D.Heart
                   src={`${process.env.PUBLIC_URL}/images/${isClicked ? "fullheart.svg" : "blankheart.svg"}`}
                   alt="heart"
