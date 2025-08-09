@@ -10,7 +10,7 @@ const ChatbotStart = () => {
 
   useEffect(() => {
     const handleEnter = (e) => {
-      if (e.key == "Enter") {
+      if (e.key === "Enter") {
         navigate('/chatbot');
       }
     };

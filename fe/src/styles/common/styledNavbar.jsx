@@ -6,13 +6,15 @@ export const NavWrapper = styled.div`
     gap: 10px;
     align-items: center;
     bottom: 50px;
-    width: 100%;
+    width: 428.5px;
+    justify-self: center;
     position: fixed;
     justify-content: space-around;
     background: #FFFFFF;
     border-bottom-left-radius: 30px;
     border-bottom-right-radius: 30px;
     z-index: 999;
+    box-shadow: 0 -1px 10px 0 rgba(0, 0, 0, 0.11);
 `
 
 export const Line = styled.div`
@@ -24,6 +26,7 @@ export const Group = styled.div`
     display: flex;
     flex-direction: row;
     gap: 40px;
+    align-items: flex-end;
 `
 
 export const Icon = styled.button`
