@@ -1,9 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import * as N from "../styles/common/styledNavbar";
 
 const NavBar = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <N.NavWrapper>
@@ -12,8 +13,11 @@ const NavBar = () => {
             <N.Icon onClick={() => navigate("/home")}>
                 <img
                     id="home"
-                    src={`${process.env.PUBLIC_URL}/images/home.svg`}
+                    src={`${process.env.PUBLIC_URL}/images/${
+                        location.pathname === "/home" ? "home_active.svg" : "home.svg"
+                    }`}
                     alt="home"
+                    style={{width: "35px", height: "35px", marginBottom: "-3px", marginTop: "-3px"}}
                 />
                 홈
             </N.Icon>
@@ -25,26 +29,32 @@ const NavBar = () => {
                 /> 
                 탐색
             </N.Icon>
-            <N.Icon onClick={() => navigate("/community/mentoring")}>
+            <N.Icon onClick={() => navigate("/coupon")}>
                 <img
-                    id="reserve"
-                    src={`${process.env.PUBLIC_URL}/images/reserve.svg`}
-                    alt="reserve"
+                    id="coupon"
+                    src={`${process.env.PUBLIC_URL}/images/${
+                        location.pathname === "/coupon" ? "coupon_active.svg" : "coupon.svg"
+                    }`}
+                    alt="coupon"
                 />
-                예약
+                혜택
             </N.Icon>
-            <N.Icon onClick={() => navigate("/scrap")}>
+            <N.Icon onClick={() => navigate("/like")}>
                 <img
                     id="like"
-                    src={`${process.env.PUBLIC_URL}/images/like.svg`}
+                    src={`${process.env.PUBLIC_URL}/images/${
+                        location.pathname === "/like" ? "like_active.svg" : "like.svg"
+                    }`}
                     alt="like"
                 />
                 좋아요
             </N.Icon>
-            <N.Icon onClick={() => navigate("/profile")}>
+            <N.Icon onClick={() => navigate("/mypage-myevent")}>
                 <img
                     id="mypage"
-                    src={`${process.env.PUBLIC_URL}/images/mypage.svg`}
+                    src={`${process.env.PUBLIC_URL}/images/${
+                        location.pathname === "/mypage-myevent" ? "mypage_active.svg" : "mypage.svg"
+                    }`}
                     alt="mypage"
                 />
                 마이페이지

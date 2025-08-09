@@ -11,6 +11,8 @@ export const Header = styled.div`
   justify-content: flex-start;
   padding-top: 50px;
   padding-left: 80px;
+  border-box: box-sizing;
+  max-width: 428px;
   width: 100%;
   p {
     margin: 0px;
@@ -36,7 +38,6 @@ align-items: center;
 `
 export const EntireWrapper = styled.div`
 background: #fff;
-width: 428px;
 height: 508px;
 flex-shrink: 0;
 display: flex;
@@ -189,24 +190,18 @@ margin-left: 30px;
 margin-top: 30px;
 gap: 30px;
 `
-export const CultureItem = styled.div`
+
+export const Top3List = styled.div`
 display: flex;
-gap: 30px;
-`
-export const Number = styled.div`
-
-`
-export const CulturePost = styled.div`
-
-`
-export const CultureInfo = styled.div`
-display: flex;
-flex-direction: column;
-gap: 10px;
-`
-export const CultureName = styled.div`
-
-`
-export const CultureDate = styled.div`
-
+align-items: flex-start;
+gap: 40px;
+p{
+margin: 0;
+color: #000;
+font-family: Pretendard;
+font-size: 18px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+}
 `
