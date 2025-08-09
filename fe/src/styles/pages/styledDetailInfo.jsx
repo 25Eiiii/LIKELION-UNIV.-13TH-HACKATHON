@@ -34,7 +34,7 @@ export const WhiteContainer = styled.div`
   background: #fff;
   box-shadow: 0 1px 12px 0 rgba(0, 0, 0, 0.13);
   margin-top: -35px;
-  padding-bottom: 40px;
+  padding-bottom: 25px;
 `;
 
 export const TextBox = styled.div`
@@ -63,7 +63,7 @@ export const Name = styled.div`
 `;
 
 export const Type = styled.div`
-  width: auto;
+  min-width: 75px;
   height: 22px;
   flex-shrink: 0;
   border-radius: 12.5px;
@@ -162,7 +162,7 @@ export const Review = styled.div`
 `;
 
 export const BasicInfo = styled.div`
-  width: 75px;
+  width: 150px;
   height: 19px;
   flex-shrink: 0;
   color: #111;
@@ -171,24 +171,25 @@ export const BasicInfo = styled.div`
   font-style: normal;
   font-weight: 500;
   line-height: normal;
-  margin-left: 15px;
-  margin-top: 28px;
-
+  margin-left: 27px;
+  margin-top: 45px;
+  display: flex;
+  align-items: center;
 `;
 
 export const BasicGrayBox = styled.div`
   width: 403px;
-  min-height: 193px;
+  min-height: 170px;
   height: auto;
   flex-shrink: 0;
   border-radius: 7px;
-  background: #f3f3f3;
+  background: #FFF;
   margin-left: 15px;
-  margin-top: 14px;
+  
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 22px;
+  gap: 20px;
 `;
 
 export const GrayText = styled.div`
@@ -291,54 +292,130 @@ background: #ABABAB;
 `;
 
 export const PointBox = styled.div`
-width: 191px;
-height: 51px;
+width: 403px;
+max-height: 330px;
 flex-shrink: 0;
-border-radius: 5px;
-border: 1px solid #ABABAB;
-background: #FFF;
+border-radius: 7px;
+border: 1px solid #CFCFCF;
+background: #FFF9E5;
 margin-left: 15px;
 margin-top: 25px;
-display: flex;
-align-items: center;
-gap: 20px;
+padding-bottom: 10px;
 `;
 
-export const PointTitle = styled.div`
-width:50px;
-height: 19px;
-color: #111;
+export const GainPointText = styled.div`
+color: #434343;
 font-family: Pretendard;
-font-size: 18px;
+font-size: 16px;
 font-style: normal;
 font-weight: 500;
 line-height: normal;
-display:flex;
-justify-content: center;
+margin-left: 19px;
+margin-top: 16px;
+margin-bottom: 11px;
+`;
+
+export const GuidePoint = styled.div`
+
+`;
+
+export const Guide = styled.div`
+color: #525252;
+font-family: Pretendard;
+font-size: 14px;
+font-style: normal;
+font-weight: 500;
+line-height: 25px; 
+display: flex;
 align-items: center;
-margin-left: 20px;
+margin-left: 17px;
+
 `;
 
 export const PointLine = styled.div`
-width: 1px;
-height: 51px;
-background: #ABABAB;
-margin-left: 5px;
+width: 402px;
+height: 1px;
+background: #D9D9D9;
+margin-top: 11px;
 `;
 
-export const Point = styled.div`
-width:50px;
-height: 19px;
-color: #282F56;
+export const PointStandard = styled.div`
+color: #434343;
 font-family: Pretendard;
-font-size: 18px;
+font-size: 15px;
 font-style: normal;
-font-weight: 600;
+font-weight: 500;
 line-height: normal;
-display:flex;
-justify-content: center;
+margin-left: 16px;
+margin-top: 10px;
+`;
+
+
+export const PointDetailBox = styled.div`
+display: flex;
+margin-top: 14px;
+`;
+
+export const BasicBox = styled.div`
+display: flex;
+flex-direction: column;
 align-items: center;
-margin-left: 5px;
+margin-left: 37px;
+`;
+
+export const Title = styled.div`
+color: #6E6E6E;
+font-family: Pretendard;
+font-size: 16px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+margin-bottom:14px;
+`;
+
+export const Text = styled.div`
+color: #6E6E6E;
+text-align: center;
+font-family: Pretendard;
+font-size: 13px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+margin-bottom: 12px;
+`;
+
+export const PointDetailLine = styled.div`
+width: 1px;
+height: 89px;
+background: #ABABAB;
+margin-left:53px;
+margin-right: 30px;
+`;
+
+export const AddBox = styled.div`
+display: flex;
+flex-direction: column;
+align-items: center;
+
+`;
+
+export const WhiteAlarm = styled.div`
+width: 338px;
+height: 26px;
+flex-shrink: 0;
+border-radius: 32.5px;
+background: #FFF;
+color: #484848;
+font-family: Pretendard;
+font-size: 12px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+display: flex;
+align-items: center;
+margin-left:28px;
+padding-right: 10px;
+margin-bottom: 10px;
 `;
 
 export const DetailInfo = styled.div`
@@ -348,9 +425,8 @@ font-size: 18px;
 font-style: normal;
 font-weight: 500;
 line-height: normal;
-margin-left: 15px;
+margin-left: 27px;
 margin-top: 21px;
-margin-bottom: 12px;
 `;
 
 export const DetailBox = styled.div`
@@ -360,13 +436,14 @@ gap: 20px;
 margin-left: 13px;
 width: 403px;
 border-radius: 7px;
-background: #F3F3F3;
+background: #FFF;
 min-height: 126px;
 height: auto;
-padding-top: 28px;
+padding-top: 15px;
 padding-bottom: 10px;
 overflow: hidden;
 `;
+
 
 export const RecText = styled.div`
 margin-left: 15px;
@@ -424,12 +501,19 @@ white-space: nowrap;
 export const QrBox = styled.div`
 display: flex;
 align-items: center;
-color: #858585;
+justify-content: center;
+color: #5A5A5A;
 font-family: Pretendard;
 font-size: 15px;
 font-style: normal;
-font-weight: 400;
+font-weight: 600;
 line-height: normal;
-margin-left: 16px;
-margin-top: 25px;
+width: 231px;
+height: 57px;
+flex-shrink: 0;
+border-radius: 32.5px;
+border: 1px solid #AFAFAF;
+background: #FFF;
+margin-top:35px;
+margin-left: 186px;
 `;
