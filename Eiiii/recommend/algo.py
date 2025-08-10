@@ -91,7 +91,7 @@ def load_event_data():
     df['category_clean'] = df['category'].apply(split_category_tags)
 
     # 메타 데이터 합치기
-    df['meta'] = df[['category_clean', 'guname', 'is_free', 'use_trgt']].astype(str).agg(' '.join, axis=1)
+    df['meta'] = df[['category_clean', 'guname', 'is_free', 'themecode']].astype(str).agg(' '.join, axis=1)
 
     # 형태소 분석 + 클린 텍스트 적용
     df['meta'] = df['meta'].apply(preprocess_text)
@@ -106,8 +106,8 @@ def load_user_profile(user_interest: dict):
     user_mapped = {
         'category': category_clean,
         'guname': user_interest.get('area', ''),
-        'use_fee': user_interest.get('fee_type', ''),
-        'use_trgt': user_interest.get('together', '')
+        'is_free': user_interest.get('fee_type', ''),
+        'themecode': user_interest.get('together', '')
     }
     return preprocess_text(' '.join(user_mapped.values()))
 
