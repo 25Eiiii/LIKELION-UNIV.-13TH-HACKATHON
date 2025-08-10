@@ -60,14 +60,17 @@ def preprocess_text(text):
     return ' '.join(tokens)
 
 # category 멀티태그 분리 함수
-def split_category_tags(category_str):
+def split_category_tags(category):
     # 예: "음악 콘서트" → ["음악", "콘서트"]
-    if not category_str:
-        return ''
+    if not category:
+        return ""
     # 공백, 쉼표, 슬래시 기준 분리
-    tags = re.split(r'[\s,/]+', category_str.strip())
-    tags = [tag for tag in tags if tag]
-    return ' '.join(tags)
+    if isinstance(category, (list, tuple, set)):
+        tags = [str(t).strip() for t in category if t]
+    else:
+        # 문자열이면 공백/콤마/슬래시 기준 분리
+        tags = [t for t in re.split(r'[\s,/]+', str(category).strip()) if t]
+    return " ".join(tags)
 
 # DB 연결
 def get_db_engine():
@@ -111,7 +114,7 @@ def load_event_data():
 # 사용자 관심사를 문자열 벡터로 변환
 def load_user_profile(user_interest: dict):
     # category 멀티태그 분리 적용
-    category_clean = split_category_tags(user_interest.get('interests', ''))
+    category_clean = split_category_tags(user_interest.get('interests', []))
 
     user_mapped = {
         'category': category_clean,
@@ -242,7 +245,7 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
 if __name__ == "__main__":
     user_interest = {
-         "interests": ["클래식", "축제-기타", "콘서트"],
+        "interests": ["클래식", "축제-기타", "콘서트"],
         "area": "성북구",
         "fee_type": "무료",
         "together": "연인과"
