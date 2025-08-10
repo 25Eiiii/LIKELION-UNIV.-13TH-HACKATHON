@@ -85,26 +85,13 @@ def load_event_data():
     query = "SELECT * FROM search_culturalevent"
     df = pd.read_sql(query, engine)
 
-    # use_fee 전처리 시작 (공백, 무료 -> 무료, 나머지 -> 유료)
-    def normalize_fee(fee):
-        if not fee or str(fee).strip() == "" or pd.isna(fee):
-            return "무료"
-        fee_str = str(fee).strip()
-        # 무료 관련 키워드
-        free_keywords = ["무료", "0원", "무료관람"]
-        if any(keyword in fee_str for keyword in free_keywords):
-            return "무료"
-        return "유료"
-
-    df["use_fee"] = df["use_fee"].apply(normalize_fee)
-
     # 메타 칼럼 합쳐서 텍스트 벡터로 만들기
     # 텍스트 벡터로 만들어야 tfidf vectorizer 적용 가능함
     # category 멀티태그 분리
     df['category_clean'] = df['category'].apply(split_category_tags)
 
     # 메타 데이터 합치기
-    df['meta'] = df[['category_clean', 'guname', 'use_fee', 'use_trgt']].astype(str).agg(' '.join, axis=1)
+    df['meta'] = df[['category_clean', 'guname', 'is_free', 'use_trgt']].astype(str).agg(' '.join, axis=1)
 
     # 형태소 분석 + 클린 텍스트 적용
     df['meta'] = df['meta'].apply(preprocess_text)
