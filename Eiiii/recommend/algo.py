@@ -8,16 +8,16 @@ from surprise import KNNBasic
 
 from behavior_based import calculate_activity_scores
 
-import os
-from konlpy.tag import Okt
-import re
-from dotenv import load_dotenv
+import os, re
 from pathlib import Path
+from dotenv import load_dotenv
 
-# ===== 공통 설정 =====
-# env_path = Path(__file__).resolve().parent.parent / ".env"
-env_path = Path(__file__).resolve().parent.parent / "Eiiii" / ".env"
-load_dotenv(dotenv_path=env_path)
+here = Path(__file__).resolve()
+env_path = here.parent.parent / ".env"  
+
+load_dotenv(dotenv_path=env_path, override=True)
+
+from konlpy.tag import Okt
 
 # ===== 공통 유틸 =====
 def get_db_engine():
