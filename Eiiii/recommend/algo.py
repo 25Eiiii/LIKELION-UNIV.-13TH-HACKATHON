@@ -242,10 +242,10 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
 if __name__ == "__main__":
     user_interest = {
-        "interests": "전시",
+         "interests": ["클래식", "축제-기타", "콘서트"],
         "area": "성북구",
         "fee_type": "무료",
-        "together": "연인"
+        "together": "연인과"
     }
 
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
