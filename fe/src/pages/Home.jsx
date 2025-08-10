@@ -3,7 +3,7 @@ import { Container } from "../styles/common/styledContainer";
 import { FiChevronRight } from "react-icons/fi";
 import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
-import Top3Card from "../components/Top3Card";
+import EventCardS from "../components/EventCardS";
 import { useNavigate } from "react-router-dom";
 
 const categories = [
@@ -35,22 +35,22 @@ export const recommendedEvents = [
 
 export const topEvents = [
   {
-    rank: 1,
-    name: "스테이 성북",
+    title: "스테이 성북",
     date: "2025. 08. 20 - 2025. 08. 27",
-    image: "post2.svg",
+    thumbnail: "post2.svg",
+    location: "서울 문화 예술 교육 센터"
   },
   {
-    rank: 2,
-    name: "청춘 음악회",
-    date: "2025. 08. 28 - 2025. 09. 01",
-    image: "post2.svg",
+    title: "한옥 쉼표, 싱잉볼 테라피",
+    date: "2025. 08. 20 - 2025. 08. 27",
+    thumbnail: "post3.svg",
+    location: "서울 문화 예술 교육 센터"
   },
   {
-    rank: 3,
-    name: "문화가 있는 날",
+    title: "문화가 있는 날",
     date: "2025. 09. 02 - 2025. 09. 08",
-    image: "post2.svg",
+    thumbnail: "post2.svg",
+    location: "서울 문화 예술 교육 센터"
   },
 ];
 
@@ -122,13 +122,15 @@ const Home = () => {
             </H.Text>
             <H.CultureList>
               {topEvents.map((event, idx) => (
-                <Top3Card key={idx} {...event}/>
+                <H.Top3List>
+                  <p>{idx+1}</p>
+                  <EventCardS key={idx} {...event}/>
+                </H.Top3List>
               ))}
             </H.CultureList>
           </H.Top3>
       </H.EntireWrapper>
 
-        
     </Container>
     <H.Chatbot onClick={() => navigate('/chatbot-intro')}>
           <img 

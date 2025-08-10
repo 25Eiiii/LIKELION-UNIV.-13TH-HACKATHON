@@ -135,4 +135,11 @@ width: 44px;
 height: 44px;
 background: #fff;
 border: 1px solid #60C795;
+img {
+width: 22px;
+height: 22px;
+}
+display: flex;
+justify-content: center;
+align-items: center;
 `
