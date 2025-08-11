@@ -5,8 +5,11 @@ from django.conf import settings
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    interests = models.JSONField(default=list)  # 리스트 형태로 최대 3개까지
-    together = models.CharField(max_length=20)
+    interests = models.JSONField(default=list)  # 최대 3개
+    # 기존 together -> 분리
+    together_input = models.CharField(max_length=10)   # "혼자", "가족과" 등 원본 라벨
+    theme_codes = models.JSONField(default=list)       # ["가족 문화행사","어르신 문화행사"] 같은 매핑 결과
+
     area = models.CharField(max_length=20)
     fee_type = models.CharField(max_length=10)
 
