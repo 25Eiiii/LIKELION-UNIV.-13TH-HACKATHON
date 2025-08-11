@@ -36,6 +36,7 @@ def get_db_engine():
 
 okt = Okt()
 
+#수정***************************************************************
 # 전처리 함수
 def preprocess_text(text):
     # 한글, 숫자, 공백만 남기기
@@ -44,21 +45,13 @@ def preprocess_text(text):
     # 형태소 분석 후 명사/형용사만 추출
     tokens = [word for word, pos in okt.pos(text) if pos in ['Noun', 'Adjective']]
 
-    # 동의어/표현 통일
-    # synonym_map = {
-    #     '전석': '',
-    #     '관람료': '', '이상': '', '누구나': '',
-    # }
-    # tokens = [synonym_map.get(tok, tok) for tok in tokens if tok]
-
-    #use_trgk을 어떻게 할 지 더 생각해봐야 할 듯....
-
     # 불용어 제거
     stopwords = {'관람', '가능', '포함', '일반시민', '관람가능'}
     tokens = [tok for tok in tokens if tok not in stopwords]
 
     return ' '.join(tokens)
 
+#수정*************************************************************
 # category 멀티태그 분리 함수
 def split_category_tags(category):
     # 예: "음악 콘서트" → ["음악", "콘서트"]
@@ -79,6 +72,7 @@ def get_db_engine():
         f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     )
 
+#수정********************************************
 # 문화 행사 데이터를 문자열 벡터로 변환
 def load_event_data():
     engine = get_db_engine()
@@ -98,6 +92,7 @@ def load_event_data():
 
     return df
 
+#profiles_userprofile 여기에서 값을 가져오면 됨*********************************************
 # 사용자 관심사를 문자열 벡터로 변환
 def load_user_profile(user_interest: dict):
     # category 멀티태그 분리 적용
