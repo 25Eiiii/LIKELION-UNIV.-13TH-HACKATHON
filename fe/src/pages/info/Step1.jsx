@@ -27,7 +27,7 @@ const Step1 = () => {
                 <S.StepBarFill></S.StepBarFill>
             </S.StepBar>
             <S.StepNum>
-                1 / 3
+                1 / 4
             </S.StepNum>
         </S.StepWrapper>
         <S.TextWrapper>
