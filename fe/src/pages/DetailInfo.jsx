@@ -15,10 +15,8 @@ const DetailInfo = () => {
   useEffect(() => {
     const fetchdata = async() => {
       try {
-        const accessToken = localStorage.getItem("accessToken");
         const response = await axios.get(
-          `/api/details/detail/${id}/`,
-          {headers : accessToken ? {Authorization : `Bearer ${accessToken}`} : {}}
+          `/api/details/detail/${id}/`
         );
         setData(response.data);
         setIsClicked(response.data.is_liked);
@@ -31,9 +29,10 @@ const DetailInfo = () => {
     };
     fetchdata();
   }, [id]);
+
     const toggleLike = async() => {
       const accessToken = localStorage.getItem("accessToken");
-      if(!accessToken) {
+      if(!accessToken||accessToken!=="null"||accessToken!=="undefined") {
         alert("로그인 후 사용 가능합니다.");
         navigate("/login");
         return;
@@ -53,6 +52,7 @@ const DetailInfo = () => {
         );
         setIsClicked(response.data.liked);
       }catch(error){
+        setIsClicked(prev);
         console.error(error.response.data);
       }
     };
@@ -74,29 +74,25 @@ const DetailInfo = () => {
     : [];
   const stores = [
     {
-      name: "제휴 가게명",
+      name: "달빛한술",
       image: "/images/store.svg",
       link: "",
     },
     {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
+      name: "초록숟가락",
+      image: "/images/store2.svg",
       link: "",
     },
     {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
+      name: "담연",
+      image: "/images/store3.svg",
       link: "",
     },
-    {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
-      link: "",
-    },
+    
   ];
   const navigate = useNavigate();
   const goReview = () => {
-    navigate("/detailReview");
+    navigate(`/detailReview/${id}`);
   };
   return (
     <>
@@ -284,19 +280,18 @@ const DetailInfo = () => {
                   <img src={store.image} alt={store.name} />
                   <D.StoreText>
                     {store.name}
-                    <a
-                      href={store.link}
+                    <p href={store?.link}
                       style={{
                         color: "#FFF",
-                        textDecoration: "none",
                         fontSize: "10px",
                         marginLeft: "5px",
                         fontWeight: "500",
                         display: "inline-block",
-                      }}
-                    >
+                      }}>
+                      
+                    
                       바로가기 &gt;
-                    </a>
+                    </p>
                   </D.StoreText>
                 </D.StoreBox>
               ))}
