@@ -474,7 +474,7 @@ display: flex;
 align-items: center;
 margin-left: 15px;
 margin-top: 10px;
-gap: 20px;
+
 overflow-x: auto;
 width: 428px;
 &::-webkit-scrollbar {

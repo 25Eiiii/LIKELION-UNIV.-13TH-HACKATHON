@@ -6,56 +6,67 @@ import NavBar from "../components/Navbar";
 import axios from "axios";
 
 const DetailInfo = () => {
- 
   const [data, setData] = useState(null);
   const { id } = useParams();
   const [dropdown, setDropDown] = useState(false);
   const [isClicked, setIsClicked] = useState();
 
   useEffect(() => {
-    const fetchdata = async() => {
+    const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(
-          `/api/details/detail/${id}/`,
-          {headers : accessToken ? {Authorization : `Bearer ${accessToken}`} : {}}
-        );
+        const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
+        ? {Authorization:`Bearer ${accessToken}`} : {};
+        const response = await axios.get(`/api/details/detail/${id}/`,{headers});
         setData(response.data);
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
-        if (error.response) {
-          console.error("서버 응답: ", error.response);
-        }
+        if (error.response.status === 401) {
+        alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
+        navigate('/login');
+      }
       }
     };
     fetchdata();
   }, [id]);
-    const toggleLike = async() => {
-      const accessToken = localStorage.getItem("accessToken");
-      if(!accessToken) {
-        alert("로그인 후 사용 가능합니다.");
-        navigate("/login");
-        return;
+
+  const toggleLike = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (
+      !accessToken ||
+      accessToken === "null" ||
+      accessToken === "undefined" ||
+      accessToken.trim() === ""
+    ) {
+      alert("로그인 후 사용 가능합니다.");
+      navigate("/login");
+      return;
+    }
+    const prev = isClicked;
+    setIsClicked(!prev);
+    try {
+      const response = await axios.post(
+        `/api/details/detail/${id}/like/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setIsClicked(response.data.liked);
+    } catch (error) {
+      setIsClicked(prev);
+      if (error.response.status === 401) {
+        alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
+        navigate('/login')
       }
-      const prev = isClicked;
-      setIsClicked(!prev);
-      try{
-        const response = await axios.post(
-          `/api/details/detail/${id}/like/`,
-          {},
-          {
-            headers: {
-              Authorization : `Bearer ${accessToken}`,
-              "Content-Type" : "application/json" 
-            }
-          }
-        );
-        setIsClicked(response.data.liked);
-      }catch(error){
-        console.error(error.response.data);
-      }
-    };
+
+      console.error(error.response.data);
+    }
+  };
   const infoList = data
     ? [
         { label: "제목 : ", value: data.title },
@@ -74,29 +85,24 @@ const DetailInfo = () => {
     : [];
   const stores = [
     {
-      name: "제휴 가게명",
+      name: "달빛한술",
       image: "/images/store.svg",
       link: "",
     },
     {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
+      name: "초록숟가락",
+      image: "/images/store2.svg",
       link: "",
     },
     {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
-      link: "",
-    },
-    {
-      name: "제휴 가게명",
-      image: "/images/store.svg",
+      name: "담연",
+      image: "/images/store3.svg",
       link: "",
     },
   ];
   const navigate = useNavigate();
   const goReview = () => {
-    navigate("/detailReview");
+    navigate(`/detailReview/${id}`);
   };
   return (
     <>
@@ -112,7 +118,9 @@ const DetailInfo = () => {
               <D.Type>{data?.codename}</D.Type>
               <D.IconBox>
                 <D.Heart
-                  src={`${process.env.PUBLIC_URL}/images/${isClicked ? "fullheart.svg" : "blankheart.svg"}`}
+                  src={`${process.env.PUBLIC_URL}/images/${
+                    isClicked ? "fullheart.svg" : "blankheart.svg"
+                  }`}
                   alt="heart"
                   onClick={toggleLike}
                 />
@@ -188,7 +196,7 @@ const DetailInfo = () => {
                 />
                 이 행사에서 받을 수 있는 포인트 : 총{" "}
                 <span style={{ color: "#232D54", fontWeight: "600" }}>
-                  {data?.reward_point+100} P
+                  {data?.reward_point + 100} P
                 </span>
               </D.GainPointText>
 
@@ -199,7 +207,16 @@ const DetailInfo = () => {
                     alt="check"
                     style={{ marginRight: "10px" }}
                   />
-                  기본 참여<span style={{color:"#282F56", fontWeight:"600", marginLeft:"10px"}}>100 P</span>
+                  기본 참여
+                  <span
+                    style={{
+                      color: "#282F56",
+                      fontWeight: "600",
+                      marginLeft: "10px",
+                    }}
+                  >
+                    100 P
+                  </span>
                 </D.Guide>
                 <D.Guide>
                   <img
@@ -207,7 +224,16 @@ const DetailInfo = () => {
                     alt="check"
                     style={{ marginRight: "10px" }}
                   />
-                  후기 작성시<span style={{color:"#282F56", fontWeight:"600", marginLeft:"10px"}}>+ 50 P</span>
+                  후기 작성시
+                  <span
+                    style={{
+                      color: "#282F56",
+                      fontWeight: "600",
+                      marginLeft: "10px",
+                    }}
+                  >
+                    + 50 P
+                  </span>
                 </D.Guide>
                 <D.Guide>
                   <img
@@ -215,42 +241,100 @@ const DetailInfo = () => {
                     alt="check"
                     style={{ marginRight: "10px" }}
                   />
-                  인증샷 추가시<span style={{color:"#282F56", fontWeight:"600", marginLeft:"10px"}}>+ 50 P</span>
+                  인증샷 추가시
+                  <span
+                    style={{
+                      color: "#282F56",
+                      fontWeight: "600",
+                      marginLeft: "10px",
+                    }}
+                  >
+                    + 50 P
+                  </span>
                 </D.Guide>
               </D.GuidePoint>
               <D.PointLine></D.PointLine>
-              <D.PointStandard onClick={()=>setDropDown(!dropdown)} style={{cursor:"pointer"}}>
+              <D.PointStandard
+                onClick={() => setDropDown(!dropdown)}
+                style={{ cursor: "pointer" }}
+              >
                 포인트 적립 기준 보기
                 <img
-                    src={`${process.env.PUBLIC_URL}/images/dropdown.svg`}
-                    alt="dropdown"
-                    style={{ marginLeft: "15px", marginBottom: "2px" ,cursor:"pointer"}}
-                    
-                  />
+                  src={`${process.env.PUBLIC_URL}/images/dropdown.svg`}
+                  alt="dropdown"
+                  style={{
+                    marginLeft: "15px",
+                    marginBottom: "2px",
+                    cursor: "pointer",
+                  }}
+                />
               </D.PointStandard>
 
-              <D.PointDetailBox style={{display: dropdown ? "flex" : "none"}}>
+              <D.PointDetailBox style={{ display: dropdown ? "flex" : "none" }}>
                 <D.BasicBox>
                   <D.Title>기본 참여</D.Title>
-                  <D.Text>∙ 무료 행사 : <span style={{color:"#484848", fontWeight:"600", marginLeft:"10px"}}>100 P</span></D.Text>
-                  <D.Text>∙ 유료 행사 : <span style={{color:"#484848", fontWeight:"600", marginLeft:"10px"}}>300 P</span></D.Text>
+                  <D.Text>
+                    ∙ 무료 행사 :{" "}
+                    <span
+                      style={{
+                        color: "#484848",
+                        fontWeight: "600",
+                        marginLeft: "10px",
+                      }}
+                    >
+                      100 P
+                    </span>
+                  </D.Text>
+                  <D.Text>
+                    ∙ 유료 행사 :{" "}
+                    <span
+                      style={{
+                        color: "#484848",
+                        fontWeight: "600",
+                        marginLeft: "10px",
+                      }}
+                    >
+                      300 P
+                    </span>
+                  </D.Text>
                 </D.BasicBox>
                 <D.PointDetailLine></D.PointDetailLine>
                 <D.AddBox>
                   <D.Title>추가 적립</D.Title>
-                  <D.Text>∙ 후기 작성 : <span style={{color:"#484848", fontWeight:"600", marginLeft:"10px"}}>+ 50 P</span></D.Text>
-                  <D.Text style={{marginLeft:"12px"}}>∙ 인증샷 추가 : <span style={{color:"#484848", fontWeight:"600", marginLeft:"10px"}}>+ 50 P</span></D.Text>
+                  <D.Text>
+                    ∙ 후기 작성 :{" "}
+                    <span
+                      style={{
+                        color: "#484848",
+                        fontWeight: "600",
+                        marginLeft: "10px",
+                      }}
+                    >
+                      + 50 P
+                    </span>
+                  </D.Text>
+                  <D.Text style={{ marginLeft: "12px" }}>
+                    ∙ 인증샷 추가 :{" "}
+                    <span
+                      style={{
+                        color: "#484848",
+                        fontWeight: "600",
+                        marginLeft: "10px",
+                      }}
+                    >
+                      + 50 P
+                    </span>
+                  </D.Text>
                 </D.AddBox>
-                
-              </D.PointDetailBox >
-              <D.WhiteAlarm style={{display: dropdown ? "flex" : "none"}}>
-                  <img
-                    src={`${process.env.PUBLIC_URL}/images/whitealarm.svg`}
-                    alt="alarm"
-                    style={{marginLeft:"22px", marginRight: "6px"}}
-                  />
-                  생활예술 강좌 등 장기 프로그램은 수업별 출석 포인트 지급
-                </D.WhiteAlarm>
+              </D.PointDetailBox>
+              <D.WhiteAlarm style={{ display: dropdown ? "flex" : "none" }}>
+                <img
+                  src={`${process.env.PUBLIC_URL}/images/whitealarm.svg`}
+                  alt="alarm"
+                  style={{ marginLeft: "22px", marginRight: "6px" }}
+                />
+                생활예술 강좌 등 장기 프로그램은 수업별 출석 포인트 지급
+              </D.WhiteAlarm>
             </D.PointBox>
 
             <D.QrBox>
@@ -261,7 +345,6 @@ const DetailInfo = () => {
               />
               설문 큐알 스캔하기
             </D.QrBox>
-
           </D.WhiteContainer>
           <D.RecommendBox>
             <D.RecText>
@@ -284,11 +367,10 @@ const DetailInfo = () => {
                   <img src={store.image} alt={store.name} />
                   <D.StoreText>
                     {store.name}
-                    <a
-                      href={store.link}
+                    <p
+                      href={store?.link}
                       style={{
                         color: "#FFF",
-                        textDecoration: "none",
                         fontSize: "10px",
                         marginLeft: "5px",
                         fontWeight: "500",
@@ -296,7 +378,7 @@ const DetailInfo = () => {
                       }}
                     >
                       바로가기 &gt;
-                    </a>
+                    </p>
                   </D.StoreText>
                 </D.StoreBox>
               ))}

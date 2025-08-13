@@ -75,6 +75,11 @@ export const Type = styled.div`
   font-weight: 400;
   line-height: normal;
   text-align: center;
+  position: absolute;
+  top: 300px;
+  right: 16px;
+  padding-left: 3px;
+  padding-right: 3px;
 `;
 
 export const Explain = styled.div`
@@ -98,13 +103,20 @@ export const Line = styled.div`
   margin-bottom:55px;
 `;
 
+export const IconBox = styled.div`
+position: absolute;
+display:flex;
+gap: 12px;
+top :332px;
+right: 16px;
+`;
+
 export const Heart = styled.img`
-  margin-left: 360px;
+
 `;
 
 export const Share = styled.img`
-  margin-right: 14px;
-  padding-left: 10px;
+  
 `;
 
 export const Tab = styled.div`
@@ -165,12 +177,14 @@ padding-bottom:10px;
 export const UserInfoBox = styled.div`
 display: flex;
 align-items:center;
+justify-content: space-between;
 margin-top: 9px;
 margin-left: 16px;
+margin-bottom: 20px;
 `;
 
 export const Nickname = styled.div`
-width: 47px;
+min-width: 47px;
 height: 14px;
 flex-shrink: 0;
 color: #545454;
@@ -182,21 +196,9 @@ line-height: normal;
 margin-bottom: 10px;
 `;
 
-export const Level = styled.div`
-width: 109px;
-height: 14px;
-flex-shrink: 0;
-color: #707070;
-font-family: Pretendard;
-font-size: 10px;
-font-style: normal;
-font-weight: 400;
-line-height: normal;
-margin-left: 10px;
-`;
 
 export const Date = styled.div`
-width:60px;
+width: 60px;
 height: 14px;
 color: #707070;
 font-family: Pretendard;
@@ -204,7 +206,7 @@ font-size: 10px;
 font-style: normal;
 font-weight: 400;
 line-height: normal;
-margin-left: 89px;
+margin-right: 20px;
 `;
 
 export const UserImage = styled.div`
