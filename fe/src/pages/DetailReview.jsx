@@ -19,18 +19,19 @@ const DetailReview = () => {
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(`/api/details/detail/${id}/`, {
-          headers: accessToken
-            ? { Authorization: `Bearer ${accessToken}` }
-            : {},
-        });
+        const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
+        ? {Authorization:`Bearer ${accessToken}`} : {};
+        const response = await axios.get(
+          `/api/details/detail/${id}/` ,{headers}
+        );
         setData(response.data);
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
-        if (error.response) {
-          console.error("서버 응답: ", error.response);
-        }
+        if (error.response.status === 401) {
+        alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
+        navigate('/login');
+      }
       }
     };
 
@@ -51,7 +52,7 @@ const DetailReview = () => {
   
   const toggleLike = async() => {
       const accessToken = localStorage.getItem("accessToken");
-      if(!accessToken) {
+      if(!accessToken||accessToken==="null"||accessToken==="undefined") {
         alert("로그인 후 사용 가능합니다.");
         navigate("/login");
         return;
