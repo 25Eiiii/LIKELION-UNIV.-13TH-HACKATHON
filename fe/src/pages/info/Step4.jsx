@@ -28,7 +28,7 @@ const Step4 = () => {
       console.log("보내는 데이터:", profileData);
       mutate(profileData);
     }
-  }, [selectedFee]); // run when fee is selected
+  }, [selectedFee]); 
   
   useEffect(() => {
     if (isSuccess) {
@@ -88,20 +88,22 @@ const area = [
 
 
 const interestsData = [
-    { name: "연극" },
-    { name: "무용" },
-    { name: "오페라·뮤지컬" },
-    { name: "전시" },
-    { name: "디자인" },
-    { name: "일러스트" },
-    { name: "국악" },
-    { name: "콘서트" },
-    { name: "클래식" },
-    { name: "전통 축제" },
-    { name: "계절 축제" },
-    { name: "문화 축제" },
-    { name: "교육" },
-    { name: "체험" },
+  {name: "교육/체험"},
+  {name: "국악"},
+  {name: "독주/독창회"},
+  {name: "무용"},
+  {name: "뮤지컬/오페라"},
+  {name: "연극"},
+  {name: "영화"},
+  {name: "전시/미술"},
+  {name: "축제-자연/경관"},
+  {name: "축제-문화/예술"},
+  {name: "축제-전통/역사"},
+  {name: "축제-시민화합"},
+  {name: "축제-기타"},
+  {name: "콘서트"},
+  {name: "클래식"},
+  {name: "기타"},
 ];
 
 const togetherData = [
