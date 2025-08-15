@@ -1,91 +1,59 @@
-version: "3.1"
+#의도
 
+version: "3.1"
 nlu:
 - intent: greet
   examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+    - 안녕
+    - 부기야
 
-- intent: goodbye
+- intent: ask_recommend
   examples: |
-    - cu
-    - good by
-    - cee you later
-    - good night
-    - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
+    - 이번 주 근처 문화 활동 추천해줘
+    - 전시 뭐 있어?
+    - 영화 보고 싶어
+    - 이번 주 내 근처 문화 활동 추천 해줄래?
+    - 이번 달 인기 문화 행사가 뭐야?
+    - 요즘 재밌는 문화 행사 알려줘
+    - 주말에 갈만한 축제 뭐 있지?
+    - 가까운 곳에서 열리는 무료 공연 추천해줘
+    - 가족이랑 가기 좋은 문화 행사 있을까?
+
+- intent: inform_category
+  examples: |
+    - [영화](category)
+    - [전시/미술](category)
+    - [교육/체험](category)
+    - [축제](category)
+    - [기타](category)
+    - [교육/체험](category)
+    - [국악](category)
+    - [독주/독창회](category)
+    - [무용](category)
+    - [뮤지컬/오페라](category)
+    - [연극](category)
+    - [콘서트](category)
+    - [클래식](category)
+
+- intent: inform_area
+  examples: |
+    - [성북구](area)
+    - [종로구](area)
+    - [강북구](area)
+    - [동대문구](area)
 
 - intent: affirm
   examples: |
-    - yes
-    - y
-    - indeed
-    - of course
-    - that sounds good
-    - correct
+    - 응
+    - 좋아
 
 - intent: deny
   examples: |
-    - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
+    - 아니
+    - 됐어
 
-- intent: mood_great
+- intent: show_more
   examples: |
-    - perfect
-    - great
-    - amazing
-    - feeling like a king
-    - wonderful
-    - I am feeling very good
-    - I am great
-    - I am amazing
-    - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
-
-- intent: mood_unhappy
-  examples: |
-    - my day was horrible
-    - I am sad
-    - I don't feel very well
-    - I am disappointed
-    - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
-
-- intent: bot_challenge
-  examples: |
-    - are you a bot?
-    - are you a human?
-    - am I talking to a bot?
-    - am I talking to a human?
+    - 더 보기
+    - 더 보여줘
+    - 계속 보여줘
