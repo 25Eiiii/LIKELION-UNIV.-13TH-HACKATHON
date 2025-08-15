@@ -21,10 +21,12 @@ const NavBar = () => {
                 />
                 홈
             </N.Icon>
-            <N.Icon onClick={() => navigate("/explore-list")}>
+            <N.Icon onClick={() => navigate("/search")}>
                 <img
                     id="explore"
-                    src={`${process.env.PUBLIC_URL}/images/explore.svg`}
+                    src={`${process.env.PUBLIC_URL}/images/${
+                        location.pathname === "/search" ? "explore_active.svg" : "explore.svg"
+                    }`}
                     alt="explore"
                 /> 
                 탐색
@@ -39,11 +41,11 @@ const NavBar = () => {
                 />
                 혜택
             </N.Icon>
-            <N.Icon onClick={() => navigate("/like")}>
+            <N.Icon onClick={() => navigate("/likes")}>
                 <img
                     id="like"
                     src={`${process.env.PUBLIC_URL}/images/${
-                        location.pathname === "/like" ? "like_active.svg" : "like.svg"
+                        location.pathname === "/likes" ? "like_active.svg" : "like.svg"
                     }`}
                     alt="like"
                 />
