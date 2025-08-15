@@ -70,7 +70,7 @@ const Likes = () => {
           </L.Header>
           <L.Text>
             <p style={{ padding: 0, marginBottom: 0, marginTop: "30px" }}>
-              효민님이 좋아한 행사,
+              회원님이 좋아한 행사,
             </p>
             <p style={{ padding: 0, margin: 0 }}>
               지금 신청하고 특별한 경험을 시작하세요🚀
