@@ -5,6 +5,7 @@ import pandas as pd
 from surprise import Dataset, Reader
 from surprise.model_selection import train_test_split
 from surprise import KNNBasic
+from surprise import accuracy
 
 from behavior_based import calculate_activity_scores
 
@@ -85,7 +86,7 @@ def load_event_data():
     df['category_clean'] = df['category'].apply(split_category_tags)
 
     # 메타 데이터 합치기
-    df['meta'] = df[['category_clean', 'guname', 'is_free', 'themecode']].astype(str).agg(' '.join, axis=1)
+    df['meta'] = df[['category_clean', 'guname', 'is_free', 'themecode', 'title']].astype(str).agg(' '.join, axis=1)
 
     # 형태소 분석 + 클린 텍스트 적용
     df['meta'] = df['meta'].apply(preprocess_text)
@@ -188,6 +189,16 @@ def collaborative_filtering_recommend(user_id, top_n=5):
     pred_df = pd.DataFrame(top_preds, columns=['id', 'pred_rating'])
     return event_df.merge(pred_df, on='id').sort_values('pred_rating', ascending=False)
 
+def evaluate_cf_rmse_mae(ratings_df):
+    data = prepare_dataset(ratings_df)
+    trainset, testset = train_test_split(data, test_size=0.2)  # 유저 시간 분할 쓰려면 custom
+    algo = KNNBasic(sim_options={'name':'cosine','user_based':True})
+    algo.fit(trainset)
+    preds = algo.test(testset)
+    rmse = accuracy.rmse(preds, verbose=False)
+    mae  = accuracy.mae(preds,  verbose=False)
+    return {'RMSE': rmse, 'MAE': mae}
+
 def recommend_for_user(user_id, ratings_df, algo, top_n=5):
     """
     사용자 기반 협업 필터링(User-Based Collaborative Filtering) 추천 함수
@@ -224,7 +235,6 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
     return top_preds
 
 
-
 if __name__ == "__main__":
     user_interest = {
         "interests": ["클래식", "축제-기타", "콘서트"],
@@ -233,9 +243,12 @@ if __name__ == "__main__":
         "together": "연인과"
     }
 
+    ratings_df = load_ratings()
+
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
     print(content_based_recommend(user_interest, top_n=5)[['title','similarity']])
     print("@@@@@@@@@ 행동 기반 추천 @@@@@@@@@")
     print(behavior_adjusted_recommend(1, user_interest, top_n=5)[['title','adjusted_similarity']])
     print("@@@@@@@@@ 협업 필터링 추천 @@@@@@@@@")
     print(collaborative_filtering_recommend(1, top_n=5)[['title','pred_rating']])
+    print(evaluate_cf_rmse_mae(ratings_df))
