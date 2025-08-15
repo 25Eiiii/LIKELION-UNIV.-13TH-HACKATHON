@@ -45,13 +45,14 @@ font-size: 20px;
 font-style: normal;
 font-weight: 600;
 line-height: 35px; /* 175% */
-margin-bottom: 90px;
+margin-bottom: 70px;
+margin-left: 24px;
 `;
 
 export const DataBox = styled.div`
 display: flex;
 margin-bottom: 30px;
-justify-content: space-between;
+margin-left: 24px;
 gap: 40px;
 `;
 
@@ -101,10 +102,15 @@ font-size: 13px;
 font-style: normal;
 font-weight: 400;
 line-height: normal;
+display: -webkit-box;
+-webkit-line-clamp: 2;  
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
 `;
 
 export const IconBox = styled.div`
-margin-left: 5px;
+margin-left: 10px;
 margin-top:5px;
 `;
 
@@ -112,6 +118,30 @@ export const Heart = styled.div`
 margin-bottom: 40px;
 `;
 
-export const Point = styled.div`
+export const PointIcon = styled.div`
+position: relative;
+`;
 
+export const Point = styled.div`
+width: 70px;
+height: 39px;
+flex-shrink: 0;
+border-radius: 7px;
+background: #FFF;
+box-shadow: 0 1px 16px 0 rgba(0, 0, 0, 0.16);
+color: #2F3F78;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+display: flex;
+justify-content: center;
+align-items: center;
+position: absolute;
+right: 40px;
+`;
+
+export const Box = styled.div`
+height: 70px;
 `;
