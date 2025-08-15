@@ -17,3 +17,5 @@ db.sqlite3
 # 가상환경 
 myvenv/
 venv/
+node_modules
+rasaenv/
