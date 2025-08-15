@@ -1,6 +1,10 @@
 #최소 대화 흐름
 version: "3.1"
 rules:
+- rule: Greet
+  steps:
+    - intent: greet
+    - action: utter_greet
 
 # 1) 추천을 물어보면 먼저 분기 액션으로 보냄
 - rule: Decide next step for recommendation
@@ -25,3 +29,14 @@ rules:
   steps:
     - intent: show_more
     - action: action_show_more
+
+- rule: User affirms
+  steps:
+    - intent: affirm
+    - action: utter_ack
+
+- rule: User denies
+  steps:
+    - intent: deny
+    - action: action_listen
+
