@@ -9,7 +9,7 @@ from surprise import accuracy
 
 from behavior_based import calculate_activity_scores
 
-import os, re
+import os, re, json
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -37,43 +37,21 @@ def get_db_engine():
 
 okt = Okt()
 
-#수정***************************************************************
 # 전처리 함수
 def preprocess_text(text):
     # 한글, 숫자, 공백만 남기기
-    text = re.sub(r'[^ㄱ-ㅎ가-힣0-9\s]', ' ', text)
+    text = re.sub(r'[^ㄱ-ㅎ가-힣0-9\s/-]', ' ', text)
 
     # 형태소 분석 후 명사/형용사만 추출
-    tokens = [word for word, pos in okt.pos(text) if pos in ['Noun', 'Adjective']]
+    tokens = text.split()
 
-    # 불용어 제거
-    stopwords = {'관람', '가능', '포함', '일반시민', '관람가능'}
-    tokens = [tok for tok in tokens if tok not in stopwords]
+    print(f"[DEBUG] 입력: {text}")
+    print(f"[DEBUG] 토큰: {tokens}")
+
 
     return ' '.join(tokens)
 
-#수정*************************************************************
-# category 멀티태그 분리 함수
-def split_category_tags(category):
-    # 예: "음악 콘서트" → ["음악", "콘서트"]
-    if not category:
-        return ""
-    # 공백, 쉼표, 슬래시 기준 분리
-    if isinstance(category, (list, tuple, set)):
-        tags = [str(t).strip() for t in category if t]
-    else:
-        # 문자열이면 공백/콤마/슬래시 기준 분리
-        tags = [t for t in re.split(r'[\s,/]+', str(category).strip()) if t]
-    return " ".join(tags)
 
-# DB 연결
-def get_db_engine():
-    return create_engine(
-        f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-    )
-
-#수정********************************************
 # 문화 행사 데이터를 문자열 벡터로 변환
 def load_event_data():
     engine = get_db_engine()
@@ -82,29 +60,61 @@ def load_event_data():
 
     # 메타 칼럼 합쳐서 텍스트 벡터로 만들기
     # 텍스트 벡터로 만들어야 tfidf vectorizer 적용 가능함
-    # category 멀티태그 분리
-    df['category_clean'] = df['category'].apply(split_category_tags)
 
     # 메타 데이터 합치기
-    df['meta'] = df[['category_clean', 'guname', 'is_free', 'themecode', 'title']].astype(str).agg(' '.join, axis=1)
+    df['meta'] = df[['codename', 'guname', 'is_free', 'themecode', 'title']].astype(str).agg(' '.join, axis=1)
 
     # 형태소 분석 + 클린 텍스트 적용
-    df['meta'] = df['meta'].apply(preprocess_text)
+    # df['meta'] = df['meta'].apply(preprocess_text)
+
 
     return df
 
 #profiles_userprofile 여기에서 값을 가져오면 됨*********************************************
 # 사용자 관심사를 문자열 벡터로 변환
-def load_user_profile(user_interest: dict):
-    # category 멀티태그 분리 적용
-    category_clean = split_category_tags(user_interest.get('interests', []))
+def load_user_profile(user_id: int):
+    engine = get_db_engine()
+    query = """
+        SELECT *
+        FROM profiles_userprofile
+        WHERE id = %s
+    """
+    df = pd.read_sql(query, engine, params=(user_id,))
+
+    if df.empty:
+        # 데이터 없으면 빈 문자열 반환
+        return ""
+
+    row = df.iloc[0]
+
+    # DB에서 가져온 값들을 합쳐서 문자열 생성
+
+    # interests가 JSON 문자열 형태일 때 파싱해서 공백 구분 문자열로 변환
+
+    raw_interests = row['interests']
+
+    if isinstance(raw_interests, list):
+        interests_list = raw_interests
+    elif isinstance(raw_interests, str):
+        try:
+            interests_list = json.loads(raw_interests)
+        except Exception as e:
+            print(f"JSON parsing error: {e}")
+            interests_list = []
+    else:
+        interests_list = []
+
+    interests_str = ' '.join(interests_list) if interests_list else ""
+    print('interests_str:', interests_str)
+
 
     user_mapped = {
-        'category': category_clean,
-        'guname': user_interest.get('area', ''),
-        'is_free': user_interest.get('fee_type', ''),
-        'themecode': user_interest.get('together', '')
+        'interests': interests_str,
+        'area': str(row['area']) if pd.notna(row['area']) else "",
+        'fee_type': str(row['fee_type']) if pd.notna(row['fee_type']) else "",
+        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else ""
     }
+
     return preprocess_text(' '.join(user_mapped.values()))
 
 #TF-IDF로 사용자와 행사 유사도 계산
@@ -116,16 +126,16 @@ def calculate_similarity(event_df, user_profile):
     return cosine_sim
 
 # 1. 콘텐츠 기반 추천
-def content_based_recommend(user_interests: dict, top_n=10):
+def content_based_recommend(user_id: int, top_n=10):
     event_df = load_event_data()
-    user_profile = load_user_profile(user_interests)
+    user_profile = load_user_profile(user_id)
     event_df['similarity'] = calculate_similarity(event_df, user_profile).round(3)
     return event_df.sort_values('similarity', ascending=False).head(top_n)
 
 # 2. 행동 기반 콘텐츠 필터링
-def behavior_adjusted_recommend(user_id, user_interests, top_n=10):
+def behavior_adjusted_recommend(user_id, top_n=10):
     event_df = load_event_data()
-    user_profile = load_user_profile(user_interests)
+    user_profile = load_user_profile(user_id)
     event_df['similarity'] = calculate_similarity(event_df, user_profile).round(4)
 
     scores, _ = calculate_activity_scores(user_id)
@@ -236,19 +246,20 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
 
 if __name__ == "__main__":
-    user_interest = {
-        "interests": ["클래식", "축제-기타", "콘서트"],
-        "area": "성북구",
-        "fee_type": "무료",
-        "together": "연인과"
-    }
+    user_id = 1
+    # user_interest = {
+    #     "interests": ["클래식", "축제-기타", "콘서트"],
+    #     "area": "성북구",
+    #     "fee_type": "무료",
+    #     "together": "연인과"
+    # }
 
     ratings_df = load_ratings()
 
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
-    print(content_based_recommend(user_interest, top_n=5)[['title','similarity']])
+    print(content_based_recommend(user_id, top_n=5)[['title','similarity']])
     print("@@@@@@@@@ 행동 기반 추천 @@@@@@@@@")
-    print(behavior_adjusted_recommend(1, user_interest, top_n=5)[['title','adjusted_similarity']])
+    print(behavior_adjusted_recommend(user_id, top_n=5)[['title','adjusted_similarity']])
     print("@@@@@@@@@ 협업 필터링 추천 @@@@@@@@@")
     print(collaborative_filtering_recommend(1, top_n=5)[['title','pred_rating']])
     print(evaluate_cf_rmse_mae(ratings_df))
