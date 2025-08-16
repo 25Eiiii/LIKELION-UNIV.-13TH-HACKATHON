@@ -124,14 +124,6 @@ def load_user_profile(user_id: int):
         'together_input': str(row['together_input']) if pd.notna(row['together_input']) else ""
     }
 
-
-    user_mapped = {
-        'interests': interests_str,
-        'area': str(row['area']) if pd.notna(row['area']) else "",
-        'fee_type': str(row['fee_type']) if pd.notna(row['fee_type']) else "",
-        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else "",
-    }
-
     return preprocess_text(' '.join(user_mapped.values()))
 
 # ===== TF-IDF로 사용자와 행사 유사도 계산 =====
