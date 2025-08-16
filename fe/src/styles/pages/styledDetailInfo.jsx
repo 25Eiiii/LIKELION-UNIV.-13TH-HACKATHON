@@ -9,6 +9,8 @@ export const InnerWrapper = styled.div`
 export const Header = styled.div`
   position: relative;
   width: 100%;
+  background: #fff;
+  min-height: 240px;
 `;
 
 export const CloudyBox = styled.div`

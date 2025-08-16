@@ -15,17 +15,21 @@ const DetailInfo = () => {
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
-        ? {Authorization:`Bearer ${accessToken}`} : {};
-        const response = await axios.get(`/api/details/detail/${id}/`,{headers});
+        const headers =
+          accessToken && accessToken !== "null" && accessToken !== "undefined"
+            ? { Authorization: `Bearer ${accessToken}` }
+            : {};
+        const response = await axios.get(`/api/details/detail/${id}/`, {
+          headers,
+        });
         setData(response.data);
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
         if (error.response.status === 401) {
-        alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
-        navigate('/login');
-      }
+          alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
+          navigate("/login");
+        }
       }
     };
     fetchdata();
@@ -61,7 +65,7 @@ const DetailInfo = () => {
       setIsClicked(prev);
       if (error.response.status === 401) {
         alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
-        navigate('/login')
+        navigate("/login");
       }
 
       console.error(error.response.data);
@@ -109,7 +113,10 @@ const DetailInfo = () => {
       <Container>
         <D.InnerWrapper>
           <D.Header>
-            <img src={data?.main_img} alt="poster" width="428px" />
+            {data?.main_img && (
+              <img src={data?.main_img} alt="poster" width="428px" />
+            )}
+            
             <D.CloudyBox></D.CloudyBox>
             <D.TextBox>
               <D.NameBox>
@@ -337,7 +344,10 @@ const DetailInfo = () => {
               </D.WhiteAlarm>
             </D.PointBox>
 
-            <D.QrBox>
+            <D.QrBox
+              onClick={() => navigate(`/survey/${id}`)}
+              style={{ cursor: "pointer" }}
+            >
               <img
                 src="/images/qr.svg"
                 alt="QR"

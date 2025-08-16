@@ -13,7 +13,15 @@ min-height: 926px;
 
 `;
 
+export const Back = styled.div`
+width: 15px;
+height: 9px;
+margin-left: 38px;
+`;
+
 export const Title = styled.div`
+width: 150px;
+height: 22px;
 color: #FFF;
 text-align: center;
 font-family: Pretendard;
@@ -21,6 +29,9 @@ font-size: 20px;
 font-style: normal;
 font-weight: 600;
 line-height: normal;
+text-align: center;
+margin-left: 140px;
+margin-top: -15px;
 `;
 
 export const TableBox = styled.div`
@@ -33,6 +44,7 @@ background: #ECEEF2;
 overflow: hidden;
 margin-left: 24px;
 margin-top:34px;
+margin-bottom: 31px;
 `;
 
 export const Table = styled.table`
@@ -69,5 +81,92 @@ font-size: 16px;
 font-style: normal;
 font-weight: 500;
 line-height: normal;
-padding-left: 10px; 
+padding-left: 10px;
+padding-top: 5px;
+input{
+background: #ECEEF2;
+border: none;
+outline: none;
+color: #434343;
+font-family: Pretendard;
+font-size: 16px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+
+&::placeholder{
+color: #6868688c;
+}
+
+}
+
+display: -webkit-box;
+-webkit-line-clamp: 1;  
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
+
 `;
+
+export const Question = styled.div`
+margin-left:25px;
+color: #454545;
+font-family: Pretendard;
+font-size: 16px;
+font-style: normal;
+font-weight: 600;
+line-height: normal;
+margin-bottom: 19px;
+`;
+
+export const Qbox = styled.div`
+margin-left: 20px;
+margin-bottom: 5px;
+
+label{
+color: #626262;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+margin-left: 9px;
+}
+`;
+
+export const Option = styled.input`
+
+`;
+
+export const Etc = styled.input`
+width: 369px;
+height: 30px;
+flex-shrink: 0;
+border-radius: 3px;
+border: 1px solid #C4C4C4;
+margin-left: 30px;
+outline: none;
+`;
+
+export const Submit = styled.div`
+width: 117px;
+height: 38px;
+flex-shrink: 0;
+background: #61688C;
+border-radius: 42px;
+box-shadow: 0 0 17px 0 rgba(11, 45, 69, 0.25);
+color: #FFF;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 600;
+line-height: normal;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-left: 155px;
+margin-top: 15px;
+cursor: pointer;
+&:active { background: #282F56; }
+`;
+

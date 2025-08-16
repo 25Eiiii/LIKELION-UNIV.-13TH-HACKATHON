@@ -42,7 +42,7 @@ function App() {
         <Route path='/category'element={<Category/>}/>
         <Route path='/search' element={<Search/>}/>
         <Route path='/likes' element={<Likes/>}/>
-        <Route path='/survey' element={<Survey/>}/>
+        <Route path='/survey/:id' element={<Survey/>}/>
       </Routes>
     </BrowserRouter>
   );
