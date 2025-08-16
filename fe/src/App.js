@@ -16,6 +16,7 @@ import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Category from './pages/Category';
 import Search from './pages/Search';
+import Likes from './pages/Likes';
 
 function App() {
 
@@ -30,7 +31,7 @@ function App() {
         <Route path='/mypage-myevent' element={<MyEvent />}></Route>
         <Route path="/detailInfo" element={<DetailInfo/>}/>
         <Route path="/detailInfo/:id" element={<DetailInfo/>}/>
-        <Route path="/detailReview" element={<DetailReview/>}/>
+        <Route path="/detailReview/:id" element={<DetailReview/>}/>
         <Route path="/survey/step1" element={<Step1/>}/>
         <Route path="/survey/step2" element={<Step2/>}/>
         <Route path="/survey/step3" element={<Step3/>}/>
@@ -39,6 +40,7 @@ function App() {
         <Route path='/login' element={<Login/>}/>
         <Route path='/category'element={<Category/>}/>
         <Route path='/search' element={<Search/>}/>
+        <Route path='/likes' element={<Likes/>}/>
       </Routes>
     </BrowserRouter>
   );

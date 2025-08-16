@@ -1,88 +1,106 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailReview";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
+import axios from "axios";
 
 const DetailReview = () => {
-  const [isClicked, setIsClicked] = useState(false);
+  const [isClicked, setIsClicked] = useState();
+  const [data, setData] = useState(null);
+  const [review, setReview] = useState([]);
+  const { id } = useParams();
   const navigate = useNavigate();
   const goInfo = () => {
-    navigate("/detailInfo");
+    navigate(`/detailInfo/${id}`);
   };
-  const reviewList = [
-    {
-      profile: "/images/profile.svg",
-      nickname: "닉네임",
-      date: "2025.08.31",
-      image: "",
-      content:
-        "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-    },
-    {
-      profile: "/images/profile.svg",
-      nickname: "닉네임",
-      date: "2025.08.31",
-      image: "",
-      content:
-        "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-    },
-    {
-      profile: "/images/profile.svg",
-      nickname: "닉네임",
-      date: "2025.08.31",
-      image: "",
-      content:
-        "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-    },
-    {
-      profile: "/images/profile.svg",
-      nickname: "닉네임",
-      date: "2025.08.31",
-      image: ["/images/poster.svg", "/images/poster.svg"],
-      content:
-        "좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄좋다는 리뷰와 함께 첨부된 사진과 줄글로 된 리뷰 몇 줄",
-    },
-  ];
+
+  useEffect(() => {
+    const fetchdata = async () => {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
+        ? {Authorization:`Bearer ${accessToken}`} : {};
+        const response = await axios.get(
+          `/api/details/detail/${id}/` ,{headers}
+        );
+        setData(response.data);
+        setIsClicked(response.data.is_liked);
+      } catch (error) {
+        console.error("데이터 불러오기 실패: ", error);
+        if (error.response.status === 401) {
+        alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
+        navigate('/login');
+      }
+      }
+    };
+
+    const reviewData = async () => {
+      const accessToken = localStorage.getItem("accessToken");
+      try {
+        const response = await axios.get(`/api/surveys/reviews/event/${id}/`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setReview(response.data);
+      } catch (error) {
+        console.error(error.response);
+      }
+    };
+    fetchdata();
+    reviewData();
+  }, [id]);
+  
+  const toggleLike = async() => {
+      const accessToken = localStorage.getItem("accessToken");
+      if(!accessToken||accessToken==="null"||accessToken==="undefined") {
+        alert("로그인 후 사용 가능합니다.");
+        navigate("/login");
+        return;
+      }
+      const prev = isClicked;
+      setIsClicked(!prev);
+      try{
+        const response = await axios.post(
+          `/api/details/detail/${id}/like/`,
+          {},
+          {
+            headers: {
+              Authorization : `Bearer ${accessToken}`,
+              "Content-Type" : "application/json" 
+            }
+          }
+        );
+        setIsClicked(response.data.liked);
+      }catch(error){
+        setIsClicked(prev);
+        console.error(error.response.data);
+      }
+    };
   return (
     <>
       <Container>
         <D.InnerWrapper>
           <D.Header>
-            <img
-              src={`${process.env.PUBLIC_URL}/images/poster.svg`}
-              alt="poster"
-              width="428px"
-            />
+            <img src={data?.main_img} alt="poster" width="428px" />
             <D.CloudyBox></D.CloudyBox>
             <D.TextBox>
               <D.NameBox>
-                <D.Name>흙의 숨결</D.Name>
-                <D.Type>전시/미술</D.Type>
+                <D.Name>{data?.title}</D.Name>
               </D.NameBox>
-              <D.Explain>
-                성북구의 공공미술관으로 조성되어 대중의 품 안에 자리하게 된
-                성북구립 최만린미술관이 정식 개관을 맞아 &lt;흙의 숨결&gt; 전을
-                개최합니다.
-              </D.Explain>
-              {isClicked ? (
+              <D.Type>{data?.codename}</D.Type>
+              <D.IconBox>
                 <D.Heart
-                  src={`${process.env.PUBLIC_URL}/images/fullheart.svg`}
+                  src={`${process.env.PUBLIC_URL}/images/${
+                    isClicked ? "fullheart.svg" : "blankheart.svg"
+                  }`}
                   alt="heart"
-                  onClick={() => setIsClicked(false)}
+                  onClick={toggleLike}
                 />
-              ) : (
-                <D.Heart
-                  src={`${process.env.PUBLIC_URL}/images/blankheart.svg`}
-                  alt="blankheart"
-                  onClick={() => setIsClicked(true)}
+                <D.Share
+                  src={`${process.env.PUBLIC_URL}/images/share.svg`}
+                  alt="share"
                 />
-              )}
-
-              <D.Share
-                src={`${process.env.PUBLIC_URL}/images/share.svg`}
-                alt="share"
-              />
+              </D.IconBox>
             </D.TextBox>
           </D.Header>
           <D.WhiteContainer>
@@ -97,34 +115,40 @@ const DetailReview = () => {
             </D.Tab>
             <D.Line></D.Line>
             <>
-              {reviewList.map((item) => (
-                <D.ReviewBox>
-                  <img src={item.profile} height="31px" />
-                  <D.ReviewGrayBox>
-                    <D.UserInfoBox>
-                      <D.Nickname>{item.nickname}</D.Nickname>
-                      <D.Date>{item.date}</D.Date>
-                    </D.UserInfoBox>
-                    {item.image && (
-                      <D.UserImage>
-                        {item.image.map((imgSrc) => (
-                          <img
-                            src={imgSrc}
-                            alt="reviewimage"
-                            style={{
-                              width: "97px",
-                              height: "107px",
-                              borderRadius: "7px",
-                            }}
-                          />
-                        ))}
-                      </D.UserImage>
-                    )}
+              {review.map((item) => {
+                const photos = Array.isArray(item.photo)
+                  ? item.photo
+                  : item.photo
+                  ? [item.photo]
+                  : [];
+                return (
+                  <D.ReviewBox>
+                    <D.ReviewGrayBox>
+                      <D.UserInfoBox>
+                        <D.Nickname>{item.nickname}</D.Nickname>
+                        <D.Date>{item.created_at}</D.Date>
+                      </D.UserInfoBox>
+                      {photos.length > 0 && (
+                        <D.UserImage>
+                          {photos.map((imgSrc) => (
+                            <img
+                              src={imgSrc}
+                              alt="reviewimage"
+                              style={{
+                                width: "97px",
+                                height: "107px",
+                                borderRadius: "7px",
+                              }}
+                            />
+                          ))}
+                        </D.UserImage>
+                      )}
 
-                    <D.UserText>{item.content}</D.UserText>
-                  </D.ReviewGrayBox>
-                </D.ReviewBox>
-              ))}
+                      <D.UserText>{item.content}</D.UserText>
+                    </D.ReviewGrayBox>
+                  </D.ReviewBox>
+                );
+              })}
             </>
           </D.WhiteContainer>
         </D.InnerWrapper>

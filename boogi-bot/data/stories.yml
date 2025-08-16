@@ -1,0 +1,7 @@
+- rule: Ask area utterance
+  steps:
+    - action: utter_ask_area
+
+- rule: Ask category utterance
+  steps:
+    - action: utter_ask_category
