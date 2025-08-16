@@ -104,12 +104,24 @@ def load_user_profile(user_id: int):
 
     interests_str = ' '.join(interests_list) if interests_list else ""
 
+        # fee_type 처리 (무료 / 유료 / 둘다좋아요 / 그 외 문구)
+    raw_fee_type = str(row['fee_type']) if pd.notna(row['fee_type']) else ""
+
+    # 자연어 문구 → 표준값 매핑
+    fee_type_map = {
+        "무료 행사만 볼래요": "무료",
+        "유료 행사도 괜찮아요": "유료",
+        "둘 다 좋아요": "무료 유료"
+    }
+
+    # 매핑 적용 (없으면 그대로 사용)
+    fee_type_str = fee_type_map.get(raw_fee_type, raw_fee_type)
 
     user_mapped = {
         'interests': interests_str,
         'area': str(row['area']) if pd.notna(row['area']) else "",
-        'fee_type': str(row['fee_type']) if pd.notna(row['fee_type']) else "",
-        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else "",
+        'fee_type': fee_type_str,
+        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else ""
     }
 
     return preprocess_text(' '.join(user_mapped.values()))
