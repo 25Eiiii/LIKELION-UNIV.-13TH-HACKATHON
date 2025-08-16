@@ -37,7 +37,7 @@ def get_db_engine():
 
 okt = Okt()
 
-# 전처리 함수
+# ===== 텍스트 전처리 =====
 def preprocess_text(text):
     # 한글, 숫자, 공백만 남기기
     text = re.sub(r'[^ㄱ-ㅎ가-힣0-9\s/-]', ' ', text)
@@ -45,15 +45,13 @@ def preprocess_text(text):
     # 형태소 분석 후 명사/형용사만 추출
     tokens = text.split()
 
-    print(f"[DEBUG] 입력: {text}")
-    print(f"[DEBUG] 토큰: {tokens}")
-
-
     return ' '.join(tokens)
 
-
-# 문화 행사 데이터를 문자열 벡터로 변환
+# ===== 행사 데이터 로드 =====
 def load_event_data():
+    """
+    search_culturalevent에서 메타 칼럼들을 합쳐 한 문자열 생성
+    """
     engine = get_db_engine()
     query = "SELECT * FROM search_culturalevent"
     df = pd.read_sql(query, engine)
@@ -61,23 +59,28 @@ def load_event_data():
     # 메타 칼럼 합쳐서 텍스트 벡터로 만들기
     # 텍스트 벡터로 만들어야 tfidf vectorizer 적용 가능함
 
-    # 메타 데이터 합치기
-    df['meta'] = df[['codename', 'guname', 'is_free', 'themecode', 'title']].astype(str).agg(' '.join, axis=1)
+    # 값 표준화
+    df["is_free"]   = df["is_free"].map({True:"무료", False:"유료"}).fillna("")
+    df["themecode"] = df["themecode"].fillna("")
+    df["guname"]    = df["guname"].fillna("")
+    df["codename"]  = df["codename"].fillna("")
+    df["title"]     = df["title"].fillna("")
 
-    # 형태소 분석 + 클린 텍스트 적용
-    # df['meta'] = df['meta'].apply(preprocess_text)
-
-
+    df["meta_raw"] = df[["codename", 'guname', "is_free", "themecode", "title"]].astype(str).agg(" ".join, axis=1)
+    df["meta"] = df["meta_raw"].apply(preprocess_text)
     return df
 
 #profiles_userprofile 여기에서 값을 가져오면 됨*********************************************
-# 사용자 관심사를 문자열 벡터로 변환
+# ===== 사용자 프로필 로드 =====
 def load_user_profile(user_id: int):
+    """
+    profiles_userinterests에서 해당 사용자의 관심사, 지역, 요금, 동반자 텍스트를 모아 하나의 문장으로 만들고 전처리 
+    """
     engine = get_db_engine()
     query = """
-        SELECT *
+        SELECT interests, area, fee_type, together_input
         FROM profiles_userprofile
-        WHERE id = %s
+        WHERE user_id = %s
     """
     df = pd.read_sql(query, engine, params=(user_id,))
 
@@ -86,11 +89,6 @@ def load_user_profile(user_id: int):
         return ""
 
     row = df.iloc[0]
-
-    # DB에서 가져온 값들을 합쳐서 문자열 생성
-
-    # interests가 JSON 문자열 형태일 때 파싱해서 공백 구분 문자열로 변환
-
     raw_interests = row['interests']
 
     if isinstance(raw_interests, list):
@@ -105,32 +103,72 @@ def load_user_profile(user_id: int):
         interests_list = []
 
     interests_str = ' '.join(interests_list) if interests_list else ""
-    print('interests_str:', interests_str)
 
 
     user_mapped = {
         'interests': interests_str,
         'area': str(row['area']) if pd.notna(row['area']) else "",
         'fee_type': str(row['fee_type']) if pd.notna(row['fee_type']) else "",
-        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else ""
+        'together_input': str(row['together_input']) if pd.notna(row['together_input']) else "",
     }
 
     return preprocess_text(' '.join(user_mapped.values()))
 
-#TF-IDF로 사용자와 행사 유사도 계산
+# ===== TF-IDF로 사용자와 행사 유사도 계산 =====
 def calculate_similarity(event_df, user_profile):
     corpus = event_df['meta'].tolist() + [user_profile]
-    tfidf = TfidfVectorizer()
+    tfidf = TfidfVectorizer(
+        ngram_range=(1, 3), 
+        sublinear_tf=True, 
+        min_df=5,
+        max_features=15000
+        )
     tfidf_matrix = tfidf.fit_transform(corpus)
     cosine_sim = cosine_similarity(tfidf_matrix[:-1], tfidf_matrix[-1]).flatten()
-    return cosine_sim
+    return pd.Series(cosine_sim, index=event_df.index)
+
+# 사용자 관심사 불러오기
+def load_user_interests(user_id):
+    """
+    DB에서 user_id로 사용자의 관심사 데이터를 불러와 dict 형태로 반환
+    예:
+    """
+    engine = get_db_engine()
+    query = f"""
+        SELECT interests, fee_type, area, together_input
+        FROM profiles_userprofile
+        WHERE user_id = {user_id}
+    """
+    df = pd.read_sql(query, engine)
+
+    # df를 dict로 변환
+    if not df.empty:
+        return df.iloc[0].to_dict()
+    else:
+        return {}
 
 # 1. 콘텐츠 기반 추천
-def content_based_recommend(user_id: int, top_n=10):
+def content_based_recommend_df(user_id: int, top_n=10) -> pd.DataFrame:
     event_df = load_event_data()
     user_profile = load_user_profile(user_id)
     event_df['similarity'] = calculate_similarity(event_df, user_profile).round(3)
-    return event_df.sort_values('similarity', ascending=False).head(top_n)
+    return (event_df.sort_values('similarity', ascending=False)
+                    .loc[:, ['id','title','similarity']]
+                    .head(top_n)
+                    .reset_index(drop=True))
+
+def content_based_recommend_ids(user_id: int, top_n=10) -> list[int]:
+    return content_based_recommend_df(user_id, top_n)['id'].astype(int).tolist()
+
+# 정밀도 검사에서 호환용 별칭 
+content_based_recommend = content_based_recommend_df
+cb_recommend_ids = content_based_recommend_ids
+
+# ===== top-k id 만 뽑기 =====
+def cb_recommend_ids(user_id: int, top_k=10):
+    df = content_based_recommend(user_id, top_n=top_k)
+    id_col = 'id' if 'id' in df.columns else df.columns[0]
+    return df[id_col].tolist()
 
 # 2. 행동 기반 콘텐츠 필터링
 def behavior_adjusted_recommend(user_id, top_n=10):
@@ -244,6 +282,132 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
     return top_preds
 
+# ===== 유틸: 안전한 Min-Max 정규화 =====
+"""
+- 데이터 값의 범위를 0~1 사이로 스케일링하여 서로 다른 범위의 점수들을 비교할 수 있음
+- 데이터가 NULL이거나 분산이 없는 경우: 모든 값을 0으로 반환
+"""
+def _minmax(s: pd.Series) -> pd.Series:
+    if s is None or len(s) == 0:
+        return pd.Series(dtype=float)
+    s = s.astype(float)
+    s_min, s_max = s.min(), s.max()
+    if pd.isna(s_min) or pd.isna(s_max) or s_max == s_min:
+        # 분산이 없거나 NULL값이면 전부 0으로
+        return pd.Series([0.0] * len(s), index=s.index)
+    return (s - s_min) / (s_max - s_min)
+
+# ===== 콘텐츠 점수 DataFrame(id, cb_score) =====
+"""
+- 유사도 점수: cb_raw
+- 정규화된 유사도: cb_score
+"""
+def compute_cb_scores(user_id: int, top_k: int = None) -> pd.DataFrame:
+    # content_based_recommend_df를 사용 (id, title, similarity)
+    cb_df = content_based_recommend_df(user_id, top_n=10_000).copy()
+    cb_df.rename(columns={'similarity': 'cb_raw'}, inplace=True)
+    cb_df['cb_score'] = _minmax(cb_df['cb_raw'])
+    keep_cols = ['id', 'cb_score', 'cb_raw', 'title']
+    if top_k:
+        cb_df = cb_df.sort_values('cb_score', ascending=False).head(top_k)
+    return cb_df[keep_cols]
+
+# ===== 행동 점수 DataFrame(id, beh_score) =====
+"""
+- 유사도 점수: beh_raw
+- 정규화된 유사도: beh_score
+"""
+def compute_behavior_scores(user_id: int, top_k: int = None) -> pd.DataFrame:
+    beh_df = behavior_adjusted_recommend(user_id, top_n=10_000).copy()
+    # behavior_adjusted_recommend가 title, adjusted_similarity를 갖고 옴
+    if beh_df is None or beh_df.empty:
+        return pd.DataFrame(columns=['id', 'beh_score', 'beh_raw', 'title'])
+    beh_df.rename(columns={'adjusted_similarity': 'beh_raw'}, inplace=True)
+    beh_df['beh_score'] = _minmax(beh_df['beh_raw'])
+    keep_cols = ['id', 'beh_score', 'beh_raw', 'title']
+    if top_k:
+        beh_df = beh_df.sort_values('beh_score', ascending=False).head(top_k)
+    return beh_df[keep_cols]
+
+# ===== 협업 점수 DataFrame(id, cf_score) =====
+"""
+- 유사도 점수: cf_raw
+- 정규화된 유사도: cf_score
+"""
+def compute_cf_scores(user_id: int, top_k: int = None) -> pd.DataFrame:
+    cf_df = collaborative_filtering_recommend(user_id, top_n=10_000)
+    if cf_df is None or isinstance(cf_df, list) or len(cf_df) == 0:
+        # collaborative_filtering_recommend가 []를 리턴할 수도 있음
+        return pd.DataFrame(columns=['id', 'cf_score', 'cf_raw', 'title'])
+    cf_df = cf_df.copy()
+    cf_df.rename(columns={'pred_rating': 'cf_raw'}, inplace=True)
+    # 예측 평점은 보통 0~5 스케일 => 데이터 기반 min-max가 더 안전
+    cf_df['cf_score'] = _minmax(cf_df['cf_raw'])
+    keep_cols = ['id', 'cf_score', 'cf_raw', 'title']
+    if top_k:
+        cf_df = cf_df.sort_values('cf_score', ascending=False).head(top_k)
+    return cf_df[keep_cols]
+
+# ===== 메인: 하이브리드 추천 =====
+def hybrid_recommend(
+    user_id: int,
+    top_n: int = 10,
+    weights: tuple = (0.0, 0.0, 1.0),  # 각 추천 점수의 가중치 (w_cb, w_beh, w_cf)
+    dedup: bool = True,
+    min_components: int = 1,           # 최소 몇 개 축에서 점수가 있어야 포함할지(0~3)
+    return_components: bool = True     # 부분 점수 컬럼 포함 여부
+) -> pd.DataFrame:
+    """
+    하이브리드 추천: 콘텐츠(CB) + 행동(BEH) + 협업(CF) 가중합
+    - 각 축을 0~1로 정규화 후 가중합
+    - 결측/콜드스타트 처리
+    - 디버깅용 부분점수와 Raw 값 포함
+
+    반환 컬럼:
+      id, title, score, [cb_score, beh_score, cf_score, cb_raw, beh_raw, cf_raw]
+    """
+    w_cb, w_beh, w_cf = weights
+
+    # 1) 각 추천의 점수를 계산
+    cb = compute_cb_scores(user_id)
+    beh = compute_behavior_scores(user_id)
+    cf  = compute_cf_scores(user_id)
+
+    # 2) 모든 점수 df를 병합
+    out = cb[['id', 'title', 'cb_score', 'cb_raw']].copy() if not cb.empty else pd.DataFrame(columns=['id','title','cb_score','cb_raw'])
+    for rec_df, score_col, raw_col in [
+        (beh, 'beh_score', 'beh_raw'),
+        (cf,  'cf_score',  'cf_raw')
+    ]:
+        out = pd.merge(out, rec_df[['id', 'title', score_col, raw_col]], on=['id', 'title'], how='outer')
+
+
+    # 3) 결측치는 0으로 채움
+    out[['cb_score','beh_score','cf_score','cb_raw','beh_raw','cf_raw']] = out[['cb_score','beh_score','cf_score','cb_raw','beh_raw','cf_raw']].fillna(0.0)
+
+    if out.empty:
+        return out
+
+    # 5) 최종 점수 = 가중합
+    out['score'] = (w_cb * out['cb_score']) + (w_beh * out['beh_score']) + (w_cf * out['cf_score'])
+
+    # 6) 중복 제거 및 정렬
+    # 'dedup=True'일 경우 같은 'id'를 가진 행은 처음 행만 남기고 나머지는 제거
+    if dedup:
+        out = out.drop_duplicates(subset=['id'])
+
+    # 7) 정렬 & 상위 N
+    out = out.sort_values('score', ascending=False)
+
+    # 8) 반환 컬럼 구성
+    cols_basic = ['id', 'title', 'score']
+    cols_comp  = ['cb_score','beh_score','cf_score','cb_raw','beh_raw','cf_raw']
+    cols = cols_basic + (cols_comp if return_components else [])
+    out = out[cols].reset_index(drop=True)
+
+    # 최종 top_n
+    return out.head(top_n)
+
 
 if __name__ == "__main__":
     user_id = 1
@@ -255,6 +419,7 @@ if __name__ == "__main__":
     # }
 
     ratings_df = load_ratings()
+    hybrid_df = hybrid_recommend(user_id, top_n=10, weights=(0.0, 0.0, 1.0))
 
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
     print(content_based_recommend(user_id, top_n=5)[['title','similarity']])
@@ -263,3 +428,5 @@ if __name__ == "__main__":
     print("@@@@@@@@@ 협업 필터링 추천 @@@@@@@@@")
     print(collaborative_filtering_recommend(1, top_n=5)[['title','pred_rating']])
     print(evaluate_cf_rmse_mae(ratings_df))
+    print("@@@@@@@@@ 하이브리드 추천 @@@@@@@@@")
+    print(hybrid_df)
