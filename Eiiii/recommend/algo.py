@@ -395,6 +395,7 @@ def recommend_for_user(user_id, ratings_df, algo, top_n=5):
 
     return top_preds
 
+
 # ===== 유틸: 안전한 Min-Max 정규화 =====
 """
 - 데이터 값의 범위를 0~1 사이로 스케일링하여 서로 다른 범위의 점수들을 비교할 수 있음
@@ -465,7 +466,7 @@ def compute_cf_scores(user_id: int, top_k: int = None) -> pd.DataFrame:
 def hybrid_recommend(
     user_id: int,
     top_n: int = 10,
-    weights: tuple = (0.5, 0.2, 0.3),  # 각 추천 점수의 가중치 (w_cb, w_beh, w_cf)
+    weights: tuple = (0.3, 0.4, 0.3),  # 각 추천 점수의 가중치 (w_cb, w_beh, w_cf)
     dedup: bool = True,
     min_components: int = 1,           # 최소 몇 개 축에서 점수가 있어야 포함할지(0~3)
     return_components: bool = True     # 부분 점수 컬럼 포함 여부
@@ -500,6 +501,14 @@ def hybrid_recommend(
 
     if out.empty:
         return out
+    
+    # 4) min_components 필터링
+    comp_cols = ['cb_score','beh_score','cf_score']
+    out['nonzero_components'] = (out[comp_cols] > 0).sum(axis=1)
+    out = out[out['nonzero_components'] >= min_components]
+
+    if out.empty:
+        return out
 
     # 5) 최종 점수 = 가중합
     out['score'] = (w_cb * out['cb_score']) + (w_beh * out['beh_score']) + (w_cf * out['cf_score'])
@@ -523,7 +532,7 @@ def hybrid_recommend(
 
 
 if __name__ == "__main__":
-    user_id = 147
+    user_id = 27
     # user_interest = {
     #     "interests": ["클래식", "축제-기타", "콘서트"],
     #     "area": "성북구",
@@ -532,7 +541,7 @@ if __name__ == "__main__":
     # }
 
     ratings_df = load_ratings()
-    hybrid_df = hybrid_recommend(user_id, top_n=10, weights=(0.5, 0.2, 0.3))
+    hybrid_df = hybrid_recommend(user_id, top_n=10, weights=(0.3, 0.4, 0.3))
 
     print("@@@@@@@@@ 콘텐츠 기반 추천 @@@@@@@@@")
     print(content_based_recommend(user_id, top_n=5)[['title','similarity']])
