@@ -18,6 +18,7 @@ import Category from './pages/Category';
 import Search from './pages/Search';
 import Likes from './pages/Likes';
 import Survey from './pages/Survey';
+import Verify from './pages/Verify';
 
 function App() {
 
@@ -43,6 +44,7 @@ function App() {
         <Route path='/search' element={<Search/>}/>
         <Route path='/likes' element={<Likes/>}/>
         <Route path='/survey/:id' element={<Survey/>}/>
+        <Route path='/verify' element={<Verify/>}/>
       </Routes>
     </BrowserRouter>
   );

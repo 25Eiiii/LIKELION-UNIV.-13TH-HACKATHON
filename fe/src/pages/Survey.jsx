@@ -66,6 +66,7 @@ const Survey = () => {
         }
       );
       alert("제출 완료되었습니다!");
+      navigate(-1);
     } catch (error) {
       console.log(error.response);
       if (error.response.status === 401) {
