@@ -8,7 +8,8 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
+from django.core.paginator import Paginator
 
 from search.models import CulturalEvent
 from .serializers import RecommendedEventSerializer
@@ -16,6 +17,7 @@ from recommend.algo import hybrid_recommend
 from details.models import CulturalEventLike
 from surveys.models import SurveyReview
 
+#메인화면
 class RecommendedEventsView(APIView):
     """
     GET /api/recommend/events/?top_n=10&like_w=1.0&review_w=1.5&recent_alpha=0.7&ongoing_bonus=0.5
@@ -174,3 +176,115 @@ class RecommendedEventsView(APIView):
             ids += list(rest_qs.values_list("id", flat=True))
 
         return ids
+    
+#챗봇
+def _format_date(ev):
+    start = getattr(ev, "start_date", None)
+    end   = getattr(ev, "end_date", None)
+    if start and end:
+        return f"{start:%Y.%m.%d} ~ {end:%Y.%m.%d}"
+    if start:
+        return f"{start:%Y.%m.%d}"
+    return getattr(ev, "rgst_date", None) or "일정 미정"
+
+
+class RecommendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        # === query ===
+        try:
+            limit = int(request.GET.get("limit", 3))
+            page  = int(request.GET.get("page", 1))
+        except ValueError:
+            return Response({"detail": "limit/page는 숫자여야 합니다."}, status=400)
+
+        area     = request.GET.get("area")        # 예: 성북구
+        category = request.GET.get("category")    # 예: 전시/미술
+        debug    = request.GET.get("__debug")     # "1"이면 디버그 정보 포함
+        force    = request.GET.get("__force")     # "filter"면 필터 우선 강제
+
+        debug_info = {"area": area, "category": category, "limit": limit, "page": page}
+
+        # === 0) filter-only 강제 모드(문제 분리) ===
+        if force == "filter":
+            qs = CulturalEvent.objects.all()
+            if area:
+                qs = qs.filter(Q(guname__icontains=area) | Q(place__icontains=area))
+            if category:
+                qs = qs.filter(codename__icontains=category)
+            qs = qs.order_by("-start_date", "-rgst_date", "-id")
+            paginator = Paginator(qs, limit)
+            page_obj = paginator.get_page(page)
+            results = [{
+                "id": ev.id,
+                "title": ev.title or "제목 없음",
+                "place": ev.place or "장소 미정",
+                "date": _format_date(ev),
+                "url": ev.hmpg_addr or None,
+            } for ev in page_obj.object_list]
+            payload = {"results": results, "total": paginator.count, "has_next": page_obj.has_next()}
+            if debug == "1":
+                payload["__debug"] = {
+                    **debug_info,
+                    "mode": "filter-only",
+                    "db_total": CulturalEvent.objects.count(),
+                    "filtered_total": paginator.count,
+                }
+            return Response(payload, status=200)
+
+        # === 1) 추천 풀 ===
+        TOP_POOL = max(300, limit * max(page, 1) * 10)
+        try:
+            rec_df = hybrid_recommend(user_id=user.id, top_n=TOP_POOL, return_components=False)
+        except Exception as e:
+            rec_df = None
+            debug_info["hybrid_error"] = str(e)
+
+        ids_ordered = rec_df["id"].dropna().astype(int).tolist() if (rec_df is not None and not rec_df.empty) else []
+        debug_info["rec_ids_len"] = len(ids_ordered)
+
+        # === 2) 교집합(추천풀 ∩ 필터) ===
+        qs = CulturalEvent.objects.filter(id__in=ids_ordered) if ids_ordered else CulturalEvent.objects.none()
+        if area:
+            qs = qs.filter(Q(guname__icontains=area) | Q(place__icontains=area))
+        if category:
+            qs = qs.filter(codename__icontains=category)
+
+        inter_count = qs.count()
+        debug_info["intersection_count"] = inter_count
+        debug_info["db_total"] = CulturalEvent.objects.count()
+
+        # 추천 순서 유지
+        if ids_ordered and inter_count > 0:
+            order_map = {eid: pos for pos, eid in enumerate(ids_ordered)}
+            when_list = [When(pk=eid, then=order_map.get(eid, len(ids_ordered))) for eid in qs.values_list("id", flat=True)]
+            qs = qs.annotate(_order=Case(*when_list, output_field=IntegerField())).order_by("_order")
+
+        # === 3) 폴백: 교집합 0이면 필터만으로 채우기 ===
+        if inter_count == 0:
+            fb = CulturalEvent.objects.all()
+            if area:
+                fb = fb.filter(Q(guname__icontains=area) | Q(place__icontains=area))
+            if category:
+                fb = fb.filter(codename__icontains=category)
+            fb = fb.order_by("-start_date", "-rgst_date", "-id")
+            qs = fb
+            debug_info["fallback_total"] = qs.count()
+
+        # === 4) 페이지네이션 & 응답 ===
+        paginator = Paginator(qs, limit)
+        page_obj = paginator.get_page(page)
+        results = [{
+            "id": ev.id,
+            "title": ev.title or "제목 없음",
+            "place": ev.place or "장소 미정",
+            "date": _format_date(ev),
+            "url": ev.hmpg_addr or None,
+        } for ev in page_obj.object_list]
+
+        payload = {"results": results, "total": paginator.count, "has_next": page_obj.has_next()}
+        if debug == "1":
+            payload["__debug"] = debug_info
+        return Response(payload, status=200)

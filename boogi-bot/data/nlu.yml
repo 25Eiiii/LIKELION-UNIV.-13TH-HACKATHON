@@ -1,11 +1,13 @@
-#의도
-
 version: "3.1"
+
 nlu:
+# ───────── intents ─────────
 - intent: greet
   examples: |
     - 안녕
     - 부기야
+    - 안녕하세요
+    - 하이
 
 - intent: ask_recommend
   examples: |
@@ -18,6 +20,11 @@ nlu:
     - 주말에 갈만한 축제 뭐 있지?
     - 가까운 곳에서 열리는 무료 공연 추천해줘
     - 가족이랑 가기 좋은 문화 행사 있을까?
+    # 컨텍스트(동시 인식 강화)
+    - [성북구](area) [전시/미술](category) 추천해줘
+    - [강북구](area) 이번 주 [축제](category) 뭐 있어?
+    - [종로구](area) [뮤지컬](category) 볼만한 거
+    - [동대문구](area) [콘서트](category) 추천
 
 - intent: inform_category
   examples: |
@@ -26,7 +33,6 @@ nlu:
     - [교육/체험](category)
     - [축제](category)
     - [기타](category)
-    - [교육/체험](category)
     - [국악](category)
     - [독주/독창회](category)
     - [무용](category)
@@ -34,6 +40,10 @@ nlu:
     - [연극](category)
     - [콘서트](category)
     - [클래식](category)
+    # 컨텍스트
+    - [성북구](area) [전시/미술](category) 뭐 있어?
+    - [종로구](area) [축제](category) 추천해줘
+    - [동대문구](area) [콘서트](category) 보고 싶어
 
 - intent: inform_area
   examples: |
@@ -41,19 +51,70 @@ nlu:
     - [종로구](area)
     - [강북구](area)
     - [동대문구](area)
+    # 컨텍스트
+    - [성북구](area)로 보여줘
+    - [종로구](area) 행사 알려줘
 
 - intent: affirm
   examples: |
     - 응
     - 좋아
+    - 그래
+    - 네
 
 - intent: deny
   examples: |
     - 아니
     - 됐어
+    - 괜찮아
 
 - intent: show_more
   examples: |
     - 더 보기
     - 더 보여줘
     - 계속 보여줘
+    - 다음 것도
+
+# ───────── lookups ─────────
+- lookup: area
+  examples: |
+    - 성북구
+    - 종로구
+    - 강북구
+    - 동대문구
+
+# category = codename (원본 분류)
+- lookup: category
+  examples: |
+    - 전시/미술
+    - 교육/체험
+    - 축제
+    - 국악
+    - 독주/독창회
+    - 무용
+    - 뮤지컬/오페라
+    - 연극
+    - 콘서트
+    - 클래식
+    - 기타
+
+# ───────── synonyms (중요: 자연어 → codename 정규화) ─────────
+- synonym: 전시/미술
+  examples: |
+    - 전시
+    - 미술
+
+- synonym: 교육/체험
+  examples: |
+    - 교육
+    - 체험
+
+- synonym: 뮤지컬/오페라
+  examples: |
+    - 뮤지컬
+    - 오페라
+
+- synonym: 독주/독창회
+  examples: |
+    - 독주회
+    - 독창회
