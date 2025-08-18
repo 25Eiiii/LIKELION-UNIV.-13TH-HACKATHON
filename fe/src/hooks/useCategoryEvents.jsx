@@ -1,0 +1,26 @@
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL || "http://localhost:8000",
+});
+
+export const useCategoryEvents = (category, search = "") => {
+  return useQuery({
+    queryKey: ["category-events", category, search],
+    queryFn: async () => {
+      const { data } = await api.get("/api/events/events-category/", {
+        params: {
+          category,                // ex) "무대/공연"
+          ...(search ? { search } : {}),
+        },
+      });
+      // data: { category, search, count, results: [...] }
+      return data;
+    },
+    enabled: Boolean(category),
+    staleTime: 5 * 60 * 1000,
+    keepPreviousData: true,
+    retry: (n, err) => (err?.response?.status === 404 ? false : n < 1),
+  });
+};

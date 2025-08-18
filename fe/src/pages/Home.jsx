@@ -5,14 +5,16 @@ import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import EventCardS from "../components/EventCardS";
 import { useNavigate } from "react-router-dom";
+import useAuthStore from "../store/useAuthStore";
+import { useTopEvents } from "../hooks/useTopEvents";
 
 const categories = [
-  { label: "공연 / 영화", image: "concert.svg" },
+  { label: "무대 / 공연", image: "concert.svg" },
   { label: "전시 / 미술", image: "art.svg" },
   { label: "교육 / 체험", image: "edu.svg" },
   { label: "축제", image: "festival.svg" },
-  { label: "도서", image: "book.svg" },
-  { label: "역사", image: "history.svg" },
+  { label: "음악 / 콘서트", image: "book.svg" },
+  { label: "기타", image: "history.svg" },
 ];
 
 export const recommendedEvents = [
@@ -57,13 +59,15 @@ export const topEvents = [
 
 const Home = () => {
   const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user);
+  const { data, isLoading } = useTopEvents("2025-08", 3)
 
   return (
     <>
     <Container>
       <H.Header>
         <p style={{ fontSize: "20px", color: "#fff"}}>
-        효민님은 문화 시민
+        {user ? `${user.nickname}님은 문화 시민`: "문화시민"}
         </p>
         <p style={{ fontSize: "38px",  color: "#fff"}}>
         Lv. 5
@@ -90,7 +94,10 @@ const Home = () => {
           </H.Question>
           <H.Categories>
             {categories.map((cat, idx) => (
-              <H.Item key={idx}>
+              <H.Item 
+                key={idx}
+                onClick={() => navigate(`/category?category=${encodeURIComponent(cat.label)}`)}
+                >
                 {cat.label}
                 <img 
                   src={`${process.env.PUBLIC_URL}/images/${cat.image}`}
@@ -124,7 +131,7 @@ const Home = () => {
               {topEvents.map((event, idx) => (
                 <H.Top3List>
                   <p>{idx+1}</p>
-                  <EventCardS key={idx} {...event}/>
+                  <EventCardS key={idx} rank={idx+1} name={event.title} date={event.date_text} image={event.main_img}/>
                 </H.Top3List>
               ))}
             </H.CultureList>

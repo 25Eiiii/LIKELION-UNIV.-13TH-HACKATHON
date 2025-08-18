@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'surveys',#설문폼
     'point',#포인트
     'recommend',#추천로직
+    'top3',#top3 조회
+    'chatbot', #챗봇
 ]
 
 REST_FRAMEWORK = {
