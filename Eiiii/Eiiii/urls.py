@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/points/', include('point.urls')),
     path("api/top3/", include("top3.urls")),
     path("api/chatbot/", include("chatbot.urls")),
+    path("api/recommend/", include("recommend.urls")),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
