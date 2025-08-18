@@ -1,8 +1,8 @@
 import { create } from "zustand"
 
 const usePointStore =  create((set) => ({
-    point: [],
-    setPoint: (value) => set({ point: value }),
+    point: 0,
+    setPoint: (value) => set({ point: value || 0 }),
 }));
 
 export default usePointStore;

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import * as L from "../styles/pages/styledLogin";
 import { Container } from "../styles/common/styledContainer";
 import axios from "axios";
-import useAuthStore from "../store/useAuthStore";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -29,13 +28,7 @@ const Login = () => {
             );
             localStorage.setItem("accessToken", response.data.access);
             localStorage.setItem("refreshToken",response.data.refresh);
-
-            if (response.data.user) {
-                useAuthStore.getState().setUser(response.data.user);
-                navigate("/home");
-                return;
-            }
-            
+            navigate("/home");
         }catch(error){
             console.log(error.response);
             setError("아이디 또는 비밀번호를 다시 확인해주세요");

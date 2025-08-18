@@ -11,7 +11,7 @@ const fetchPoint = async () => {
         },
     });
     console.log("data: ", res.data.point);
-    return res.data
+    return res.data.point;
 }
 
 // usePoint 훅
