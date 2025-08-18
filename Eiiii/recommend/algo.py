@@ -8,7 +8,7 @@ from surprise import KNNBasic
 from surprise import accuracy
 from typing import List
 
-from behavior_based import calculate_activity_scores
+from .behavior_based import calculate_activity_scores
 
 import numpy as np
 np.random.seed(42)
