@@ -65,7 +65,7 @@ const WriteReview = () => {
   return (
     <Container>
       <W.Header>
-        <W.Back onClick={() => navigate("/home")}>
+        <W.Back onClick={() => navigate("/mypage-myevent")}>
           <img
             src={`${process.env.PUBLIC_URL}/images/backbtn.svg`}
             alt="back"
@@ -89,12 +89,13 @@ const WriteReview = () => {
         onBlur={() => setTouched(true)}
         placeholder="내용을 입력해주세요."
         $error={contentError}
-        maxLength={MAX_LEN}
-      />
-      <W.Counter $error={contentError}>
-        {content.length} / {MAX_LEN}
-      </W.Counter>
-      {contentError && <W.Warn>※ 본문을 입력해 주세요.</W.Warn>}
+        maxLength={MAX_LEN}>
+          <W.Counter $error={contentError}>
+          {content.length} / {MAX_LEN}
+        </W.Counter>
+      </W.TextArea>
+      {contentError && <W.Warn>필수 입력 사항입니다.</W.Warn>}
+      
 
       <W.Label style={{ fontSize: "15px", fontWeight: "500"}}>별점 선택 (필수)</W.Label>
       <W.Stars>
@@ -111,10 +112,8 @@ const WriteReview = () => {
             </W.Star>
           );
         })}
-        {rating > 0 && <W.StarText>{rating} / 5</W.StarText>}
       </W.Stars>
 
-      <W.Label style={{ fontSize: "15px", fontWeight: "500", marginTop: "30px"}}>인증샷 추가 (선택)</W.Label>
       <W.UploadRow>
         <W.UploadBox>
           <input
@@ -128,13 +127,13 @@ const WriteReview = () => {
         </W.UploadBox>
         {photoFile && <W.Preview src={URL.createObjectURL(photoFile)} alt="preview" />}
       </W.UploadRow>
-      <W.Hint>사진을 올리면 추가 포인트가 지급될 수 있어요.</W.Hint>
+      <W.Hint>인증샷 추가시 <p style={{ color: "#60C795", fontWeight: "600"}}>+50 P</p></W.Hint>
 
       <W.Label style={{ fontSize: "15px", fontWeight: "500"}}>추가 설문 (선택)</W.Label>
       <W.Input
         value={extra}
         onChange={(e) => setExtra(e.target.value)}
-        placeholder="다음에도 성북에서 해주세요! 등"
+        placeholder="내용을 입력해주세요."
       />
 
       <W.Submit disabled={submitting || content.trim().length === 0} onClick={handleSubmit}>
