@@ -1,8 +1,9 @@
 from rest_framework import generics
-from .serializers import SignupSerializer
+from .serializers import SignupSerializer,CustomTokenObtainPairSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 # Create your views here.
 
@@ -22,3 +23,6 @@ class CheckUsernameView(APIView):
         if User.objects.filter(username=username).exists():
             return Response({"available": False})
         return Response({"available": True})
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
