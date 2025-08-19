@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from geopy.distance import geodesic
+from geopy.point import Point
 from datetime import date as _date, datetime as _dt
 from sqlalchemy import text, bindparam
 from math import log1p, exp
@@ -20,13 +21,38 @@ def _fetch_user_location(conn, user_id: int):
         return float(row[0]), float(row[1])
     except:
         return None, None
+    
+def normalize_lat_lon(lat_raw, lon_raw):
+    """
+    위도/경도 뒤바뀜을 자동 보정.
+    - 위도 합법 범위: [-90, 90], 경도 합법 범위: [-180, 180]
+    - 케이스:
+        1) (lat, lon) 둘 다 합법 → 그대로
+        2) lat는 불법, lon은 위도 범위 / lat는 경도 범위 → 스왑
+        3) 하나라도 숫자 변환 실패나 범위 크게 벗어남 → (None, None)
+    """
+    try:
+        lat = float(lat_raw) if lat_raw is not None else None
+        lon = float(lon_raw) if lon_raw is not None else None
+    except Exception:
+        return None, None
 
+    def valid_lat(x): return x is not None and -90.0 <= x <= 90.0
+    def valid_lon(x): return x is not None and -180.0 <= x <= 180.0
+
+    if valid_lat(lat) and valid_lon(lon):
+        return lat, lon
+    # 뒤바뀐 패턴: lat가 경도 범위, lon이 위도 범위일 때
+    if valid_lon(lat) and valid_lat(lon):
+        return lon, lat
+    # 둘 다 이상하면 사용하지 않음
+    return None, None
 
 def _fetch_event_meta(conn, event_ids: list[int]):
     if not event_ids:
         return {}
     stmt = text("""
-        SELECT id, title, lat, lot, place, codename, main_img, date, start_date, end_date
+        SELECT id, title, lat, lot AS lon, place, codename, main_img, date, start_date, end_date
         FROM search_culturalevent
         WHERE id IN :ids
     """).bindparams(bindparam("ids", expanding=True))  
@@ -35,9 +61,9 @@ def _fetch_event_meta(conn, event_ids: list[int]):
 
     meta = {}
     for r in rows:
-        (eid, title, lat, lot, place, codename, main_img, date_text, start_date, end_date) = r
+        (eid, title, lat, lon, place, codename, main_img, date_text, start_date, end_date) = r
         meta[eid] = {
-            "title": title, "lat": lat, "lot": lot, "place": place,
+            "title": title, "lat": lat, "lon": lon, "place": place,
             "codename": codename, "main_img": main_img, "date_text": date_text,
             "start_date": start_date, "end_date": end_date,
         }
@@ -99,11 +125,14 @@ def get_monthly_top3_for_user(user_id: int, today: date | None = None):
         corrected_distance = _f(d.get("distance_score"))
         distance_km = None
         if (user_lat is not None and user_lon is not None 
-                and md.get("lat") is not None and md.get("lot") is not None):
+                and md.get("lat") is not None and md.get("lon") is not None):
             try:
-                ev_lat = float(md["lat"])
-                ev_lon = float(md["lot"])
-                km = geodesic((user_lat, user_lon), (ev_lat, ev_lon)).km
+                ev_lat, ev_lon = normalize_lat_lon(md["lat"], md["lon"])
+                u_lat, u_lon = normalize_lat_lon(user_lat, user_lon)
+                if ev_lat is not None and ev_lon is not None and u_lat is not None and u_lon is not None:
+                    km = geodesic((u_lat, u_lon), (ev_lat, ev_lon)).km
+                else:
+                    km = None
                 corrected_distance = max(0.0, 1.0 - km / 10.0)
                 distance_km = round(km, 2)
             except:
@@ -189,7 +218,7 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
     engine = get_db_engine()
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT e.id, e.title, e.lat, e.lot, e.place, e.codename, e.main_img,
+            SELECT e.id, e.title, e.lat, e.lot AS lon, e.place, e.codename, e.main_img,
                    e.date, e.start_date, e.end_date,
                    COALESCE(l.cnt, 0) AS like_count,
                    COALESCE(rv.avg_rating, 0) AS avg_rating,
@@ -209,8 +238,9 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
 
     items = []
     for r in rows:
-        (eid, title, ev_lat, ev_lon, place, codename, main_img,
+        (eid, title, ev_lat_raw, ev_lon_raw, place, codename, main_img,
          date_text, sd_raw, ed_raw, like_cnt, avg_rating, rv_cnt) = r
+        ev_lat, ev_lon = normalize_lat_lon(ev_lat_raw, ev_lon_raw)
 
         # 날짜 정규화
         sd = to_date(sd_raw)
@@ -234,7 +264,11 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
         distance_km = None
         if lat is not None and lon is not None and ev_lat is not None and ev_lon is not None:
             try:
-                km = geodesic((float(lat), float(lon)), (float(ev_lat), float(ev_lon))).km
+                u_lat, u_lon = normalize_lat_lon(lat, lon)
+                if u_lat is not None and u_lon is not None:
+                    km = geodesic((u_lat, u_lon), (ev_lat, ev_lon)).km
+                else:
+                    km = None
                 distance_score = max(0.0, 1.0 - (km / 10.0))
                 distance_km = round(km, 2)
             except:
