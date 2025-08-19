@@ -1,47 +1,25 @@
-from typing import Any, Dict, List, Text
+# actions.py
+from typing import Any, Dict, Text, List, Optional
+import logging
+import requests
+import time
+
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet, FollowupAction
-import requests
-import logging
-
-import urllib.parse
-
-def _auth_headers_ascii(tracker: Tracker) -> Dict[str, str]:
-    token = tracker.get_slot("auth_token")
-    if not token:
-        return {}
-    ascii_token = str(token).encode("ascii", "ignore").decode("ascii")
-    return {
-        "Authorization": f"Bearer {ascii_token}",
-        "Accept": "application/json",
-        "User-Agent": "boogi-bot/1.0 (+requests)"
-    }
-
-def _encode_params_utf8(params: Dict[str, Any]) -> Dict[str, Any]:
-    """한글 파라미터를 확실히 퍼센트 인코딩해서 전달 (이중 인코딩 방지).
-    숫자/불린은 그대로, 문자열만 quote."""
-    out = {}
-    for k, v in params.items():
-        if v is None:
-            continue
-        if isinstance(v, (int, float, bool)):
-            out[k] = v
-        else:
-            s = str(v)
-            # 이미 퍼센트 인코딩된 값이면 그대로 두고, 아니면 UTF-8로 인코딩
-            if "%" in s:
-                out[k] = s
-            else:
-                out[k] = urllib.parse.quote(s, safe="")
-    return out
+from rasa_sdk.events import (
+    SlotSet,
+    FollowupAction,
+    SessionStarted,
+    ActionExecuted,
+)
+from requests.exceptions import ReadTimeout, ConnectTimeout, ConnectionError
 
 logger = logging.getLogger(__name__)
 
 # ===== 엔드포인트 =====
 BASE_URL        = "http://127.0.0.1:8000"
-LOGIN_ENDPOINT  = "/api/recommend/chat"     # 로그인 전용
-PUBLIC_ENDPOINT = "/api/recommend/public"   # 비로그인 전용(팀원 개발 예정)
+LOGIN_ENDPOINT  = "/api/recommend/chat"         # 로그인 전용
+PUBLIC_ENDPOINT = "/api/pbrecommend/public/"    # 비로그인 전용(팀원 개발 예정)
 
 # ===== 키워드 분기 =====
 NEARBY_KEYWORDS = ["근처", "가까운", "주변", "이번 주", "이번주"]
@@ -50,76 +28,268 @@ THEME_KEYWORDS  = ["인기", "요즘", "주말", "가족", "가족이랑", "가�
 # ===== 페이징 =====
 PAGE_SIZE = 3
 
-def choose_endpoint_and_headers(tracker: Tracker) -> tuple[str, Dict[str, str]]:
-    token = tracker.get_slot("auth_token")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UTIL
+# ─────────────────────────────────────────────────────────────────────────────
+def _get_token(tracker: Tracker) -> Optional[Text]:
+    """auth_token을 (1) 슬롯 → (2) 최신 메시지 메타데이터 → (3) 최근 user 이벤트 메타데이터 순으로 탐색."""
+    # 1) 슬롯
+    tok = tracker.get_slot("auth_token")
+    if tok:
+        logger.debug("[token] from slot")
+        return tok
+    # 2) 최신 메시지 metadata
+    md = (tracker.latest_message or {}).get("metadata") or {}
+    if md.get("auth_token"):
+        logger.debug("[token] from latest_message.metadata")
+        return md["auth_token"]
+    # 3) 과거 user 이벤트 스캔 (뒤에서 앞으로)
+    for ev in reversed(tracker.events or []):
+        if ev.get("event") == "user":
+            m = ev.get("metadata") or {}
+            if m.get("auth_token"):
+                logger.debug("[token] from past user metadata")
+                return m["auth_token"]
+    logger.debug("[token] not found")
+    return None
+
+
+def _auth_headers_from_token(token: Optional[Text]) -> Dict[str, str]:
+    if not token:
+        return {}
+    # 비ASCII 혼입 대비
+    ascii_token = str(token).encode("ascii", "ignore").decode("ascii")
+    return {
+        "Authorization": f"Bearer {ascii_token}",
+        "Accept": "application/json",
+        "User-Agent": "boogi-bot/1.0 (+requests)",
+    }
+
+
+def _choose_endpoint_and_headers_from_token(token: Optional[Text]) -> tuple[str, Dict[str, str], str]:
+    """token 유무로 엔드포인트/헤더/모드(login|public) 결정."""
     if token:
-        # 반드시 ASCII 강제 버전 사용
-        return f"{BASE_URL}{LOGIN_ENDPOINT}", _auth_headers_ascii(tracker)
-    return f"{BASE_URL}{PUBLIC_ENDPOINT}", {}
+        url = f"{BASE_URL}{LOGIN_ENDPOINT}"
+        headers = _auth_headers_from_token(token)
+        logger.info("auth_token 감지됨 → LOGIN_ENDPOINT 사용: %s", url)
+        return url, headers, "login"
+    url = f"{BASE_URL}{PUBLIC_ENDPOINT}"
+    logger.warning("auth_token 미감지 → PUBLIC_ENDPOINT 사용: %s", url)
+    return url, {}, "public"
+
+
+def _toggle_slash(url: str) -> str:
+    """/ 유무가 다른 라우팅에 대비해 한 번 토글."""
+    return url[:-1] if url.endswith("/") else url + "/"
+
+
+def _call_once(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any],
+               connect_s: int, read_s: int) -> requests.Response:
+    if method.upper() == "POST":
+        return requests.post(url, json=params, headers=headers, timeout=(connect_s, read_s))
+    # 기본 GET
+    return requests.get(url, params=params, headers=headers, timeout=(connect_s, read_s))
+
+
+def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any]) -> requests.Response:
+    """
+    - 404 → 슬래시 토글 1회 재시도
+    - 401/403 → 퍼블릭 폴백
+    - ReadTimeout/ConnectionError → 지수백오프로 2회 재시도
+    """
+    CONNECT_T = 3          # 연결 타임아웃
+    READ_T    = 45         # 응답 타임아웃
+    MAX_RETRY = 2          # 네트워크 오류 재시도 횟수
+
+    def call_with_retries(m: str, target_url: str, target_headers: Dict[str, str]) -> requests.Response:
+        last_exc = None
+        for attempt in range(MAX_RETRY + 1):
+            try:
+                return _call_once(m, target_url, target_headers, params, CONNECT_T, READ_T)
+            except (ReadTimeout, ConnectTimeout, ConnectionError) as e:
+                last_exc = e
+                backoff = 0.4 * (2 ** attempt)  # 0.4s, 0.8s, ...
+                logger.warning("네트워크 에러(%s) 재시도 %d/%d, %.1fs 대기...",
+                               type(e).__name__, attempt+1, MAX_RETRY+1, backoff)
+                time.sleep(backoff)
+        # 모두 실패
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("unknown network error")
+
+    # 1) 1차 호출
+    r = call_with_retries(method, url, headers)
+
+    # 2) 404면 슬래시 토글 재시도
+    if r.status_code == 404:
+        alt = _toggle_slash(url)
+        if alt != url:
+            logger.warning("404 → 슬래시 토글 재시도: %s", alt)
+            r2 = call_with_retries(method, alt, headers)
+            if r2.ok or r2.status_code in (401, 403, 404):
+                r = r2
+
+    # 3) 401/403 → 퍼블릭 폴백 시도
+    if r.status_code in (401, 403):
+        pub = f"{BASE_URL}{PUBLIC_ENDPOINT}"
+        logger.warning("401/403 → 퍼블릭 폴백: %s", pub)
+        r = call_with_retries("GET", pub, {})  # 퍼블릭은 헤더 없이
+
+    # 4) 최종 상태 처리
+    r.raise_for_status()
+    return r
+
+
+def _maybe_sync_token_slot(tracker: Tracker) -> List:
+    """메타데이터에서 토큰을 읽어 왔는데 슬롯이 비어 있으면 슬롯 동기화 이벤트 반환(다음 턴 대비)."""
+    # 슬롯 우선
+    tok = tracker.get_slot("auth_token")
+    if tok:
+        return []
+    # 최신 메시지 metadata
+    md = (tracker.latest_message or {}).get("metadata") or {}
+    if md.get("auth_token"):
+        return [SlotSet("auth_token", md["auth_token"])]
+    # 과거 user 이벤트 뒤에서 앞으로 스캔
+    for ev in reversed(tracker.events or []):
+        if ev.get("event") == "user":
+            m = ev.get("metadata") or {}
+            if m.get("auth_token"):
+                return [SlotSet("auth_token", m["auth_token"])]
+    return []
+
+
+def _say(dispatcher: CollectingDispatcher, template: str):
+    """Rasa 3.x(response) / 2.x(template) 호환 출력."""
+    try:
+        dispatcher.utter_message(response=template)
+    except TypeError:
+        dispatcher.utter_message(template=template)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+class ActionSessionStart(Action):
+    def name(self) -> Text:
+        return "action_session_start"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ):
+        """
+        세션 시작 시 REST 채널의 metadata에서 auth_token을 받아 슬롯에 저장.
+        (첫 user 메시지 이전일 수 있으므로 이후 매 액션에서 _maybe_sync_token_slot로 보완)
+        """
+        events: List = [SessionStarted()]
+        md = (tracker.latest_message or {}).get("metadata") or {}
+        token = md.get("auth_token")
+        if token:
+            events.append(SlotSet("auth_token", token))
+        events.append(ActionExecuted("action_listen"))
+        return events
+
 
 class ActionDetermineNextStep(Action):
     def name(self) -> Text:
         return "action_determine_next_step"
 
-    def run(self, dispatcher, tracker, domain):
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ):
+        # 토큰 슬롯 동기화(항상 첫 줄에서) — 저장은 "이 액션 끝난 뒤"에 반영됨
+        events: List = _maybe_sync_token_slot(tracker)
+
         text = (tracker.latest_message.get("text") or "").strip()
         area = tracker.get_slot("area")
-        category = tracker.get_slot("category")  # UI 버튼이라 이미 codename 보장
+        category = tracker.get_slot("category")  # UI 버튼이라 codename 보장 가정
 
+        logger.info("[determine] text='%s' area=%r category=%r", text, area, category)
+
+        # 이미 area/category가 있으면 바로 추천으로
         if category or area:
-            return [
-                SlotSet("category", category),
-                SlotSet("area", area),
+            return events + [
                 SlotSet("page", 1),
                 FollowupAction("action_recommend_event"),
             ]
 
+        # 사용자가 자연어로 근처/주말 등 요청한 경우
         if any(k in text for k in NEARBY_KEYWORDS):
-            dispatcher.utter_message(response="utter_ask_area")
-            return []
+            _say(dispatcher, "utter_ask_area")
+            return events
         if any(k in text for k in THEME_KEYWORDS):
-            dispatcher.utter_message(response="utter_ask_category")
-            return []
+            _say(dispatcher, "utter_ask_category")
+            return events
 
-        dispatcher.utter_message(response="utter_ask_area")
-        return []
+        # 기본값: 지역 먼저 유도
+        _say(dispatcher, "utter_ask_area")
+        return events
+
 
 class ActionRecommendEvent(Action):
     def name(self) -> Text:
         return "action_recommend_event"
 
-    def run(self, dispatcher, tracker, domain):
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ):
+        # 토큰 슬롯 동기화(다음 턴 대비)
+        events: List = _maybe_sync_token_slot(tracker)
+
         area = tracker.get_slot("area")
-        category = tracker.get_slot("category")  # 이미 codename
+        category = tracker.get_slot("category")
         page = tracker.get_slot("page") or 1
 
-        # 1) 원본 params
-        params = {"limit": PAGE_SIZE, "page": page}
-        if area:     params["area"] = area
-        if category: params["category"] = category
+        # 방어막: 빈 슬롯이면 질문으로 회귀
+        if not area and not category:
+            _say(dispatcher, "utter_ask_area")
+            return events
+        if area and not category:
+            _say(dispatcher, "utter_ask_category")
+            return events
+        if category and not area:
+            _say(dispatcher, "utter_ask_area")
+            return events
 
-        # 2) URL/헤더 선택(헤더는 ASCII 보장), params는 UTF-8 퍼센트 인코딩
-        url, headers = choose_endpoint_and_headers(tracker)
-        encoded_params = _encode_params_utf8(params)
+        # 이 턴에서 사용할 토큰은 "지역 변수"로 확보 (슬롯 반영 타이밍 이슈 회피)
+        token = _get_token(tracker)
+        url, headers, mode = _choose_endpoint_and_headers_from_token(token)
+        method = "GET"
 
+        # 요청 파라미터
+        params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
+        if area:
+            params["area"] = area
+        if category:
+            params["category"] = category
+
+        logger.info("Reco call url=%s method=%s params=%r headers=%r",
+                    url, method, params, list(headers.keys()))
+
+        # 호출
         try:
-            logger.info("Calling recommend: url=%s params=%s headers=%s", url, encoded_params, headers)
-            resp = requests.get(
-                url,
-                params=encoded_params,
-                headers=headers,
-                timeout=(3, 15)  
-            )
-            resp.raise_for_status()
-            items = resp.json().get("results", [])
+            resp = _call_reco(method, url, headers, params)
+            data = resp.json()
+            items = data.get("results", [])
         except Exception as e:
             logger.exception("recommend API 호출 실패: %s", e)
             dispatcher.utter_message(text="추천 서버와 통신에 문제가 있어요. 잠시 후 다시 시도해 주세요.")
-            return []
+            return events
 
+        # 결과 처리
         if not items:
             dispatcher.utter_message(text="조건에 맞는 행사가 지금은 없네요. 다른 분류로 찾아볼까요?")
-            return []
+            return events
 
         header_area = f"'{area}'에서 " if area else ""
         header_cat  = f"'{category}' " if category else ""
@@ -132,45 +302,58 @@ class ActionRecommendEvent(Action):
             detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
-        dispatcher.utter_message(text="더 볼까요? '더 보기'라고 말해보세요!")
-        return [SlotSet("page", page + 1)]
+        has_next = bool(data.get("next")) or (len(items) == PAGE_SIZE)
+        if has_next:
+            dispatcher.utter_message(text="더 볼까요? '더 보기'라고 말해보세요!")
+            return events + [SlotSet("page", page + 1)]
+        else:
+            dispatcher.utter_message(text="여기까지가 끝! 다른 분류로 찾아볼까요?")
+            return events
+
 
 class ActionShowMore(Action):
     def name(self) -> Text:
         return "action_show_more"
 
-    def run(self, dispatcher, tracker, domain):
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ):
+        # 토큰 슬롯 동기화(다음 턴 대비)
+        events: List = _maybe_sync_token_slot(tracker)
+
         area = tracker.get_slot("area")
         category = tracker.get_slot("category")
         page = tracker.get_slot("page") or 1
 
-        # 1) 원본 params
-        params = {"limit": PAGE_SIZE, "page": page}
-        if area:     params["area"] = area
-        if category: params["category"] = category
+        # 이 턴에서 사용할 토큰은 "지역 변수"로 확보
+        token = _get_token(tracker)
+        url, headers, mode = _choose_endpoint_and_headers_from_token(token)
+        method = "GET"
 
-        # 2) URL/헤더/인코딩
-        url, headers = choose_endpoint_and_headers(tracker)
-        encoded_params = _encode_params_utf8(params)
+        params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
+        if area:
+            params["area"] = area
+        if category:
+            params["category"] = category
+
+        logger.info("Reco more call url=%s method=%s params=%r headers=%r",
+                    url, method, params, list(headers.keys()))
 
         try:
-            logger.info("Calling recommend more: url=%s params=%s headers=%s", url, encoded_params, headers)
-            resp = requests.get(
-                url,
-                params=encoded_params,
-                headers=headers,
-                timeout=(3, 15)  
-            )
-            resp.raise_for_status()
-            items = resp.json().get("results", [])
+            resp = _call_reco(method, url, headers, params)
+            data = resp.json()
+            items = data.get("results", [])
         except Exception as e:
             logger.exception("recommend more API 호출 실패: %s", e)
             dispatcher.utter_message(text="더 보기를 불러오는데 문제가 생겼어요. 잠시 후 다시 시도해 주세요.")
-            return []
-        
+            return events
+
         if not items:
             dispatcher.utter_message(text="더 이상 결과가 없어요. 다른 분류나 지역으로 찾아볼까요?")
-            return []
+            return events
 
         for it in items:
             title = it.get("title") or "제목 없음"
@@ -179,4 +362,4 @@ class ActionShowMore(Action):
             detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
-        return [SlotSet("page", page + 1)]
+        return events + [SlotSet("page", page + 1)]

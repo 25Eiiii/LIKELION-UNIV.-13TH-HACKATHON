@@ -13,13 +13,19 @@ rules:
     - action: action_determine_next_step
 
 # 2) 지역을 고르면 바로 추천 (근처/가까운 시나리오)
-- rule: Recommend after area provided
+- rule: Recommend after area provideda
+  condition:
+      - slot_was_set:
+          - area: true
   steps:
     - intent: inform_area
     - action: action_recommend_event
 
 # 3) 카테고리를 고르면 바로 추천 (인기/주말/가족 시나리오, 또는 직접 지정)
 - rule: Recommend after category provided
+  condition:
+    - slot_was_set:
+        - category: true
   steps:
     - intent: inform_category
     - action: action_recommend_event
