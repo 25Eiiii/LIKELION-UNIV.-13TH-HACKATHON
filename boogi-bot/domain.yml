@@ -29,7 +29,7 @@ slots:
       - type: from_entity
         entity: category
 
-  # 🔧 사용자 발화로 절대 채우지 않기
+  #사용자 발화로 절대 채우지 않기
   page:
     type: any
     influence_conversation: false
@@ -93,4 +93,5 @@ actions:
   - action_determine_next_step
   - action_recommend_event
   - action_show_more
+  - action_session_start 
 
