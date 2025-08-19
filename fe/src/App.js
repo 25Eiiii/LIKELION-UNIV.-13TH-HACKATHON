@@ -19,7 +19,7 @@ import Search from './pages/Search';
 import Likes from './pages/Likes';
 import Survey from './pages/Survey';
 import Verify from './pages/Verify';
-import WriteReview from "./pages/WriteReview";
+import WriteReview from "./pages/mypage/WriteReview";
 
 function App() {
 
