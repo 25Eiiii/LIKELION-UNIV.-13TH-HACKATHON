@@ -1,26 +1,38 @@
 import styled from "styled-components"
-import { useState } from "react"
 import { NextLv } from "../styles/pages/styledMyEvent";
+import usePointStore from "../store/usePointStore";
+import { usePoint } from "../hooks/usePoint";
 
 const MAX_POINT = 3000;
 
-const PointBar = ({ currentPoint }) => {
-  const progress = Math.min((currentPoint / MAX_POINT) * 100, 100);
-  
+const PointBar = () => {
+  const { isLoading, isError } = usePoint();  // ✅ 반드시 호출
+  const point = Number(usePointStore((s) => s.point)) || 0;
+  console.log("PointBar store point:", point);
+
+  const progress = Math.min(Math.max((point / MAX_POINT) * 100, 0), 100);
+  const remain = Math.max(0, MAX_POINT - point);
+
+  if (isLoading) return <p>포인트 불러오는 중…</p>;
+  if (isError) return <p>포인트를 불러올 수 없어요.</p>;
+
   return (
     <ProgressWrapper>
-        <BarBackground>
-            <BarFill style={{ width: `${progress}%` }}></BarFill>
-        </BarBackground>
-        <NextLv>다음 레벨까지 {MAX_POINT-currentPoint}P</NextLv>
-        <CurrentPoint>{currentPoint}
-            <Point>P</Point>
-        </CurrentPoint>
+      <BarBackground>
+        <BarFill style={{ width: `${progress}%` }} />
+      </BarBackground>
+      <NextLv>다음 레벨까지 {remain}P</NextLv>
+      <CurrentPoint>
+        {point}<Point>P</Point>
+      </CurrentPoint>
     </ProgressWrapper>
-  )
-}
+  );
+};
 
 export default PointBar;
+
+/* styles ... 동일 */
+
 
 const ProgressWrapper = styled.div`
   width: 362px;

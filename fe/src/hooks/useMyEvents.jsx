@@ -1,27 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios"
+import axios from "axios";
 import useMyEventStore from "../store/useMyEventStore";
 
-// 데이터 불러오기 
-const fetchMyEvents = async () =>  {
-    const token =  localStorage.getItem("accessToken");
-    const res = await axios.get("/api/surveys/my-events/", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    console.log("data: ", res.data);
-    return res.data;
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+const ENDPOINT = "/api/surveys/my-events/";
+
+// 서버 응답: title, date, place, main_img, submitted_at
+const fetchMyEvents = async () => {
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    "";
+
+  const res = await axios.get(`${API_BASE}${ENDPOINT}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const raw = Array.isArray(res.data) ? res.data : res.data?.results || [];
+  return raw.map((ev) => ({
+    title: ev.title ?? "",
+    date: ev.date ?? "",
+    place: ev.place ?? "",
+    main_img: ev.main_img ?? "",
+    submitted_at: ev.submitted_at ?? "",
+  }));
 };
 
-// useMyEvents 훅
-export const useMyEvents = () => {
-    const setEvents = useMyEventStore((state) => state.setEvents);
+export function useMyEvents() {
+  const setEvents = useMyEventStore((s) => s.setEvents);
 
-    // 데이터 불러오기 
-    return useQuery({
-        queryKey: ["myEvents"],
-        queryFn: fetchMyEvents,
-        onSuccess: (data) => setEvents(data),
-    });
-};
+  return useQuery({
+    queryKey: ["my-events"],
+    queryFn: fetchMyEvents,
+    staleTime: 60_000,
+    onSuccess: (data) => setEvents(data),
+  });
+}

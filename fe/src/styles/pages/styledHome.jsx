@@ -75,6 +75,7 @@ margin-top: 30px;
 `
 
 export const Item = styled.button`
+gap: 12px;
 width: 105px;
 height: 80px;
 flex-shrink: 0;
@@ -89,7 +90,7 @@ justify-content: center;
 align-items: center;
 color: rgba(0, 0, 0, 0.6);
 font-family: Pretendard;
-font-size: 15px;
+font-size: 14px;
 font-style: normal;
 font-weight: 600;
 line-height: normal;
@@ -99,14 +100,69 @@ export const RecContainer = styled.div`
 display: flex;
 justify-content: flex-start;
 width: 428px;
-height: 322px;
 flex-shrink: 0;
 background: rgba(146, 173, 93, 0.24);
 margin-top: 30px;
 display: flex;
 flex-direction: column;
+padding-bottom: 20px;
+border-radius: 20px 0px 0px 20px;
+margin-left: 70px;
 `
-
+export const GoLoginBtns = styled.div`
+display: flex;
+gap: 14px;
+margin-top: 10px;
+`
+export const GoLoginBox = styled.div`
+width: 348px;
+height: 213px;
+flex-shrink: 0;
+border-radius: 18px;
+background: #FFF;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+margin-top: 40px;
+color: #838383;
+text-align: center;
+font-family: Pretendard;
+font-style: normal;
+line-height: normal;
+gap: 10px;
+margin-left: 22px;
+`
+export const LoginBtn = styled.button`
+width: 93px;
+height: 43px;
+flex-shrink: 0;
+color: #696969;
+text-align: center;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+border-radius: 6px;
+border: 2px solid #DFDFDF;
+background: none;
+`
+export const SignUpBtn = styled.button`
+width: 93px;
+height: 43px;
+flex-shrink: 0;
+color: #696969;
+text-align: center;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+border-radius: 6px;
+border: 2px solid #DFDFDF;
+background: none;
+`
 export const TextWrapper = styled.div`
 display: flex;
 align-items: center;
@@ -132,10 +188,10 @@ border: none;
 `
 
 export const EventList = styled.div`
-margin-left: 40px;
+margin-left: 20px;
 margin-top: 20px;
 display: flex;
-gap: 15px;
+gap: 16px;
 overflow-x: auto;
 &::-webkit-scrollbar {
 display: none;
@@ -144,10 +200,13 @@ display: none;
 export const EventItem = styled.div`
 display: flex;
 flex-direction: column;
+align-items: center;
+cursor: pointer;
+align-items: flex-start;
 `
 
-export const EventPost = styled.div`
-
+export const EventPost = styled.img`
+margin-bottom: 8px;
 `
 
 export const EventName = styled.div`
@@ -157,6 +216,7 @@ font-size: 13px;
 font-style: normal;
 font-weight: 600;
 line-height: normal;
+width: 124px;
 `
 export const EventDate = styled.div`
 color: #404040;
@@ -176,9 +236,6 @@ export const Chatbot = styled.button`
     width: 100%;
 `;
 
-
-
-
 export const  Top3 = styled.div`
 width: 428px;
 margin-top: 30px;
@@ -186,9 +243,10 @@ margin-top: 30px;
 export const CultureList = styled.div`
 display:  flex;
 flex-direction: column;
-margin-left: 30px;
+margin-left: 16px;
 margin-top: 30px;
 gap: 30px;
+padding-bottom: 100px;
 `
 
 export const Top3List = styled.div`
