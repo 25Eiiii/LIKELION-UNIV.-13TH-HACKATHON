@@ -29,6 +29,19 @@ slots:
       - type: from_entity
         entity: category
 
+  # 🔧 사용자 발화로 절대 채우지 않기
+  page:
+    type: any
+    influence_conversation: false
+    mappings:
+      - type: custom
+
+  auth_token:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
+
 responses:
   utter_greet:
     - text: "안녕하세요! 문화 추천 도우미 부기예요 무엇을 도와드릴까요?"
@@ -80,3 +93,4 @@ actions:
   - action_determine_next_step
   - action_recommend_event
   - action_show_more
+
