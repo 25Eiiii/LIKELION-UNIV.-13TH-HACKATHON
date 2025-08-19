@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'recommend',#추천로직
     'top3',#top3 조회
     'chatbot', #챗봇
+    'pbrecommend' #비로그인 챗봇 추천
 ]
 
 REST_FRAMEWORK = {

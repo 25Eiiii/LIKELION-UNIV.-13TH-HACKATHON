@@ -14,10 +14,10 @@ from rasa_sdk.events import (
 
 logger = logging.getLogger(__name__)
 
-# ===== 서버 엔드포인트 =====
-BASE_URL = "http://127.0.0.1:8000"
-LOGIN_ENDPOINT = "/api/recommend/chat"        # 로그인 전용
-PUBLIC_ENDPOINT = "/api/pbrecommend/public/"  # 비로그인 전용
+# ===== 엔드포인트 =====
+BASE_URL        = "http://127.0.0.1:8000"
+LOGIN_ENDPOINT  = "/api/recommend/chat"     # 로그인 전용
+PUBLIC_ENDPOINT = "/api/pbrecommend/public/"   # 비로그인 전용(팀원 개발 예정)
 
 # ===== 키워드 분기 =====
 NEARBY_KEYWORDS = ["근처", "가까운", "주변", "이번 주", "이번주"]
