@@ -19,7 +19,14 @@ stories:
     - intent: inform_category
     - action: action_recommend_event
 
-- story: show more
+- story: show more (explicit)
   steps:
     - intent: show_more
     - action: action_show_more
+
+#affirm으로 더보기
+- story: show more via affirm
+  steps:
+    - intent: affirm
+    - action: action_show_more
+

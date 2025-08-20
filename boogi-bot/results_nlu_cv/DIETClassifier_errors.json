@@ -1,0 +1,336 @@
+[
+  {
+    "text": "영화",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "value": "영화",
+        "entity": "category"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "category",
+        "start": 0,
+        "end": 2,
+        "value": "영화",
+        "extractor": "RegexEntityExtractor"
+      }
+    ]
+  },
+  {
+    "text": "성북구",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "성북구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "성북구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "성북구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "성북구로 보여줘",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "성북구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 4,
+        "value": "성북구로",
+        "extractor": "RegexEntityExtractor"
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "성북구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "주말에 갈만한 축제 뭐 있지?",
+    "entities": [],
+    "predicted_entities": [
+      {
+        "entity": "category",
+        "start": 8,
+        "end": 10,
+        "value": "축제",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "category",
+        "start": 0,
+        "end": 16,
+        "confidence_entity": 0.9426068663597107,
+        "value": "주말에 갈만한 축제 뭐 있지?",
+        "extractor": "DIETClassifier"
+      }
+    ]
+  },
+  {
+    "text": "동대문구",
+    "entities": [
+      {
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "동대문구 콘서트 보고 싶어",
+    "entities": [
+      {
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "entity": "area"
+      },
+      {
+        "start": 5,
+        "end": 8,
+        "value": "콘서트",
+        "entity": "category"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 4,
+        "value": "동대문구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "category",
+        "start": 5,
+        "end": 8,
+        "value": "콘서트",
+        "extractor": "RegexEntityExtractor"
+      }
+    ]
+  },
+  {
+    "text": "종로구 쪽 뭐 있어?",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "종로구 축제 추천해줘",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "entity": "area"
+      },
+      {
+        "start": 4,
+        "end": 6,
+        "value": "축제",
+        "entity": "category"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "category",
+        "start": 4,
+        "end": 6,
+        "value": "축제",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "종로구",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  },
+  {
+    "text": "종로구 행사 알려줘",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "entity": "area"
+      }
+    ],
+    "predicted_entities": [
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      },
+      {
+        "entity": "area",
+        "start": 0,
+        "end": 3,
+        "value": "종로구",
+        "extractor": "RegexEntityExtractor",
+        "processors": [
+          "EntitySynonymMapper"
+        ]
+      }
+    ]
+  }
+]

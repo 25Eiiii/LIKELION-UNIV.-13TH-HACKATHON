@@ -89,6 +89,10 @@ responses:
   utter_ack:
     - text: "좋아요! 검색 중이에요…"
 
+  utter_default:
+    - text: "제가 잘 이해하지 못했어요. 지역/종류를 알려주시면 바로 추천해드려요!"
+
+
 actions:
   - action_determine_next_step
   - action_recommend_event

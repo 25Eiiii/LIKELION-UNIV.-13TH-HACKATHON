@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.sqlite3
+*.pyc
 
 # Django
 *.log
@@ -27,3 +28,10 @@ boogi-bot/.rasa/tmp/
 
 # Rasa trained models (자동 생성 파일)
 boogi-bot/models/
+
+# Rasa outputs
+*.png
+
+# models/*.tar.gz
+
+

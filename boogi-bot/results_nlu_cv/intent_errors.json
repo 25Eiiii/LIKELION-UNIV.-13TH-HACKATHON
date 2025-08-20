@@ -1,0 +1,146 @@
+[
+  {
+    "text": "축제 아니어도 괜찮아 뭐가 재밌어?",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.5853884220123291
+    }
+  },
+  {
+    "text": "영화 볼지 전시 볼지 고민이야 추천 부탁",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 1.0
+    }
+  },
+  {
+    "text": "축제 괜찮으면 그거로 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 1.0
+    }
+  },
+  {
+    "text": "콘서트 뭐 있어",
+    "intent": "inform_category",
+    "intent_prediction": {
+      "name": "ask_recommend",
+      "confidence": 0.999992847442627
+    }
+  },
+  {
+    "text": "동대문구에서 오늘 갈만한 곳",
+    "intent": "inform_area",
+    "intent_prediction": {
+      "name": "ask_recommend",
+      "confidence": 0.7733328342437744
+    }
+  },
+  {
+    "text": "영화 보고 싶어",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 1.0
+    }
+  },
+  {
+    "text": "문화생활 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9999988079071045
+    }
+  },
+  {
+    "text": "전체 지역 기준으로 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9909255504608154
+    }
+  },
+  {
+    "text": "클래식 생각 중인데 요즘 인기 어때?",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9999998807907104
+    }
+  },
+  {
+    "text": "추천 좀 해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9999994039535522
+    }
+  },
+  {
+    "text": "추천 리스트 보여줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_area",
+      "confidence": 0.9127623438835144
+    }
+  },
+  {
+    "text": "성북구 아니어도 상관없어 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_area",
+      "confidence": 0.9998899698257446
+    }
+  },
+  {
+    "text": "종로구까지 포함해서 뭐 볼까",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_area",
+      "confidence": 0.9999927282333374
+    }
+  },
+  {
+    "text": "주말에 갈만한 축제 뭐 있지?",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9999469518661499
+    }
+  },
+  {
+    "text": "오늘 뭐 하면 좋을까",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9758439064025879
+    }
+  },
+  {
+    "text": "인기 순으로 3개만 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 1.0
+    }
+  },
+  {
+    "text": "뭐 볼까?",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.9999997615814209
+    }
+  },
+  {
+    "text": "뮤지컬 볼까 말까 추천해줘",
+    "intent": "ask_recommend",
+    "intent_prediction": {
+      "name": "inform_category",
+      "confidence": 0.698499858379364
+    }
+  }
+]

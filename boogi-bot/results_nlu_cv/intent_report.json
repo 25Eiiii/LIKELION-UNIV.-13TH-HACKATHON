@@ -1,0 +1,49 @@
+{
+  "ask_recommend": {
+    "precision": 0.9622641509433962,
+    "recall": 0.7611940298507462,
+    "f1-score": 0.85,
+    "support": 67,
+    "confused_with": {
+      "inform_category": 13,
+      "inform_area": 3
+    }
+  },
+  "inform_area": {
+    "precision": 0.9117647058823529,
+    "recall": 0.96875,
+    "f1-score": 0.9393939393939394,
+    "support": 32,
+    "confused_with": {
+      "ask_recommend": 1
+    }
+  },
+  "inform_category": {
+    "precision": 0.6578947368421053,
+    "recall": 0.9615384615384616,
+    "f1-score": 0.78125,
+    "support": 26,
+    "confused_with": {
+      "ask_recommend": 1
+    }
+  },
+  "accuracy": 0.856,
+  "macro avg": {
+    "precision": 0.8439745312226181,
+    "recall": 0.8971608304630693,
+    "f1-score": 0.8568813131313132,
+    "support": 125
+  },
+  "weighted avg": {
+    "precision": 0.8860274548747007,
+    "recall": 0.856,
+    "f1-score": 0.8585848484848484,
+    "support": 125
+  },
+  "micro avg": {
+    "precision": 0.856,
+    "recall": 0.856,
+    "f1-score": 0.856,
+    "support": 125
+  }
+}
