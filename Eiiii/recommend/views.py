@@ -5,6 +5,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from .utils_meta import fetch_events_meta_preserve_order, to_items
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,6 +17,10 @@ from .serializers import RecommendedEventSerializer
 from recommend.algo import hybrid_recommend
 from details.models import CulturalEventLike
 from surveys.models import SurveyReview
+from surveys.models import SurveySubmission
+from .similar_from_anchor import similar_to_event_df
+
+import pandas as pd
 
 #메인화면
 class RecommendedEventsView(APIView):
@@ -288,3 +293,61 @@ class RecommendView(APIView):
         if debug == "1":
             payload["__debug"] = debug_info
         return Response(payload, status=200)
+
+#챗봇 추천
+
+def _nickname(user) -> str:
+    return (
+        getattr(user, "nickname", None)
+    )
+
+class SimilarFromLastParticipationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        nick = _nickname(user)
+        LIMIT = 3  # 고정 3개
+        explain = str(request.query_params.get("explain","")).lower() in ("1","true","y","yes")
+
+        last = (
+            SurveySubmission.objects
+            .filter(user=user)
+            .select_related("event")
+            .order_by("-submitted_at")
+            .first()
+        )
+
+        if last:
+            anchor = last.event
+            sim_df = similar_to_event_df(anchor.id, top_n=LIMIT, exclude_past=True, explain=explain)
+            if not sim_df.empty:
+                items = to_items(
+                    sim_df,
+                    "score",
+                    extra_cols=(["sim_anchor","same_area","same_fee","recency","matched_terms"] if explain else None)
+                )
+                return Response({
+                    "anchor_event": {"id": anchor.id, "title": anchor.title},
+                    "message": f"{nick}님 최근 참여하셨던 『{anchor.title}』와 비슷한 행사를 추천해드릴게요",
+                    "items": items
+                }, status=status.HTTP_200_OK)
+
+        # 폴백(하이브리드)
+        hyb = hybrid_recommend(user.id, top_n=LIMIT)
+        if hyb is None or hyb.empty:
+            return Response({
+                "anchor_event": None,
+                "message": f"{nick}님 아직 설문 인증 기록이 없어, 프로필/행동/협업 데이터를 바탕으로 추천했어요.",
+                "items": []
+            }, status=status.HTTP_200_OK)
+
+        ids = hyb["id"].astype(int).tolist()
+        meta = fetch_events_meta_preserve_order(ids)
+        merged = meta.merge(hyb[["id","title","score"]], on=["id","title"], how="left")
+        items = to_items(merged, "score")
+        return Response({
+            "anchor_event": None,
+            "message": f"{nick}님 아직 설문 인증 기록이 없어, 프로필/행동/협업 데이터를 바탕으로 추천했어요.",
+            "items": items
+        }, status=status.HTTP_200_OK)
