@@ -22,6 +22,16 @@ BASE_URL = os.getenv("RECO_BASE_URL", "http://127.0.0.1:8000")
 LOGIN_ENDPOINT  = "/api/recommend/chat"         # 로그인 전용
 PUBLIC_ENDPOINT = "/api/pbrecommend/public/"    # 비로그인 전용(팀원 개발 예정)
 
+
+# 엔드포인트 메서드 환경변수 (기본: 로그인=GET, 퍼블릭=GET)
+LOGIN_METHOD  = os.getenv("RECO_LOGIN_METHOD",  "GET").upper()
+PUBLIC_METHOD = os.getenv("RECO_PUBLIC_METHOD", "GET").upper()
+
+# 타임아웃/재시도도 env로 조절
+CONNECT_T = int(os.getenv("RECO_CONNECT_T", "3"))
+READ_T    = int(os.getenv("RECO_READ_T",    "60"))   # 45→60
+MAX_RETRY = int(os.getenv("RECO_MAX_RETRY", "1"))    # 2→1 (개발중 체감↑)
+
 # ===== 키워드 분기 =====
 NEARBY_KEYWORDS = ["근처", "가까운", "주변", "이번 주", "이번주"]
 THEME_KEYWORDS  = ["인기", "요즘", "주말", "가족", "가족이랑", "가족과"]
@@ -99,9 +109,6 @@ def _call_once(method: str, url: str, headers: Dict[str, str], params: Dict[str,
     return requests.get(url, params=params, headers=headers, timeout=(connect_s, read_s))
 
 def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any]) -> requests.Response:
-    CONNECT_T = 3
-    READ_T    = 45  # 
-    MAX_RETRY = 2
 
     def call_with_retries(m: str, target_url: str, target_headers: Dict[str, str], *, q: Dict[str, Any]) -> requests.Response:
         last_exc = None
@@ -131,11 +138,19 @@ def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str,
             if r2.ok or r2.status_code in (401, 403, 404):
                 r = r2
 
-    # 3) 401/403 → 퍼블릭 폴백 (동일 쿼리 유지)
+    # ✅ 405면 메서드 자동 전환(예: GET→POST 혹은 반대)
+    if r.status_code == 405:
+        alt_m = "POST" if method.upper() == "GET" else "GET"
+        logger.warning("405(Method Not Allowed) → %s로 재시도", alt_m)
+        r2 = call_with_retries(alt_m, url, headers, q=params)
+        if r2.ok or r2.status_code in (401, 403, 404, 405):
+            r = r2
+
+    # 401/403 퍼블릭 폴백(기존 그대로)
     if r.status_code in (401, 403):
         pub = f"{BASE_URL}{PUBLIC_ENDPOINT}"
         logger.warning("401/403 → 퍼블릭 폴백: %s", pub)
-        r = call_with_retries("GET", pub, {}, q=params)
+        r = call_with_retries(PUBLIC_METHOD, pub, {}, q=params)
 
     # 4) 최종 상태
     r.raise_for_status()
@@ -277,7 +292,7 @@ class ActionRecommendEvent(Action):
         # 이 턴에서 사용할 토큰은 "지역 변수"로 확보 (슬롯 반영 타이밍 이슈 회피)
         token = _get_token(tracker)
         url, headers, mode = _choose_endpoint_and_headers_from_token(token)
-        method = "GET"
+        method = LOGIN_METHOD if mode == "login" else PUBLIC_METHOD
 
         # 요청 파라미터
         params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
@@ -344,7 +359,7 @@ class ActionShowMore(Action):
         # 이 턴에서 사용할 토큰은 "지역 변수"로 확보
         token = _get_token(tracker)
         url, headers, mode = _choose_endpoint_and_headers_from_token(token)
-        method = "GET"
+        method = LOGIN_METHOD if mode == "login" else PUBLIC_METHOD
 
         params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
         if area:

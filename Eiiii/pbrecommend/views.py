@@ -18,7 +18,6 @@ class PublicRecommendView(APIView):
       - area: str (부분일치, guname|place)
       - category: str (부분일치, category|codename)
       - when: [today, week, weekend, upcoming7]
-      - is_free: '무료' | '유료' (문자열 필드)
       - sort: 'rgst_desc'(기본) | 'rgst_asc' | 'popular' | 'start_asc' | 'start_desc'
       - limit: int (기본 6, 1~50)
       - page: int (기본 1, 1 이상)
@@ -66,28 +65,6 @@ class PublicRecommendView(APIView):
             return qs.filter(end_date__gte=today)
         return qs.filter(end_date__gte=start, start_date__lte=end)
 
-    def _apply_is_free_text(self, qs, is_free_param: str):
-        """
-        is_free 문자열 필터: '무료' | '유료'
-        - 공백/대소문자/영문 동의어를 안전 처리('free'/'paid')
-        - 정확 매칭 우선, 필요 시 icontains 보조
-        """
-        if not is_free_param:
-            return qs
-
-        val = is_free_param.strip().lower()
-        FREE_KEYS = {"무료", "free"}
-        PAID_KEYS = {"유료", "paid"}
-
-        if val in FREE_KEYS:
-            # 정확 매칭 우선
-            return qs.filter(is_free="무료")
-        if val in PAID_KEYS:
-            return qs.filter(is_free="유료")
-
-        # 혹시 값이 비표준이면 관대한 부분일치(선택)
-        return qs.filter(is_free__icontains=is_free_param.strip())
-
     def _order_fields(self, sort: str):
         meta_fields = {f.name for f in CulturalEvent._meta.get_fields()}
         def rgst_desc(): return ["-rgst_date"] if "rgst_date" in meta_fields else ["-id"]
@@ -116,7 +93,6 @@ class PublicRecommendView(APIView):
         area = request.query_params.get("area")
         category = request.query_params.get("category")
         when = request.query_params.get("when")
-        is_free_param = request.query_params.get("is_free")
         sort = request.query_params.get("sort", "rgst_desc")
 
         # 지역/카테고리
@@ -130,23 +106,33 @@ class PublicRecommendView(APIView):
         # 날짜
         qs = self._apply_time_window(qs, when) if when else qs.filter(end_date__gte=timezone.localdate())
 
-        # 무료/유료 (문자열)
-        qs = self._apply_is_free_text(qs, is_free_param)
-
         # 정렬
         if sort == "popular":
             qs = qs.annotate(like_count=Count("liked_by")).order_by(*self._order_fields(sort))
         else:
             qs = qs.order_by(*self._order_fields(sort))
 
-        # 페이지네이션(page 기반)
+        # 페이지네이션(page 기반) + 마지막 페이지 병합(fold)
         limit, page, offset, error_resp = self._parse_page_pagination(request)
         if error_resp:
             return error_resp
 
         total = qs.count()
-        slice_qs = qs[offset:offset + limit]
 
+        end_nominal = offset + limit
+        has_more = end_nominal < total               # fold 이전 기준으로 has_more 결정
+        next_page = page + 1 if has_more else None
+
+        start = offset
+        end = end_nominal
+        if has_more:
+            remaining = total - end_nominal
+            if remaining < limit:
+                end = total  # 마지막 “찌꺼기”를 현재 페이지에 붙여줌
+        else:
+            end = min(end_nominal, total)
+
+        slice_qs = qs[start:end]
         data = PublicEventCardSerializer(slice_qs, many=True).data
 
         # 원시 날짜 포함
@@ -157,16 +143,15 @@ class PublicRecommendView(APIView):
                 item.setdefault("start_date_raw", obj.start_date)
                 item.setdefault("end_date_raw", obj.end_date)
 
-        has_more = (page * limit) < total
-        next_page = page + 1 if has_more else None
-
         resp = {
             "results": data,
             "total": total,
             "limit": limit,
             "page": page,
-            "next_page": next_page,
             "has_more": has_more,
-            "meta": {"sort": sort, "when": when, "is_free": is_free_param},
+            "next_page": next_page,
+            "next": next_page,        # 클라이언트 호환 키
+            "returned": len(data),    # 디버깅용
+            "meta": {"sort": sort, "when": when},
         }
         return Response(resp, status=status.HTTP_200_OK)

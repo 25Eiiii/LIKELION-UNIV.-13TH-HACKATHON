@@ -1,91 +1,73 @@
-#### This file contains tests to evaluate that your bot behaves as expected.
-#### If you want to learn more, please see the docs: https://rasa.com/docs/rasa/testing-your-assistant
-
+version: "3.1"
 stories:
-- story: happy path 1
+# 1) 추천 요청 → 다음 스텝 결정 → (액션 내부에서 질문 발화) → listen
+- story: ask → determine (internal ask_area)
   steps:
-  - user: |
-      hello there!
-    intent: greet
-  - action: utter_greet
-  - user: |
-      amazing
-    intent: mood_great
-  - action: utter_happy
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
 
-- story: happy path 2
+# 2) 지역만 주면 추천 실행 (내부에서 카테고리 물을 수 있음)
+- story: inform area → recommend
   steps:
-  - user: |
-      hello there!
-    intent: greet
-  - action: utter_greet
-  - user: |
-      amazing
-    intent: mood_great
-  - action: utter_happy
-  - user: |
-      bye-bye!
-    intent: goodbye
-  - action: utter_goodbye
+    - intent: inform_area
+      entities:
+        - area: 성북구
+    - action: action_recommend_event
 
-- story: sad path 1
+# 3) 카테고리만 주면 추천 실행 (내부에서 지역 물을 수 있음)
+- story: inform category → recommend
   steps:
-  - user: |
-      hello
-    intent: greet
-  - action: utter_greet
-  - user: |
-      not good
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      yes
-    intent: affirm
-  - action: utter_happy
+    - intent: inform_category
+      entities:
+        - category: 전시/미술
+    - action: action_recommend_event
 
-- story: sad path 2
+# 4) 지역+카테고리 한 번에 → 추천
+- story: area & category in one turn → recommend
   steps:
-  - user: |
-      hello
-    intent: greet
-  - action: utter_greet
-  - user: |
-      not good
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      not really
-    intent: deny
-  - action: utter_goodbye
+    - intent: inform_category
+      entities:
+        - area: 종로구
+        - category: 콘서트
+    - action: action_recommend_event
 
-- story: sad path 3
+# 5) ask → determine → area → recommend → 더 보기(명시)
+- story: ask → area → recommend → show more
   steps:
-  - user: |
-      hi
-    intent: greet
-  - action: utter_greet
-  - user: |
-      very terrible
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      no
-    intent: deny
-  - action: utter_goodbye
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
+    - intent: inform_area
+      entities:
+        - area: 동대문구
+    - action: action_recommend_event
+    - intent: show_more
+    - action: action_show_more
 
-- story: say goodbye
+# 6) ask → determine → category → recommend → 더 보기 2회(명시)
+- story: ask → category → recommend → show more x2
   steps:
-  - user: |
-      bye-bye!
-    intent: goodbye
-  - action: utter_goodbye
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
+    - intent: inform_category
+      entities:
+        - category: 영화
+    - action: action_recommend_event
+    - intent: show_more
+    - action: action_show_more
+    - intent: show_more
+    - action: action_show_more
 
-- story: bot challenge
+# 7) 더 보기 단독(명시)
+- story: show more (explicit)
   steps:
-  - user: |
-      are you a bot?
-    intent: bot_challenge
-  - action: utter_iamabot
+    - intent: show_more
+    - action: action_show_more
+
+# 8) 거절 → listen
+- story: deny → listen
+  steps:
+    - intent: deny
+    - action: action_listen
