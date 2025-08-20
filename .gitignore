@@ -28,7 +28,6 @@ boogi-bot/.rasa/tmp/
 
 # Rasa trained models (자동 생성 파일)
 boogi-bot/models/
-boogi-bot/tests/
 
 # Rasa outputs
 *.png
