@@ -28,7 +28,7 @@ pipeline:
 
   # 5) 분류기 (인텐트+엔티티 동시)
   - name: DIETClassifier
-    epochs: 120                  # 약간 상향(데이터 적을수록 epochs↑가 유리)
+    epochs: 170                  # 약간 상향(데이터 적을수록 epochs↑가 유리)
     learning_rate: 0.001
     constrain_similarities: true
     random_seed: 42              # 재현성
@@ -39,7 +39,7 @@ pipeline:
 
   # 7) NLU 폴백 (모호/낮은 확신 처리)
   - name: FallbackClassifier
-    threshold: 0.35              # 기존 0.4 → 약간 완화 (한국어 짧은 입력 안전)
+    threshold: 0.30              # 기존 0.4 → 약간 완화 (한국어 짧은 입력 안전)
     ambiguity_threshold: 0.05    # 모호도 임계조정
 
 policies:
