@@ -20,11 +20,16 @@ nlu:
     - 주말에 갈만한 축제 뭐 있지?
     - 가까운 곳에서 열리는 무료 공연 추천해줘
     - 가족이랑 가기 좋은 문화 행사 있을까?
-    # 컨텍스트(동시 인식 강화)
-    - [성북구](area) [전시/미술](category) 추천해줘
-    - [강북구](area) 이번 주 [축제](category) 뭐 있어?
-    - [종로구](area) [뮤지컬](category) 볼만한 거
-    - [동대문구](area) [콘서트](category) 추천
+    - 뭐 볼까?
+    - 지금 갈만한 거 추천해줘
+    - 오늘 뭐 하면 좋을까
+    - 문화생활 추천해줘
+    - 볼만한 행사 있어?
+    - 추천 좀 해줘
+    - 새로운 거 없을까
+    - 이달에 할만한 거 뭐야
+    - 쉬운 코스 추천해줘
+    - 가까운 데 말고 전체로 추천해줘
 
 - intent: inform_category
   examples: |
@@ -40,10 +45,15 @@ nlu:
     - [연극](category)
     - [콘서트](category)
     - [클래식](category)
-    # 컨텍스트
     - [성북구](area) [전시/미술](category) 뭐 있어?
     - [종로구](area) [축제](category) 추천해줘
     - [동대문구](area) [콘서트](category) 보고 싶어
+    - [전시/미술](category) 뭐 있어?
+    - [축제](category) 알려줘
+    - [영화](category) 볼래
+    - [클래식](category) 추천
+    - [뮤지컬/오페라](category) 보고 싶어
+    - [콘서트](category) 추천해줘
 
 - intent: inform_area
   examples: |
@@ -51,9 +61,14 @@ nlu:
     - [종로구](area)
     - [강북구](area)
     - [동대문구](area)
-    # 컨텍스트
     - [성북구](area)로 보여줘
     - [종로구](area) 행사 알려줘
+    - [성북구](area) 근처로 찾아줘
+    - [성북구](area) 주변 행사
+    - [성북구](area)에서 하는 거
+    - [종로구](area) 쪽 뭐 있어?
+    - [강북구](area)에 있는 전시
+    - [동대문구](area) 근처 추천
 
 - intent: affirm
   examples: |
@@ -119,3 +134,7 @@ nlu:
   examples: |
     - 독주회
     - 독창회
+
+- regex: area
+  examples: |
+    - (성북구|종로구|강북구|동대문구)(?:에서|에|로|쪽|\s*근처|\s*주변)?

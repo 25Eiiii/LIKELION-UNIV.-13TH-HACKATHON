@@ -1,0 +1,29 @@
+version: "3.1"
+stories:
+- story: E2E 근처 전시 (지역 먼저 → 카테고리 묻기 → 추천)
+  steps:
+    - user: |
+        근처 전시 뭐 있어?
+      intent: ask_recommend
+    - action: action_determine_next_step
+    - action: utter_ask_area
+
+    - user: |
+        /inform_area{"area":"종로구"}
+      intent: inform_area
+      entities:
+        - area: 종로구
+    - action: action_recommend_event
+    - action: utter_ask_category     # ← 실제 코드가 이렇게 동작함 (area만 있으면 카테고리 먼저 묻기)
+
+    - user: |
+        /inform_category{"category":"전시/미술"}
+      intent: inform_category
+      entities:
+        - category: 전시/미술
+    - action: action_recommend_event  # ← 이제 추천 호출
+
+    - user: |
+        더보기
+      intent: show_more
+    - action: action_show_more
