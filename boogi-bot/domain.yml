@@ -50,41 +50,41 @@ responses:
     - text: "어느 지역을 원하세요? 아래에서 골라주세요."
       buttons:
         - title: "성북구"
-          payload: '/inform_area{"area":"성북구"}'
+          payload: '/inform_area{{"area":"성북구"}}'
         - title: "종로구"
-          payload: '/inform_area{"area":"종로구"}'
+          payload: '/inform_area{{"area":"종로구"}}'
         - title: "강북구"
-          payload: '/inform_area{"area":"강북구"}'
+          payload: '/inform_area{{"area":"강북구"}}'
         - title: "동대문구"
-          payload: '/inform_area{"area":"동대문구"}'
+          payload: '/inform_area{{"area":"동대문구"}}'
 
   utter_ask_category:
     - text: "어떤 종류가 좋으세요? 아래에서 골라주세요."
       buttons:
         - title: "영화"
-          payload: '/inform_category{"category":"영화"}'
+          payload: '/inform_category{{"category":"영화"}}'
         - title: "전시/미술"
-          payload: '/inform_category{"category":"전시/미술"}'
+          payload: '/inform_category{{"category":"전시/미술"}}'
         - title: "교육/체험"
-          payload: '/inform_category{"category":"교육/체험"}'
+          payload: '/inform_category{{"category":"교육/체험"}}'
         - title: "축제"
-          payload: '/inform_category{"category":"축제"}'
+          payload: '/inform_category{{"category":"축제"}}'
         - title: "기타"
-          payload: '/inform_category{"category":"기타"}'
+          payload: '/inform_category{{"category":"기타"}}'
         - title: "국악"
-          payload: '/inform_category{"category":"국악"}'
+          payload: '/inform_category{{"category":"국악"}}'
         - title: "독주/독창회"
-          payload: '/inform_category{"category":"독주/독창회"}'
+          payload: '/inform_category{{"category":"독주/독창회"}}'
         - title: "무용"
-          payload: '/inform_category{"category":"무용"}'
+          payload: '/inform_category{{"category":"무용"}}'
         - title: "뮤지컬/오페라"
-          payload: '/inform_category{"category":"뮤지컬/오페라"}'
+          payload: '/inform_category{{"category":"뮤지컬/오페라"}}'
         - title: "연극"
-          payload: '/inform_category{"category":"연극"}'
+          payload: '/inform_category{{"category":"연극"}}'
         - title: "콘서트"
-          payload: '/inform_category{"category":"콘서트"}'
+          payload: '/inform_category{{"category":"콘서트"}}'
         - title: "클래식"
-          payload: '/inform_category{"category":"클래식"}'
+          payload: '/inform_category{{"category":"클래식"}}'
 
   utter_ack:
     - text: "좋아요! 검색 중이에요…"

@@ -30,9 +30,6 @@ boogi-bot/.rasa/tmp/
 boogi-bot/models/
 
 # Rasa outputs
-results_*/
 *.png
-*.dot
-*.md.html
 
 # models/*.tar.gz
