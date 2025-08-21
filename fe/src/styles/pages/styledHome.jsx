@@ -23,19 +23,46 @@ export const Header = styled.div`
   }
 `;
 
-export const Search = styled.div`
+export const SearchBox = styled.div`
+display: flex;
+align-items: center;
+gap: 13px;
+color: #9A9A9A;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+padding-top: 5px;
 width: 349px;
-height: 50px;
+height: 39px;
 flex-shrink: 0;
 border-radius: 16px;
 background: #FFF;
 box-shadow: 0 1px 7px 0 rgba(0, 0, 0, 0.20);
-display: flex;
-align-items: center;
-    img {
-    margin-left:  20px;
-    }
-`
+`;
+
+export const Search = styled.input`
+width: 150px;
+height: 40px;
+outline: none;
+border: none;
+color: #2C2C2C;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+
+::placeholder{
+color: #9A9A9A;
+font-family: Pretendard;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+};
+`;
 export const EntireWrapper = styled.div`
 background: #fff;
 height: 508px;

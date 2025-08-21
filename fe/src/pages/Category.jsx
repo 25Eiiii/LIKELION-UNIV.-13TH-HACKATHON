@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams} from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import * as C from "../styles/pages/styledCategory";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
@@ -15,31 +15,35 @@ const Category = () => {
     { label: "음악/콘서트", query: "음악/콘서트" },
     { label: "기타", query: "기타" },
   ];
-  
-  const [searchParams,setSearchParams] = useSearchParams();
-  const initialCategory = searchParams.get("category");
-  const initialSelected = categoryList.find(item=>item.label===initialCategory) || categoryList[0];
-  const [isSelected, setIsSelected] = useState(initialSelected);
-  const [search, setSearch] = useState("");
-  const [data, setData] = useState();
+
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
 
-  useEffect(() => {
-    if (isSelected) {
-      SearchCategory();
-    }
-  }, [isSelected]);
+  const initialCategory = categoryList.find(
+    (item) => item.label === searchParams.get("category")
+  ) || categoryList[0];
 
-  const SearchCategory = async () => {
+  const [isSelected, setIsSelected] = useState(initialCategory);
+  const [search, setSearch] = useState(searchQuery);
+  const [data, setData] = useState([]);
+
+  const fetchData = async () => {
     try {
-      const categoryQuery = isSelected.query;
-      const url = categoryQuery ? `/api/events/events-category/?category=${categoryQuery}&search=${search}` : `/api/events/events-category/?search=${search}`
+      const url = `/api/events/events-category/?search=${encodeURIComponent(
+        search
+      )}`;
       const response = await axios.get(url);
-      setData(response.data);
+      setData(response.data.results || []);
     } catch (error) {
-      console.log(error.response.data);
+      console.error(error.response?.data || error);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [searchQuery]); // URL search 파라미터가 바뀌면 다시 호출
+
   return (
     <>
       <Container>
@@ -64,21 +68,24 @@ const Category = () => {
             <C.Search
               placeholder="Search"
               value={search}
+              onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  SearchCategory();
+                  // URL 갱신 → useEffect에서 fetchData 호출됨
+                  setSearchParams({ search });
                 }
               }}
-              onChange={(e) => setSearch(e.target.value)}
             />
           </C.SearchBox>
+
           <C.AllCategory>
             {categoryList.map((item) => (
               <C.CategoryItem
+                key={item.label}
                 onClick={() => {
                   setIsSelected(item);
-                  setSearchParams({category: item.label});
+                  setSearchParams({ search }); // 현재 검색어 유지
                 }}
               >
                 {item.label}
@@ -86,14 +93,15 @@ const Category = () => {
                   style={{
                     visibility: isSelected.query === item.query ? "visible" : "hidden",
                   }}
-                ></C.MiniLine>
+                />
               </C.CategoryItem>
             ))}
           </C.AllCategory>
-          <C.Line></C.Line>
+          <C.Line />
 
-          {data?.results?.map((item) => (
-            <C.ItemBox onClick={()=>navigate(`/detailInfo/${item.id}`)}>
+          {data.length === 0 && <p style={{ marginLeft: 20 }}>로딩 중..</p>}
+          {data.map((item) => (
+            <C.ItemBox key={item.id} onClick={() => navigate(`/detailInfo/${item.id}`)}>
               <C.ItemImg src={item.main_img} />
               <C.TextBox>
                 <C.TypeBox>
@@ -106,11 +114,12 @@ const Category = () => {
               </C.TextBox>
             </C.ItemBox>
           ))}
-          <C.Box></C.Box>
+          <C.Box />
         </C.InnerWrapper>
       </Container>
-      <NavBar></NavBar>
+      <NavBar />
     </>
   );
 };
+
 export default Category;

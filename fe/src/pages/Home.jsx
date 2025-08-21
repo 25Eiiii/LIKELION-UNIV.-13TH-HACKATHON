@@ -7,6 +7,9 @@ import EventCardS from "../components/EventCardS";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/useAuthStore";
 import { useTopEvents, useTop3Monthly } from "../hooks/useRec";
+import { useState } from "react";
+import axios from "axios";
+
 
 const categories = [
   { label: "무대 / 공연", image: "concert.svg" },
@@ -19,10 +22,18 @@ const categories = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
   const { data: events = [], isLoading, error } = useTopEvents(10);
   const { data: top3 = [], isLoading: loadingTop3, error: errorTop3 } = useTop3Monthly();
   const nickname = useAuthStore((s) => s.nickname);
+
+  const [search, setSearch] = useState("");
+
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const SearchCategory = () => {
+    // 검색어를 쿼리스트링으로 전달해서 Category 페이지로 이동
+    navigate(`/category?search=${encodeURIComponent(search)}`);
+  };
 
   return (
     <>
@@ -44,10 +55,25 @@ const Home = () => {
         </H.Header>
 
         <H.EntireWrapper>
-          <H.Search>
-            <img src={`${process.env.PUBLIC_URL}/images/search.svg`} alt="search" />
-          </H.Search>
-
+          <H.SearchBox>
+            <img
+              src={`${process.env.PUBLIC_URL}/images/categorysearch.svg`}
+              alt="search"
+              width="24px"
+              style={{ marginLeft: "21px" }}
+            />
+            <H.Search
+              placeholder="Search"
+              value={search}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  SearchCategory();
+                }
+              }}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </H.SearchBox>
           <H.CategoryWrapper>
             <H.Question>어떤 문화 활동을 찾고 계신가요?</H.Question>
             <H.Categories>
