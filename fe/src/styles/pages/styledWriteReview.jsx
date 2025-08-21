@@ -1,8 +1,8 @@
 import { styled } from "styled-components"
 
-/* 헤더: 가운데 제목 + 좌측 백버튼 (sticky 옵션) */
+
 export const Header = styled.header`
-  position: sticky;      /* 스크롤해도 상단 고정 원하면 sticky, 아니면 relative */
+  position: sticky;      
   top: 0;
   z-index: 10;
   background: #282f56;
@@ -10,9 +10,9 @@ width: 428px;
 height: 41px;
   display: flex;
   align-items: center;
-  min-height: 56px;      /* 고정 height 대신 min-height로 유연하게 */
+  min-height: 56px;    
   padding: 12px 16px 8px;
-  /* 가운데 제목 */
+
   p {
     position: absolute;
     left: 50%;
@@ -36,18 +36,18 @@ display: flex;
 align-items: center;
 `;
 
-/* 본문: 스크롤 영역 */
+
 export const Content = styled.main`
   flex: 1 1 auto;
-  overflow-y: auto;      /* ✅ 여기서 스크롤 발생 */
+  overflow-y: auto;      
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
 
-  /* 내부 컨텐츠 가로 여백 */
+
   padding: 16px 16px 24px;
-  background: #f7f7fa;   /* 필요시 화면 대비용 */
+  background: #f7f7fa;   
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
 `;
