@@ -1,5 +1,6 @@
 // src/hooks/useTopEvents.js
 import { useQuery } from "@tanstack/react-query";
+import useAuthStore from "../store/useAuthStore";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 const authHeaders = () => {
@@ -42,12 +43,23 @@ export function useTopEvents(topN = 3) {
 
 // 월간 Top3
 export function useTop3Monthly() {
+  const token = useAuthStore((s) => s.token);
+
   async function fetchTop3() {
-    const url = new URL("/api/top3/monthly/", API_BASE);
+    const url = token
+    ? `${API_BASE}/api/top3/monthly/`
+    : `/api/top3/public`
+    ;
+
+    const headers = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
+
     const res = await fetch(url, { headers: authHeaders() });
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    console.log("🔍 Top3 raw response:", json);   // ✅ 응답 원본 확인
+
     return Array.isArray(json) ? json : json?.results || [];
   }
   return useQuery({ queryKey: ["top3-monthly"], queryFn: fetchTop3 });
