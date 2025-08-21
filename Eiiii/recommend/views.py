@@ -22,6 +22,9 @@ from .similar_from_anchor import similar_to_event_df
 
 import pandas as pd
 
+from django.core.cache import cache
+from django.core.paginator import Paginator
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 메인화면 (그리드용 추천 목록) — 기존 형식 유지
 # ─────────────────────────────────────────────────────────────────────────────
@@ -198,6 +201,9 @@ def _format_date(ev):
 class RecommendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    CACHE_TTL_SEC = 600            # 캐시 유지 시간
+    CACHE_VER     = "v1"          # 캐시 키 버전(구조 바뀔 때만 올리면 됨)
+
     def get(self, request):
         user = request.user
         # === query ===
@@ -210,16 +216,21 @@ class RecommendView(APIView):
         limit = max(1, min(limit, 50))
         page  = max(1, page)
 
-        area     = request.GET.get("area")        # 예: 성북구
-        category = request.GET.get("category")    # 예: 전시/미술
-        debug    = request.GET.get("__debug")     # "1"이면 디버그 정보 포함
-        force    = request.GET.get("__force")     # "filter"면 필터 우선 강제
-        # 선택: top_n 오버라이드(있으면 사용)
+        area       = request.GET.get("area")        # 예: 성북구
+        category   = request.GET.get("category")    # 예: 전시/미술
+        debug      = request.GET.get("__debug")     # "1"이면 디버그 정보 포함
+        force      = request.GET.get("__force")     # "filter"면 필터 우선 강제
         user_top_n = int(request.GET.get("top_n", 0) or 0)
+        cand_limit = int(request.GET.get("cand_limit", 5000))  # 후보군 상한(필요 시 조절)
+        bust       = request.GET.get("__bust")      # 캐시 무시하고 강제 재계산(옵션)
 
-        debug_info = {"area": area, "category": category, "limit": limit, "page": page}
+        debug_info = {
+            "area": area, "category": category,
+            "limit": limit, "page": page,
+            "cand_limit": cand_limit,
+        }
 
-        # === 0) filter-only 강제 모드(문제 분리) ===
+        # === 0) filter-only 강제 모드(문제 분리용) ===
         if force == "filter":
             qs = CulturalEvent.objects.all()
             if area:
@@ -247,11 +258,11 @@ class RecommendView(APIView):
                 "total": paginator.count,
                 "limit": limit,
                 "page": page,
-                "has_more": has_more,       # alias
-                "has_next": has_more,       # alias(기존 클라 호환)
-                "next_page": next_page,     # 사람 친화
-                "next": next_page,          # Rasa 액션 호환 키 (data.get("next"))
-                "returned": len(results),   # 디버깅 편의
+                "has_more": has_more,
+                "has_next": has_more,
+                "next_page": next_page,
+                "next": next_page,
+                "returned": len(results),
             }
             if debug == "1":
                 payload["__debug"] = {
@@ -260,75 +271,128 @@ class RecommendView(APIView):
                     "db_total": CulturalEvent.objects.count(),
                     "filtered_total": paginator.count,
                 }
+            # 스크롤 중 캐시 만료 연장 (캐시 키가 있을 때만)
+            if not bust and ids_ordered is not None:
+                try:
+                    cache.touch(cache_key, self.CACHE_TTL_SEC)
+                except Exception:
+                    # 일부 백엔드/버전에선 touch 미지원일 수 있으니, 안전하게 무시
+                    pass                
+            
             return Response(payload, status=200)
 
-        # === 1) 추천 풀 ===
-        # 현재 페이지를 충분히 커버하도록 풀을 크게 + 최소 300 보장 + 사용자가 주면 그 값도 반영
-        TOP_POOL = max(300, limit * max(page, 1) * 10, user_top_n or 0)
-        try:
-            rec_df = hybrid_recommend(user_id=user.id, top_n=TOP_POOL, return_components=False)
-        except Exception as e:
-            rec_df = None
-            debug_info["hybrid_error"] = str(e)
-
-        ids_ordered = rec_df["id"].dropna().astype(int).tolist() if (rec_df is not None and not rec_df.empty) else []
-        debug_info["rec_ids_len"] = len(ids_ordered)
-
-        # === 2) 교집합(추천풀 ∩ 필터) ===
-        qs = CulturalEvent.objects.filter(id__in=ids_ordered) if ids_ordered else CulturalEvent.objects.none()
+        # === 1) 후보군 id 먼저(필터 적용 후 상한) ===
+        fq = CulturalEvent.objects.all().only("id")
         if area:
-            qs = qs.filter(Q(guname__icontains=area) | Q(place__icontains=area))
+            fq = fq.filter(Q(guname__icontains=area) | Q(place__icontains=area))
         if category:
-            qs = qs.filter(Q(category__icontains=category) | Q(codename__icontains=category))
+            fq = fq.filter(Q(category__icontains=category) | Q(codename__icontains=category))
 
-        inter_count = qs.count()
-        debug_info["intersection_count"] = inter_count
-        debug_info["db_total"] = CulturalEvent.objects.count()
+        candidate_ids = list(fq.values_list("id", flat=True)[:cand_limit])
+        debug_info["candidate_total"] = len(candidate_ids)
 
-        # 추천 순서 유지
-        if ids_ordered and inter_count > 0:
-            order_map = {eid: pos for pos, eid in enumerate(ids_ordered)}
-            when_list = [When(pk=eid, then=order_map.get(eid, len(ids_ordered))) for eid in qs.values_list("id", flat=True)]
-            qs = qs.annotate(_order=Case(*when_list, output_field=IntegerField())).order_by("_order")
+        # === 2) 캐시 키 구성
+        cache_key = f"chatrec:{self.CACHE_VER}:{user.id}:{area or '-'}:{category or '-'}"
+        ids_ordered = None if bust else cache.get(cache_key)
+        debug_info["cache"] = "hit" if ids_ordered is not None else "miss"
 
-        # === 3) 폴백: 교집합 0이면 필터만으로 채우기 ===
-        if inter_count == 0:
-            fb = CulturalEvent.objects.all()
-            if area:
-                fb = fb.filter(Q(guname__icontains=area) | Q(place__icontains=area))
-            if category:
-                fb = fb.filter(Q(category__icontains=category) | Q(codename__icontains=category))
-            fb = fb.order_by("-start_date", "-rgst_date", "-id")
-            qs = fb
-            debug_info["fallback_total"] = qs.count()
+        # === 3) 캐시 미스면 추천 계산 → 정렬된 ID 배열로 캐시
+        if ids_ordered is None:
+            TOP_POOL = max(300, limit * max(page, 1) * 10, user_top_n or 0, min(len(candidate_ids), cand_limit))
+            rec_df = None
+            try:
+                rec_df = hybrid_recommend(
+                    user_id=user.id,
+                    top_n=TOP_POOL,
+                    weights=(0.3, 0.4, 0.3),   # fast_mode=True면 CF는 내부에서 0으로 처리 또는 캐시 있으면만 반영
+                    return_components=False,
+                    candidate_ids=candidate_ids,  # 후보군만 스코어링
+                    fast_mode=True,               # 즉시 응답용(캐시된 CF 없으면 자동 스킵)
+                )
+            except Exception as e:
+                debug_info["hybrid_error"] = str(e)
 
-        # === 4) 페이지네이션 & 응답 ===
-        paginator = Paginator(qs, limit)
-        page_obj = paginator.get_page(page)
+            ids_ordered = (
+                rec_df["id"].dropna().astype(int).tolist()
+                if (rec_df is not None and not rec_df.empty) else []
+            )
+            debug_info["rec_ids_len"] = len(ids_ordered)
+
+            # 폴백: 추천 비었으면 후보군 최신순으로 정렬된 ID 생성
+            if not ids_ordered:
+                fb_qs = CulturalEvent.objects.filter(id__in=candidate_ids) if candidate_ids else CulturalEvent.objects.none()
+                fb_ids = list(
+                    fb_qs.order_by("-start_date", "-rgst_date", "-id")
+                         .values_list("id", flat=True)[:cand_limit]
+                )
+                ids_ordered = fb_ids
+                debug_info["fallback_total"] = len(fb_ids)
+
+            # 캐시 저장
+            cache.set(cache_key, ids_ordered, self.CACHE_TTL_SEC)
+
+        # === 4) 페이지 슬라이스(IDs 기반) ===
+        total = len(ids_ordered)
+        start = (page - 1) * limit
+        end   = start + limit + 1  # +1로 has_more 판단
+        if start >= total:
+            # 범위를 벗어난 요청이면 빈 결과 반환
+            payload = {
+                "results": [],
+                "total": total,
+                "limit": limit,
+                "page": page,
+                "has_more": False,
+                "has_next": False,
+                "next_page": None,
+                "next": None,
+                "returned": 0,
+            }
+            if debug == "1":
+                payload["__debug"] = {**debug_info, "mode": "hybrid-fast", "slice": [start, end]}
+            return Response(payload, status=200)
+
+        page_ids = ids_ordered[start:end]
+        has_more = len(page_ids) > limit
+        page_ids = page_ids[:limit]
+
+        # === 5) 해당 페이지 ID들만 DB에서 순서 보존 조회 ===
+        preserved = Case(
+            *[When(id=pk, then=pos) for pos, pk in enumerate(page_ids)],
+            output_field=IntegerField(),
+        )
+        qs = (CulturalEvent.objects
+              .filter(id__in=page_ids)
+              .only("id", "title", "place", "hmpg_addr", "start_date", "end_date", "rgst_date")
+              .order_by(preserved))
+
         results = [{
             "id": ev.id,
             "title": ev.title or "제목 없음",
             "place": ev.place or "장소 미정",
             "date": _format_date(ev),
             "url": ev.hmpg_addr or None,
-        } for ev in page_obj.object_list]
+        } for ev in qs]
 
-        has_more  = page_obj.has_next()
         next_page = (page + 1) if has_more else None
 
         payload = {
             "results": results,
-            "total": paginator.count,
+            "total": total,
             "limit": limit,
             "page": page,
-            "has_more": has_more,       # alias
-            "has_next": has_more,       # alias(기존 클라 호환)
-            "next_page": next_page,     # 사람 친화
-            "next": next_page,          # Rasa 액션 호환 키 (data.get("next"))
-            "returned": len(results),   # 디버깅 편의
+            "has_more": has_more,
+            "has_next": has_more,
+            "next_page": next_page,
+            "next": next_page,
+            "returned": len(results),
         }
         if debug == "1":
-            payload["__debug"] = debug_info
+            payload["__debug"] = {
+                **debug_info,
+                "mode": "hybrid-fast",
+                "slice": [start, end],
+            }
         return Response(payload, status=200)
 
 #챗봇 추천
