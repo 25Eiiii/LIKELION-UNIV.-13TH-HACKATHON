@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+from celery.schedules import crontab
 
 load_dotenv()
 KAKAO_API_KEY = os.environ.get("KAKAO_API_KEY")
@@ -58,7 +59,7 @@ INSTALLED_APPS = [
     'profiles',#관심사 입력
     'surveys',#설문폼
     'point',#포인트
-    'recommend',#추천로직
+    'recommend.apps.RecommendConfig',#추천로직
     'top3',#top3 조회
     'chatbot', #챗봇
     'pbrecommend' #비로그인 챗봇 추천
@@ -189,3 +190,16 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    }
+}
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
