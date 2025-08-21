@@ -81,6 +81,7 @@ display: flex;
 align-items:  center;
 padding-left: 15px;
 padding-right: 70px;
+cursor: pointer;
 `
 
 export const Recommend = styled.div`
@@ -102,7 +103,6 @@ line-height: normal;
 
 export const RecList = styled.div`
 display: flex;
-gap: 36px;
 `
 export const SendWrapper = styled.div`
 width: 428px;

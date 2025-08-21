@@ -21,6 +21,7 @@ venv/
 node_modules
 rasaenv/
 myvenv311/
+rasa_env/
 
 # Rasa cache & temp
 boogi-bot/.rasa/cache/
