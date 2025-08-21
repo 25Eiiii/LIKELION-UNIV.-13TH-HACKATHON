@@ -46,7 +46,7 @@ function App() {
         <Route path='/likes' element={<Likes/>}/>
         <Route path='/survey/:id' element={<Survey/>}/>
         <Route path='/verify' element={<Verify/>}/>
-        <Route path="/reviews/new" element={<WriteReview />} />
+        <Route path="/write-review/:event_id" element={<WriteReview />} />
       </Routes>
     </BrowserRouter>
   );

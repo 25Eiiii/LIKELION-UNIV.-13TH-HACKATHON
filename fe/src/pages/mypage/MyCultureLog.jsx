@@ -16,18 +16,6 @@ const MyCultureLog = () => {
 
   const hasReview = (ev) => reviewedByTitle.has(normalize(ev.title));
 
-  const handleWrite = (ev) => {
-    const params = new URLSearchParams({
-      ...(ev.id ? { eventId: String(ev.id) } : { ek: ev.eventKey || "" }),
-      title: ev.title ?? "",
-      img: ev.main_img ?? "",
-      sd: ev.start_date ?? "",
-      ed: ev.end_date ?? "",
-      place: ev.place ?? "",
-    });
-    nav(`/reviews/new?${params.toString()}`);
-  };
-
   if (isLoading) return <Wrapper>불러오는 중</Wrapper>;
   if (isError) return <Wrapper>오류 발생</Wrapper>;
   if (!events.length) return <Wrapper>표시할 행사가 없습니다.</Wrapper>;
@@ -55,7 +43,7 @@ const MyCultureLog = () => {
               $done={done}
               disabled={done}
               aria-disabled={done}
-              onClick={() => !done && handleWrite(event)}
+              onClick={() => !done && nav(`/write-review/${event.event_id}`, { state: event })}
             >
               {done ? "후기 작성완료" : "후기 작성하기"}
             </ReviewBtn>

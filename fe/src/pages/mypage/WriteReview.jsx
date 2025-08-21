@@ -1,20 +1,21 @@
-import React, { useMemo, useState } from "react";
-import styled from "styled-components";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Container } from "../../styles/common/styledContainer";
 import * as W from "../../styles/pages/styledWriteReview"
 import useAuthStore from "../../store/useAuthStore";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 const MAX_LEN = 600;
 
 const WriteReview = () => {
-  const [sp] = useSearchParams();
+  const { event_id } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  console.log("token:",token)
+
+  const user = useAuthStore((s) => s.user);
 
   const [content, setContent] = useState("");
   const [extra, setExtra] = useState("");
@@ -23,10 +24,23 @@ const WriteReview = () => {
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState(false);
 
+  const { state } = useLocation();
+  const [eventInfo, setEventInfo] = useState({ title: "", main_img: " "});
+
   const contentError = useMemo(
     () => touched && content.trim().length === 0,
     [touched, content]
   );
+
+  useEffect(() => {
+    console.log("event_id:", event_id)
+    if (state) {
+      setEventInfo({
+        title: state.title,
+        main_img: state.main_img,
+      });
+    }
+  }, [state, event_id]);
 
   const onSelectPhoto = (e) => {
     const f = e.target.files?.[0];
@@ -37,8 +51,9 @@ const WriteReview = () => {
     setTouched(true);
     if (content.trim().length === 0) return;
 
+    console.log(event_id)
     const fd = new FormData();
-    
+    fd.append("event_id", event_id);
     fd.append("content", content.trim());
     if (extra.trim()) fd.append("extra_feedback", extra.trim());
     if (rating > 0) fd.append("rating", String(rating));
@@ -46,14 +61,14 @@ const WriteReview = () => {
 
     try {
       setSubmitting(true);
-      await axios.post(`${API_BASE}/api/surveys/review/`, fd, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      await axios.post(`/api/surveys/review/`, fd, {
+        headers: {Authorization: `Bearer ${token}`},
         // FormData 사용 시 Content-Type은 axios가 자동 설정 (boundary 포함)
       });
       // 후기 목록 새로고침
       await qc.invalidateQueries({ queryKey: ["my-reviews"] });
       alert("후기가 등록되었습니다.");
-      navigate(-1); // 이전 화면으로
+      navigate('/mypage-myevent'); // 이전 화면으로
     } catch (e) {
       console.error(e);
       alert("등록에 실패했어요. 잠시 후 다시 시도해 주세요.");
@@ -75,8 +90,8 @@ const WriteReview = () => {
       </W.Header>
 
       <W.Card>
-        <W.Thumb />
-        <W.EventTitle>우리동네 음악회</W.EventTitle>
+        <W.Thumb src={eventInfo.main_img} alt="thumb"/>
+        <W.EventTitle>{eventInfo.title}</W.EventTitle>
       </W.Card>
 
       <W.Label>
@@ -119,7 +134,7 @@ const WriteReview = () => {
           <input
             id="photo"
             type="file"
-            accept="iContainer/*"
+            accept="image/*"
             onChange={onSelectPhoto}
             style={{ display: "none" }}
           />
