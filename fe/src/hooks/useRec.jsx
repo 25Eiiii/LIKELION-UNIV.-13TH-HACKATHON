@@ -48,7 +48,7 @@ export function useTop3Monthly() {
   async function fetchTop3() {
     const url = token
     ? `${API_BASE}/api/top3/monthly/`
-    : `$/api/top3/monthly/public`
+    : `/api/top3/monthly/public`
     ;
 
     const headers = token

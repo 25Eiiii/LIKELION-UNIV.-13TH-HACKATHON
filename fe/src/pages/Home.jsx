@@ -4,7 +4,7 @@ import { FiChevronRight } from "react-icons/fi";
 import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import EventCardS from "../components/EventCardS";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../store/useAuthStore";
 import { useTopEvents, useTop3Monthly } from "../hooks/useRec";
 import { useState } from "react";
@@ -28,7 +28,8 @@ const Home = () => {
 
   const [search, setSearch] = useState("");
 
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchParams] = useSearchParams();
+
 
   const SearchCategory = () => {
     // 검색어를 쿼리스트링으로 전달해서 Category 페이지로 이동
