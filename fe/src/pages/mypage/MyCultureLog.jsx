@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useMyEvents } from "../../hooks/useMyEvents";
-import { useMyReview } from "../../hooks/useMyReview"; // 내가 쓴 후기 목록
+import { useMyReviews } from "../../hooks/useMyReview"; // 내가 쓴 후기 목록
 
 // 제목 매칭 보조(공백/대소문자 무시)
 const normalize = (s = "") => s.replace(/\s/g, "").toLowerCase();
@@ -10,11 +10,23 @@ const normalize = (s = "") => s.replace(/\s/g, "").toLowerCase();
 const MyCultureLog = () => {
   const nav = useNavigate();
   const { data: events = [], isLoading, isError } = useMyEvents();
-  const { data: reviews = [] } = useMyReview(); // [{ id, title, ... }]
+  const { data: reviews = [] } = useMyReviews(); // [{ id, title, ... }]
 
   const reviewedByTitle = new Set(reviews.map((r) => normalize(r.title)));
 
   const hasReview = (ev) => reviewedByTitle.has(normalize(ev.title));
+
+  const handleWrite = (ev) => {
+    const params = new URLSearchParams({
+      ...(ev.id ? { eventId: String(ev.id) } : { ek: ev.eventKey || "" }),
+      title: ev.title ?? "",
+      img: ev.main_img ?? "",
+      sd: ev.start_date ?? "",
+      ed: ev.end_date ?? "",
+      place: ev.place ?? "",
+    });
+    nav(`/reviews/new?${params.toString()}`);
+  };
 
   if (isLoading) return <Wrapper>불러오는 중</Wrapper>;
   if (isError) return <Wrapper>오류 발생</Wrapper>;
@@ -68,7 +80,6 @@ display: flex;
 flex-direction: column;
 position: relative;
 `
-
 export const ReviewBtn = styled.button`
 width: 95px;
 height: 27px;

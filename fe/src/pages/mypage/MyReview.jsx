@@ -3,7 +3,7 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/useAuthStore";
 import useMyReviewStore from "../../store/useMyReviewStore";
-import { useMyReview } from "../../hooks/useMyReview";
+import { useMyReviews } from "../../hooks/useMyReview";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 
@@ -15,7 +15,7 @@ const MyReview = () => {
     localStorage.getItem("token") ||
     localStorage.getItem("access") || "";
 
-  const { isLoading, isError } = useMyReview();
+  const { isLoading, isError } = useMyReviews();
   const reviews = useMyReviewStore((state) => state.reviews) || [];
 
   const deleteReview = async (reviewId) => {

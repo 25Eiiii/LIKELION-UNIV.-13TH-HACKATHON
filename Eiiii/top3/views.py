@@ -11,10 +11,10 @@ class MonthlyTop3View(APIView):
     def get(self, request):
         try:
             data = get_monthly_top3_for_user(request.user.id, today=date.today())
-            results = data or []                # ✅ None → []
+            results = data or []                
             return Response({
                 "month": date.today().strftime("%Y-%m"),
-                "count": len(results),          # ✅ len(None) 방지
+                "count": len(results),          
                 "results": results
             }, status=status.HTTP_200_OK)
         except Exception as e:

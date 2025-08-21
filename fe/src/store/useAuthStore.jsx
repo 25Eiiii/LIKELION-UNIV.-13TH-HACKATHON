@@ -1,9 +1,15 @@
 import { create } from 'zustand'
 
 const useAuthStore = create((set) => ({
-  user: null,
-  setUser: (u) => set({ user: u }),
-  clearUser: () => set({ user: null }),
+  nickname: localStorage.getItem('nickname') || '',
+  setNickname: (nickname) => {
+    localStorage.setItem('nickname', nickname);
+    set({ nickname });
+  },
+  clearNickname: () => {
+    localStorage.removeItem('nickname');
+    set({ nickname: '' });
+  }
 }));
 
 export default useAuthStore;

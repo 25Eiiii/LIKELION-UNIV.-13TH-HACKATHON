@@ -61,12 +61,19 @@ INSTALLED_APPS = [
     'recommend',#추천로직
     'top3',#top3 조회
     'chatbot', #챗봇
+    'pbrecommend' #비로그인 챗봇 추천
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10/min",     # 비로그인 기준 분당 10회
+    },
 }
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),       # Access 토큰: 60분

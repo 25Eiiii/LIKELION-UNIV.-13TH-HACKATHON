@@ -30,6 +30,7 @@ class SurveySubmissionSerializer(serializers.ModelSerializer):
 
 #설문한 행사 정보
 class MyCulturalEventSerializer(serializers.ModelSerializer):
+    event_id = serializers.IntegerField(source='event.id', read_only=True)
     title = serializers.CharField(source='event.title')
     date = serializers.CharField(source='event.date')
     place = serializers.CharField(source='event.place')
@@ -38,7 +39,7 @@ class MyCulturalEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SurveySubmission
-        fields = ['title', 'date', 'place', 'main_img', 'submitted_at', 'is_reviewed']
+        fields = ['event_id', 'title', 'date', 'place', 'main_img', 'submitted_at', 'is_reviewed']
 
     def get_is_reviewed(self, obj):
         return SurveyReview.objects.filter(user=obj.user, event=obj.event).exists()
@@ -110,6 +111,7 @@ class PublicReviewSerializer(serializers.ModelSerializer):
 
 #내가 인증한 문화 행사 리스트 조회
 class MyCertifiedEventSerializer(serializers.ModelSerializer):
+    event_id = serializers.IntegerField(source='event.id', read_only=True)
     title = serializers.CharField(source='event.title')
     start_date = serializers.DateField(source='event.start_date', format='%Y.%m.%d')
     end_date = serializers.DateField(source='event.end_date', format='%Y.%m.%d')
@@ -118,4 +120,4 @@ class MyCertifiedEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SurveySubmission
-        fields = ['title', 'start_date', 'end_date', 'place', 'main_img']
+        fields = ['event_id', 'title', 'start_date', 'end_date', 'place', 'main_img']

@@ -1,4 +1,3 @@
-#최소 대화 흐름
 version: "3.1"
 rules:
 - rule: Greet
@@ -6,37 +5,58 @@ rules:
     - intent: greet
     - action: utter_greet
 
-# 1) 추천을 물어보면 먼저 분기 액션으로 보냄
 - rule: Decide next step for recommendation
   steps:
     - intent: ask_recommend
     - action: action_determine_next_step
 
-# 2) 지역을 고르면 바로 추천 (근처/가까운 시나리오)
 - rule: Recommend after area provided
+  condition:
+    - slot_was_set:
+        - area: true
   steps:
     - intent: inform_area
     - action: action_recommend_event
 
-# 3) 카테고리를 고르면 바로 추천 (인기/주말/가족 시나리오, 또는 직접 지정)
 - rule: Recommend after category provided
+  condition:
+    - slot_was_set:
+        - category: true
   steps:
     - intent: inform_category
     - action: action_recommend_event
 
-# 4) 더보기
 - rule: Show more results
   steps:
     - intent: show_more
     - action: action_show_more
 
-- rule: User affirms
+# 새로 추가: 다른 분류의 행사 추천 동의시 -> action_determine_next_step
+- rule: User affirms while paginating -> action_determine_next_step
+  condition:
+    - slot_was_set:
+        - page: true
+        - area: true
+        - category: true
   steps:
     - intent: affirm
-    - action: utter_ack
+    - action: action_determine_next_step
 
-- rule: User denies
+- rule: Say thanks and close on deny
   steps:
     - intent: deny
+    - action: utter_thanks_bye
     - action: action_listen
+
+# 중복 질문 방지
+- rule: Listen after asking area
+  steps:
+    - action: utter_ask_area
+    - action: action_listen
+
+- rule: Listen after asking category
+  steps:
+    - action: utter_ask_category
+    - action: action_listen
+
 

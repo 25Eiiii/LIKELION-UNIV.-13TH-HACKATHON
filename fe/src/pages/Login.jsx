@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as L from "../styles/pages/styledLogin";
 import { Container } from "../styles/common/styledContainer";
 import axios from "axios";
+import useAuthStore from "../store/useAuthStore";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -10,6 +11,9 @@ const Login = () => {
     const [id,setId] = useState("");
     const [password,setPassword] = useState("");
     const [error,setError] = useState(null);
+
+    // 로그인 시 nickname 저장
+    const setNickname = useAuthStore((s) => s.setNickname);
 
     const goLogin = async() => {
         try{
@@ -26,6 +30,8 @@ const Login = () => {
                     },
                 },
             );
+            const nickname = response.data.nickname;
+            setNickname(nickname);
             localStorage.setItem("accessToken", response.data.access);
             localStorage.setItem("refreshToken",response.data.refresh);
             navigate("/home");

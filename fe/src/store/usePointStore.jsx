@@ -1,8 +1,30 @@
-import { create } from "zustand"
+// src/store/usePointStore.js
+import { create } from "zustand";
 
-const usePointStore =  create((set) => ({
-    point: 0,
-    setPoint: (value) => set({ point: value || 0 }),
+const usePointStore = create((set, get) => ({
+  point: 0,
+  setPoint: (v) => {
+    const n = Number(v) || 0;
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[usePointStore] setPoint called with:", v, "→", n);
+    }
+    set({ point: n });
+  },
+  addPoint: (delta) =>
+    set((s) => {
+      const next = Math.max(0, (Number(s.point) || 0) + Number(delta || 0));
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[usePointStore] addPoint:", delta, "→", next);
+      }
+      return { point: next };
+    }),
 }));
+
+// 스토어 변경 구독(개발중만)
+if (process.env.NODE_ENV !== "production") {
+  const unsub = usePointStore.subscribe((state) => {
+    console.log("[usePointStore] state changed:", state);
+  });
+}
 
 export default usePointStore;

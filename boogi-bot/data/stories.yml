@@ -1,7 +1,32 @@
-- rule: Ask area utterance
+version: "3.1"
+stories:
+- story: greet then ask area
   steps:
-    - action: utter_ask_area
+    - intent: greet
+    - action: utter_greet
 
-- rule: Ask category utterance
+- story: ask recommend then choose area
   steps:
-    - action: utter_ask_category
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - intent: inform_area
+    - action: action_recommend_event
+
+- story: ask recommend then choose category
+  steps:
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - intent: inform_category
+    - action: action_recommend_event
+
+- story: show more (explicit)
+  steps:
+    - intent: show_more
+    - action: action_show_more
+
+#affirm으로 더보기
+# - story: show more via affirm
+#   steps:
+#     - intent: affirm
+#     - action: action_show_more
+

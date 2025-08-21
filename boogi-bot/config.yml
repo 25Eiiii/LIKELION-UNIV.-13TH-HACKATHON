@@ -1,50 +1,69 @@
-# The config recipe.
-# https://rasa.com/docs/rasa/model-configuration/
-recipe: default.v1
+version: "3.1"
+language: ko
 
-# The assistant project unique identifier
-# This default value must be replaced with a unique assistant name within your deployment
-assistant_id: 20250815-164204-quantum-bureau
+pipeline:
+  # 1) 토크나이저
+  - name: WhitespaceTokenizer
 
-# Configuration for Rasa NLU.
-# https://rasa.com/docs/rasa/nlu/components/
-language: en
+  # 2) 정규식 특징 + 룩업/패턴 엔티티 인식
+  - name: RegexFeaturizer
+  - name: RegexEntityExtractor
+    use_lookup_tables: true      # nlu.yml의 lookup: area/category 활용
+    use_regexes: true            # 정규식 패턴 추가 시 반영
+    case_sensitive: false
+    use_word_boundaries: false
 
-pipeline: null
-# # No configuration for the NLU pipeline was provided. The following default pipeline was used to train your model.
-# # If you'd like to customize it, uncomment and adjust the pipeline.
-# # See https://rasa.com/docs/rasa/tuning-your-model for more information.
-#   - name: WhitespaceTokenizer
-#   - name: RegexFeaturizer
-#   - name: LexicalSyntacticFeaturizer
-#   - name: CountVectorsFeaturizer
-#   - name: CountVectorsFeaturizer
-#     analyzer: char_wb
-#     min_ngram: 1
-#     max_ngram: 4
-#   - name: DIETClassifier
-#     epochs: 100
-#     constrain_similarities: true
-#   - name: EntitySynonymMapper
-#   - name: ResponseSelector
-#     epochs: 100
-#     constrain_similarities: true
-#   - name: FallbackClassifier
-#     threshold: 0.3
-#     ambiguity_threshold: 0.1
+  # 3) 고전 특징 (토큰 기반 BoW)
+  - name: LexicalSyntacticFeaturizer
+  - name: CountVectorsFeaturizer
+    OOV_token: "__oov__"
+    min_ngram: 1
+    max_ngram: 1
 
-# Configuration for Rasa Core.
-# https://rasa.com/docs/rasa/core/policies/
-policies: null
-# # No configuration for policies was provided. The following default policies were used to train your model.
-# # If you'd like to customize them, uncomment and adjust the policies.
-# # See https://rasa.com/docs/rasa/policies for more information.
-#   - name: MemoizationPolicy
-#   - name: RulePolicy
-#   - name: UnexpecTEDIntentPolicy
-#     max_history: 5
-#     epochs: 100
-#   - name: TEDPolicy
-#     max_history: 5
-#     epochs: 100
-#     constrain_similarities: true
+  # 4) 문자 n-gram (한글 오탈자/붙임표현 보완)
+  - name: CountVectorsFeaturizer
+    analyzer: char_wb
+    min_ngram: 3
+    max_ngram: 5
+
+  # 5) 분류기 (인텐트+엔티티 동시)
+  - name: DIETClassifier
+    epochs: 170                  # 약간 상향(데이터 적을수록 epochs↑가 유리)
+    learning_rate: 0.001
+    constrain_similarities: true
+    random_seed: 42              # 재현성
+    entity_recognition: false
+
+  # 6) 동의어 매핑 (자연어 → 코드네임 통일)
+  - name: EntitySynonymMapper
+
+  # 7) NLU 폴백 (모호/낮은 확신 처리)
+  - name: FallbackClassifier
+    threshold: 0.30              # 기존 0.4 → 약간 완화 (한국어 짧은 입력 안전)
+    ambiguity_threshold: 0.05    # 모호도 임계조정
+
+policies:
+  # 1) 룰 우선 (대부분의 흐름이 rules로 정의되어 있음)
+  - name: RulePolicy
+    core_fallback_threshold: 0.3
+    core_fallback_action_name: "action_default_fallback"
+    enable_fallback_prediction: true
+
+  # 2) 과거 대화 기억 기반 빠른 매칭
+  - name: MemoizationPolicy
+    max_history: 5
+
+  # 3) 일반화(예외/꼬인 흐름 대응)
+  - name: TEDPolicy
+    max_history: 5
+    epochs: 50
+    constrain_similarities: true
+
+  # 4) 예기치 못한 인텐트 탐지(옵션, 품질↑)
+  - name: UnexpecTEDIntentPolicy
+    max_history: 5
+    epochs: 50
+    tolerance: 0.2               # 너무 민감하면 거짓양성↑
+
+assistant_id: 20250819-130214-heartless-circuit
+
