@@ -3,6 +3,7 @@ from typing import Any, Dict, Text, List, Optional
 import logging
 import requests
 import time
+import os
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
@@ -17,9 +18,19 @@ from requests.exceptions import ReadTimeout, ConnectTimeout, ConnectionError
 logger = logging.getLogger(__name__)
 
 # ===== 엔드포인트 =====
-BASE_URL        = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("RECO_BASE_URL", "http://127.0.0.1:8000")
 LOGIN_ENDPOINT  = "/api/recommend/chat"         # 로그인 전용
 PUBLIC_ENDPOINT = "/api/pbrecommend/public/"    # 비로그인 전용(팀원 개발 예정)
+
+
+# 엔드포인트 메서드 환경변수 (기본: 로그인=GET, 퍼블릭=GET)
+LOGIN_METHOD  = os.getenv("RECO_LOGIN_METHOD",  "GET").upper()
+PUBLIC_METHOD = os.getenv("RECO_PUBLIC_METHOD", "GET").upper()
+
+# 타임아웃/재시도도 env로 조절
+CONNECT_T = int(os.getenv("RECO_CONNECT_T", "3"))
+READ_T    = int(os.getenv("RECO_READ_T",    "60"))   # 45→60
+MAX_RETRY = int(os.getenv("RECO_MAX_RETRY", "1"))    # 2→1 (개발중 체감↑)
 
 # ===== 키워드 분기 =====
 NEARBY_KEYWORDS = ["근처", "가까운", "주변", "이번 주", "이번주"]
@@ -58,14 +69,21 @@ def _get_token(tracker: Tracker) -> Optional[Text]:
 def _auth_headers_from_token(token: Optional[Text]) -> Dict[str, str]:
     if not token:
         return {}
-    # 비ASCII 혼입 대비
-    ascii_token = str(token).encode("ascii", "ignore").decode("ascii")
+    # 토큰은 변형하지 말고 그대로 사용 (로깅만 마스킹)
     return {
-        "Authorization": f"Bearer {ascii_token}",
+        "Authorization": f"Bearer {str(token)}",
         "Accept": "application/json",
         "User-Agent": "boogi-bot/1.0 (+requests)",
     }
 
+def _safe_log_headers(headers: Dict[str, str]) -> Dict[str, str]:
+    out = {}
+    for k, v in headers.items():
+        if k.lower() == "authorization":
+            out[k] = "Bearer ***"
+        else:
+            out[k] = v
+    return out
 
 def _choose_endpoint_and_headers_from_token(token: Optional[Text]) -> tuple[str, Dict[str, str], str]:
     """token 유무로 엔드포인트/헤더/모드(login|public) 결정."""
@@ -88,58 +106,68 @@ def _call_once(method: str, url: str, headers: Dict[str, str], params: Dict[str,
                connect_s: int, read_s: int) -> requests.Response:
     if method.upper() == "POST":
         return requests.post(url, json=params, headers=headers, timeout=(connect_s, read_s))
-    # 기본 GET
     return requests.get(url, params=params, headers=headers, timeout=(connect_s, read_s))
 
-
 def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any]) -> requests.Response:
-    """
-    - 404 → 슬래시 토글 1회 재시도
-    - 401/403 → 퍼블릭 폴백
-    - ReadTimeout/ConnectionError → 지수백오프로 2회 재시도
-    """
-    CONNECT_T = 3          # 연결 타임아웃
-    READ_T    = 45         # 응답 타임아웃
-    MAX_RETRY = 2          # 네트워크 오류 재시도 횟수
 
-    def call_with_retries(m: str, target_url: str, target_headers: Dict[str, str]) -> requests.Response:
+    def call_with_retries(m: str, target_url: str, target_headers: Dict[str, str], *, q: Dict[str, Any]) -> requests.Response:
         last_exc = None
         for attempt in range(MAX_RETRY + 1):
             try:
-                return _call_once(m, target_url, target_headers, params, CONNECT_T, READ_T)
+                return _call_once(m, target_url, target_headers, q, CONNECT_T, READ_T)
             except (ReadTimeout, ConnectTimeout, ConnectionError) as e:
                 last_exc = e
                 backoff = 0.4 * (2 ** attempt)  # 0.4s, 0.8s, ...
-                logger.warning("네트워크 에러(%s) 재시도 %d/%d, %.1fs 대기...",
-                               type(e).__name__, attempt+1, MAX_RETRY+1, backoff)
+                logger.warning("네트워크 에러(%s) 재시도 %d/%d, %.1fs 대기... url=%s headers=%s params=%r",
+                               type(e).__name__, attempt+1, MAX_RETRY+1, backoff,
+                               target_url, _safe_log_headers(target_headers), q)
                 time.sleep(backoff)
-        # 모두 실패
         if last_exc:
             raise last_exc
         raise RuntimeError("unknown network error")
 
     # 1) 1차 호출
-    r = call_with_retries(method, url, headers)
+    r = call_with_retries(method, url, headers, q=params)
 
     # 2) 404면 슬래시 토글 재시도
     if r.status_code == 404:
         alt = _toggle_slash(url)
         if alt != url:
-            logger.warning("404 → 슬래시 토글 재시도: %s", alt)
-            r2 = call_with_retries(method, alt, headers)
+            logger.warning("404 → 슬래시 토글 재시도: %s (원본 %s)", alt, url)
+            r2 = call_with_retries(method, alt, headers, q=params)
             if r2.ok or r2.status_code in (401, 403, 404):
                 r = r2
 
-    # 3) 401/403 → 퍼블릭 폴백 시도
+    # ✅ 405면 메서드 자동 전환(예: GET→POST 혹은 반대)
+    if r.status_code == 405:
+        alt_m = "POST" if method.upper() == "GET" else "GET"
+        logger.warning("405(Method Not Allowed) → %s로 재시도", alt_m)
+        r2 = call_with_retries(alt_m, url, headers, q=params)
+        if r2.ok or r2.status_code in (401, 403, 404, 405):
+            r = r2
+
+    # 401/403 퍼블릭 폴백(기존 그대로)
     if r.status_code in (401, 403):
         pub = f"{BASE_URL}{PUBLIC_ENDPOINT}"
         logger.warning("401/403 → 퍼블릭 폴백: %s", pub)
-        r = call_with_retries("GET", pub, {})  # 퍼블릭은 헤더 없이
+        r = call_with_retries(PUBLIC_METHOD, pub, {}, q=params)
 
-    # 4) 최종 상태 처리
+    # 4) 최종 상태
     r.raise_for_status()
     return r
 
+def _parse_json_safe(resp: requests.Response) -> Dict[str, Any]:
+    try:
+        return resp.json()
+    except ValueError:
+        text = (resp.text[:200] + "...") if resp.text and len(resp.text) > 200 else resp.text
+        logger.error("JSON 파싱 실패: status=%s content-type=%s body=%r",
+                     resp.status_code, resp.headers.get("content-type"), text)
+        raise
+
+def _md_escape(text: str) -> str:
+    # 아주 가벼운 이스케이프 (대괄호/괄호 정도)
+    return str(text).replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)")
 
 def _maybe_sync_token_slot(tracker: Tracker) -> List:
     """메타데이터에서 토큰을 읽어 왔는데 슬롯이 비어 있으면 슬롯 동기화 이벤트 반환(다음 턴 대비)."""
@@ -264,7 +292,7 @@ class ActionRecommendEvent(Action):
         # 이 턴에서 사용할 토큰은 "지역 변수"로 확보 (슬롯 반영 타이밍 이슈 회피)
         token = _get_token(tracker)
         url, headers, mode = _choose_endpoint_and_headers_from_token(token)
-        method = "GET"
+        method = LOGIN_METHOD if mode == "login" else PUBLIC_METHOD
 
         # 요청 파라미터
         params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
@@ -279,7 +307,7 @@ class ActionRecommendEvent(Action):
         # 호출
         try:
             resp = _call_reco(method, url, headers, params)
-            data = resp.json()
+            data = _parse_json_safe(resp)
             items = data.get("results", [])
         except Exception as e:
             logger.exception("recommend API 호출 실패: %s", e)
@@ -296,13 +324,13 @@ class ActionRecommendEvent(Action):
         dispatcher.utter_message(text=f"{header_area}{header_cat}추천이에요.")
 
         for it in items[:PAGE_SIZE]:
-            title = it.get("title") or "제목 없음"
+            title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
             detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
-        has_next = bool(data.get("next")) or (len(items) == PAGE_SIZE)
+        has_next = bool(data.get("next"))
         if has_next:
             dispatcher.utter_message(text="더 볼까요? '더 보기'라고 말해보세요!")
             return events + [SlotSet("page", page + 1)]
@@ -331,7 +359,7 @@ class ActionShowMore(Action):
         # 이 턴에서 사용할 토큰은 "지역 변수"로 확보
         token = _get_token(tracker)
         url, headers, mode = _choose_endpoint_and_headers_from_token(token)
-        method = "GET"
+        method = LOGIN_METHOD if mode == "login" else PUBLIC_METHOD
 
         params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
         if area:
@@ -344,7 +372,7 @@ class ActionShowMore(Action):
 
         try:
             resp = _call_reco(method, url, headers, params)
-            data = resp.json()
+            data = _parse_json_safe(resp)
             items = data.get("results", [])
         except Exception as e:
             logger.exception("recommend more API 호출 실패: %s", e)
@@ -356,7 +384,7 @@ class ActionShowMore(Action):
             return events
 
         for it in items:
-            title = it.get("title") or "제목 없음"
+            title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
             detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"

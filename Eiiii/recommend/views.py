@@ -5,6 +5,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from .utils_meta import fetch_events_meta_preserve_order, to_items
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,8 +17,14 @@ from .serializers import RecommendedEventSerializer
 from recommend.algo import hybrid_recommend
 from details.models import CulturalEventLike
 from surveys.models import SurveyReview
+from surveys.models import SurveySubmission
+from .similar_from_anchor import similar_to_event_df
 
-#메인화면
+import pandas as pd
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 메인화면 (그리드용 추천 목록) — 기존 형식 유지
+# ─────────────────────────────────────────────────────────────────────────────
 class RecommendedEventsView(APIView):
     """
     GET /api/recommend/events/?top_n=10&like_w=1.0&review_w=1.5&recent_alpha=0.7&ongoing_bonus=0.5
@@ -28,7 +35,19 @@ class RecommendedEventsView(APIView):
 
     def get(self, request):
         user = request.user
-        top_n = int(request.query_params.get("top_n", 10))
+
+        # 페이지네이션 파라미터(기본값만 사용, 응답은 기존대로 리스트 반환)
+        try:
+            limit = int(request.query_params.get("limit", 10))
+            page  = int(request.query_params.get("page", 1))
+        except ValueError:
+            return Response({"detail": "limit/page는 숫자여야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+        limit = max(1, min(limit, 50))
+        page = max(1, page)
+
+        # 기존 top_n 허용 + 기본은 현재 페이지를 충분히 커버하도록 크게
+        user_top_n = int(request.query_params.get("top_n", 0) or 0)
+        top_n = max(user_top_n, limit * page * 10)
 
         # --- 1) 하이브리드 추천
         rec_df = hybrid_recommend(
@@ -63,25 +82,18 @@ class RecommendedEventsView(APIView):
             .order_by(preserved)
         )
         data = RecommendedEventSerializer(qs, many=True).data
+        # 메인화면은 기존 스펙 유지(배열 그대로 반환)
         return Response(data, status=status.HTTP_200_OK)
 
     def _get_popular_event_ids_weighted(self, exclude_ids: List[int], limit: int, request) -> List[int]:
-        """
-        '좋아요 + 리뷰 수(가중치)'로 인기 점수(popularity_score) 산정.
-        - 최근 가중(recent_alpha): recent 60일치에 비중을 더 줌 (0~1)
-        - 진행/예정 이벤트 보너스(ongoing_bonus) 추가
-        - 역참조 이름에 의존하지 않도록 Subquery로 안전 계산
-        """
         today = timezone.now().date()
         since = today - timezone.timedelta(days=60)
 
-        # 쿼리 파라미터로 가중치 조절 가능 (기본값 권장)
         like_w = float(request.query_params.get("like_w", 1.0))
         review_w = float(request.query_params.get("review_w", 1.5))
-        recent_alpha = float(request.query_params.get("recent_alpha", 0.7))  # 최근 60일 비중
-        ongoing_bonus = float(request.query_params.get("ongoing_bonus", 0.5))  # 진행/예정 보너스
+        recent_alpha = float(request.query_params.get("recent_alpha", 0.7))
+        ongoing_bonus = float(request.query_params.get("ongoing_bonus", 0.5))
 
-        # --- Subquery: 좋아요 수 (전체/최근)
         like_all_sq = (CulturalEventLike.objects
             .filter(event=OuterRef("pk"))
             .values("event")
@@ -94,7 +106,6 @@ class RecommendedEventsView(APIView):
             .annotate(c=Count("*"))
             .values("c")[:1])
 
-        # --- Subquery: 리뷰 수 (전체/최근)
         review_all_sq = (SurveyReview.objects
             .filter(event=OuterRef("pk"))
             .values("event")
@@ -110,7 +121,6 @@ class RecommendedEventsView(APIView):
         base_qs = (
             CulturalEvent.objects
             .exclude(id__in=exclude_ids)
-            # 진행/예정 우선. 지나간 것도 필요하면 아래 필터를 빼고 all에서 추가 보충
             .filter(end_date__gte=today)
             .annotate(
                 like_all=Coalesce(Subquery(like_all_sq, output_field=IntegerField()), Value(0)),
@@ -120,7 +130,6 @@ class RecommendedEventsView(APIView):
             )
         )
 
-        # 최근/전체 블렌딩: blended = recent_alpha*recent + (1-recent_alpha)*all
         blended_like = ExpressionWrapper(
             Value(recent_alpha) * F("like_recent") + Value(1.0 - recent_alpha) * F("like_all"),
             output_field=FloatField()
@@ -130,14 +139,12 @@ class RecommendedEventsView(APIView):
             output_field=FloatField()
         )
 
-        # 진행/예정 보너스
         is_ongoing = Case(
             When(end_date__gte=today, then=Value(1.0)),
             default=Value(0.0),
             output_field=FloatField()
         )
 
-        # 최종 인기 점수: like_w*blended_like + review_w*blended_review + ongoing_bonus*is_ongoing
         scored_qs = (
             base_qs
             .annotate(
@@ -155,17 +162,14 @@ class RecommendedEventsView(APIView):
 
         ids = list(scored_qs.values_list("id", flat=True))
 
-        # 진행/예정이 너무 적다면: 전체에서 추가 보충
         if len(ids) < limit:
             remain = limit - len(ids)
-
             rest_qs = (
                 CulturalEvent.objects
                 .exclude(id__in=ids + exclude_ids)
                 .annotate(
                     like_all=Coalesce(Subquery(like_all_sq, output_field=IntegerField()), Value(0)),
                     review_all=Coalesce(Subquery(review_all_sq, output_field=IntegerField()), Value(0)),
-                    # 전체 영역에서는 최근 가중 없이 간단히 누적만 사용
                     popularity_score=ExpressionWrapper(
                         Value(like_w) * F("like_all") + Value(review_w) * F("review_all"),
                         output_field=FloatField()
@@ -176,8 +180,11 @@ class RecommendedEventsView(APIView):
             ids += list(rest_qs.values_list("id", flat=True))
 
         return ids
-    
-#챗봇
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 챗봇 추천(로그인) — Rasa 액션이 기대하는 next/has_more 포함
+# ─────────────────────────────────────────────────────────────────────────────
 def _format_date(ev):
     start = getattr(ev, "start_date", None)
     end   = getattr(ev, "end_date", None)
@@ -200,10 +207,15 @@ class RecommendView(APIView):
         except ValueError:
             return Response({"detail": "limit/page는 숫자여야 합니다."}, status=400)
 
+        limit = max(1, min(limit, 50))
+        page  = max(1, page)
+
         area     = request.GET.get("area")        # 예: 성북구
         category = request.GET.get("category")    # 예: 전시/미술
         debug    = request.GET.get("__debug")     # "1"이면 디버그 정보 포함
         force    = request.GET.get("__force")     # "filter"면 필터 우선 강제
+        # 선택: top_n 오버라이드(있으면 사용)
+        user_top_n = int(request.GET.get("top_n", 0) or 0)
 
         debug_info = {"area": area, "category": category, "limit": limit, "page": page}
 
@@ -213,10 +225,12 @@ class RecommendView(APIView):
             if area:
                 qs = qs.filter(Q(guname__icontains=area) | Q(place__icontains=area))
             if category:
-                qs = qs.filter(codename__icontains=category)
+                qs = qs.filter(Q(category__icontains=category) | Q(codename__icontains=category))
             qs = qs.order_by("-start_date", "-rgst_date", "-id")
+
             paginator = Paginator(qs, limit)
             page_obj = paginator.get_page(page)
+
             results = [{
                 "id": ev.id,
                 "title": ev.title or "제목 없음",
@@ -224,7 +238,21 @@ class RecommendView(APIView):
                 "date": _format_date(ev),
                 "url": ev.hmpg_addr or None,
             } for ev in page_obj.object_list]
-            payload = {"results": results, "total": paginator.count, "has_next": page_obj.has_next()}
+
+            has_more  = page_obj.has_next()
+            next_page = (page + 1) if has_more else None
+
+            payload = {
+                "results": results,
+                "total": paginator.count,
+                "limit": limit,
+                "page": page,
+                "has_more": has_more,       # alias
+                "has_next": has_more,       # alias(기존 클라 호환)
+                "next_page": next_page,     # 사람 친화
+                "next": next_page,          # Rasa 액션 호환 키 (data.get("next"))
+                "returned": len(results),   # 디버깅 편의
+            }
             if debug == "1":
                 payload["__debug"] = {
                     **debug_info,
@@ -235,7 +263,8 @@ class RecommendView(APIView):
             return Response(payload, status=200)
 
         # === 1) 추천 풀 ===
-        TOP_POOL = max(300, limit * max(page, 1) * 10)
+        # 현재 페이지를 충분히 커버하도록 풀을 크게 + 최소 300 보장 + 사용자가 주면 그 값도 반영
+        TOP_POOL = max(300, limit * max(page, 1) * 10, user_top_n or 0)
         try:
             rec_df = hybrid_recommend(user_id=user.id, top_n=TOP_POOL, return_components=False)
         except Exception as e:
@@ -250,7 +279,7 @@ class RecommendView(APIView):
         if area:
             qs = qs.filter(Q(guname__icontains=area) | Q(place__icontains=area))
         if category:
-            qs = qs.filter(codename__icontains=category)
+            qs = qs.filter(Q(category__icontains=category) | Q(codename__icontains=category))
 
         inter_count = qs.count()
         debug_info["intersection_count"] = inter_count
@@ -268,7 +297,7 @@ class RecommendView(APIView):
             if area:
                 fb = fb.filter(Q(guname__icontains=area) | Q(place__icontains=area))
             if category:
-                fb = fb.filter(codename__icontains=category)
+                fb = fb.filter(Q(category__icontains=category) | Q(codename__icontains=category))
             fb = fb.order_by("-start_date", "-rgst_date", "-id")
             qs = fb
             debug_info["fallback_total"] = qs.count()
@@ -284,7 +313,78 @@ class RecommendView(APIView):
             "url": ev.hmpg_addr or None,
         } for ev in page_obj.object_list]
 
-        payload = {"results": results, "total": paginator.count, "has_next": page_obj.has_next()}
+        has_more  = page_obj.has_next()
+        next_page = (page + 1) if has_more else None
+
+        payload = {
+            "results": results,
+            "total": paginator.count,
+            "limit": limit,
+            "page": page,
+            "has_more": has_more,       # alias
+            "has_next": has_more,       # alias(기존 클라 호환)
+            "next_page": next_page,     # 사람 친화
+            "next": next_page,          # Rasa 액션 호환 키 (data.get("next"))
+            "returned": len(results),   # 디버깅 편의
+        }
         if debug == "1":
             payload["__debug"] = debug_info
         return Response(payload, status=200)
+
+#챗봇 추천
+
+def _nickname(user) -> str:
+    return (
+        getattr(user, "nickname", None)
+    )
+
+class SimilarFromLastParticipationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        nick = _nickname(user)
+        LIMIT = 3  # 고정 3개
+        explain = str(request.query_params.get("explain","")).lower() in ("1","true","y","yes")
+
+        last = (
+            SurveySubmission.objects
+            .filter(user=user)
+            .select_related("event")
+            .order_by("-submitted_at")
+            .first()
+        )
+
+        if last:
+            anchor = last.event
+            sim_df = similar_to_event_df(anchor.id, top_n=LIMIT, exclude_past=True, explain=explain)
+            if not sim_df.empty:
+                items = to_items(
+                    sim_df,
+                    "score",
+                    extra_cols=(["sim_anchor","same_area","same_fee","recency","matched_terms"] if explain else None)
+                )
+                return Response({
+                    "anchor_event": {"id": anchor.id, "title": anchor.title},
+                    "message": f"{nick}님 최근 참여하셨던 『{anchor.title}』와 비슷한 행사를 추천해드릴게요",
+                    "items": items
+                }, status=status.HTTP_200_OK)
+
+        # 폴백(하이브리드)
+        hyb = hybrid_recommend(user.id, top_n=LIMIT)
+        if hyb is None or hyb.empty:
+            return Response({
+                "anchor_event": None,
+                "message": f"{nick}님 아직 설문 인증 기록이 없어, 프로필/행동/협업 데이터를 바탕으로 추천했어요.",
+                "items": []
+            }, status=status.HTTP_200_OK)
+
+        ids = hyb["id"].astype(int).tolist()
+        meta = fetch_events_meta_preserve_order(ids)
+        merged = meta.merge(hyb[["id","title","score"]], on=["id","title"], how="left")
+        items = to_items(merged, "score")
+        return Response({
+            "anchor_event": None,
+            "message": f"{nick}님 아직 설문 인증 기록이 없어, 프로필/행동/협업 데이터를 바탕으로 추천했어요.",
+            "items": items
+        }, status=status.HTTP_200_OK)
