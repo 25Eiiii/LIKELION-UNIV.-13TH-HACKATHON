@@ -25,8 +25,8 @@ stories:
     - action: action_show_more
 
 #affirm으로 더보기
-- story: show more via affirm
-  steps:
-    - intent: affirm
-    - action: action_show_more
+# - story: show more via affirm
+#   steps:
+#     - intent: affirm
+#     - action: action_show_more
 

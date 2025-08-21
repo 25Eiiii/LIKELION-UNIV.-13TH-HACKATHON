@@ -31,17 +31,32 @@ rules:
     - intent: show_more
     - action: action_show_more
 
-# 새로 추가: 페이지네이션 중 affirm이면 곧장 더보기
-- rule: User affirms while paginating -> show more
+# 새로 추가: 다른 분류의 행사 추천 동의시 -> action_determine_next_step
+- rule: User affirms while paginating -> action_determine_next_step
   condition:
     - slot_was_set:
         - page: true
+        - area: true
+        - category: true
   steps:
     - intent: affirm
-    - action: action_show_more
+    - action: action_determine_next_step
 
-- rule: User denies
+- rule: Say thanks and close on deny
   steps:
     - intent: deny
+    - action: utter_thanks_bye
     - action: action_listen
+
+# 중복 질문 방지
+- rule: Listen after asking area
+  steps:
+    - action: utter_ask_area
+    - action: action_listen
+
+- rule: Listen after asking category
+  steps:
+    - action: utter_ask_category
+    - action: action_listen
+
 

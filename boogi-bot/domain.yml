@@ -92,6 +92,9 @@ responses:
   utter_default:
     - text: "제가 잘 이해하지 못했어요. 지역/종류를 알려주시면 바로 추천해드려요!"
 
+  utter_thanks_bye:
+    - text: "이용해주셔서 감사합니다. 언제든지 다시 불러주세요:)"
+
 
 actions:
   - action_determine_next_step
