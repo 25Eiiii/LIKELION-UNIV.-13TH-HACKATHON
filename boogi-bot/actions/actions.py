@@ -138,7 +138,7 @@ def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str,
             if r2.ok or r2.status_code in (401, 403, 404):
                 r = r2
 
-    # ✅ 405면 메서드 자동 전환(예: GET→POST 혹은 반대)
+    # 405면 메서드 자동 전환(예: GET→POST 혹은 반대)
     if r.status_code == 405:
         alt_m = "POST" if method.upper() == "GET" else "GET"
         logger.warning("405(Method Not Allowed) → %s로 재시도", alt_m)
@@ -195,6 +195,15 @@ def _say(dispatcher: CollectingDispatcher, template: str):
     except TypeError:
         dispatcher.utter_message(template=template)
 
+def _reset_and_restart() -> List:
+    """추천 세션 리셋 후, 초기 질문 흐름으로 복귀."""
+    return [
+        SlotSet("area", None),
+        SlotSet("category", None),
+        SlotSet("page", 1),
+        FollowupAction("action_determine_next_step"),
+    ]
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ACTIONS
@@ -250,15 +259,13 @@ class ActionDetermineNextStep(Action):
 
         # 사용자가 자연어로 근처/주말 등 요청한 경우
         if any(k in text for k in NEARBY_KEYWORDS):
-            _say(dispatcher, "utter_ask_area")
-            return events
+            return events + [FollowupAction("utter_ask_area")]
+
         if any(k in text for k in THEME_KEYWORDS):
-            _say(dispatcher, "utter_ask_category")
-            return events
+            return events + [FollowupAction("utter_ask_category")]
 
         # 기본값: 지역 먼저 유도
-        _say(dispatcher, "utter_ask_area")
-        return events
+        return events + [FollowupAction("utter_ask_area")]
 
 
 class ActionRecommendEvent(Action):
@@ -280,14 +287,11 @@ class ActionRecommendEvent(Action):
 
         # 방어막: 빈 슬롯이면 질문으로 회귀
         if not area and not category:
-            _say(dispatcher, "utter_ask_area")
-            return events
+            return events + [FollowupAction("utter_ask_area")]
         if area and not category:
-            _say(dispatcher, "utter_ask_category")
-            return events
+            return events + [FollowupAction("utter_ask_category")]
         if category and not area:
-            _say(dispatcher, "utter_ask_area")
-            return events
+            return events + [FollowupAction("utter_ask_area")]
 
         # 이 턴에서 사용할 토큰은 "지역 변수"로 확보 (슬롯 반영 타이밍 이슈 회피)
         token = _get_token(tracker)
@@ -317,7 +321,7 @@ class ActionRecommendEvent(Action):
         # 결과 처리
         if not items:
             dispatcher.utter_message(text="조건에 맞는 행사가 지금은 없네요. 다른 분류로 찾아볼까요?")
-            return events
+            return events + _reset_and_restart()
 
         header_area = f"'{area}'에서 " if area else ""
         header_cat  = f"'{category}' " if category else ""
@@ -336,30 +340,23 @@ class ActionRecommendEvent(Action):
             return events + [SlotSet("page", page + 1)]
         else:
             dispatcher.utter_message(text="여기까지가 끝! 다른 분류로 찾아볼까요?")
-            return events
+            return events + _reset_and_restart()
 
 
 class ActionShowMore(Action):
     def name(self) -> Text:
         return "action_show_more"
 
-    def run(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-    ):
-        # 토큰 슬롯 동기화(다음 턴 대비)
+    def run(self, dispatcher, tracker, domain):
         events: List = _maybe_sync_token_slot(tracker)
 
         area = tracker.get_slot("area")
         category = tracker.get_slot("category")
         page = tracker.get_slot("page") or 1
 
-        # 이 턴에서 사용할 토큰은 "지역 변수"로 확보
         token = _get_token(tracker)
         url, headers, mode = _choose_endpoint_and_headers_from_token(token)
-        method = LOGIN_METHOD if mode == "login" else PUBLIC_METHOD
+        method = "GET"
 
         params: Dict[str, Any] = {"limit": PAGE_SIZE, "page": page}
         if area:
@@ -378,10 +375,19 @@ class ActionShowMore(Action):
             logger.exception("recommend more API 호출 실패: %s", e)
             dispatcher.utter_message(text="더 보기를 불러오는데 문제가 생겼어요. 잠시 후 다시 시도해 주세요.")
             return events
+        
+        # --- has_more/next 기반으로 종료 여부 판단 ---
+        # 서버가 has_more를 주면 우선 사용, 없으면 next/next_page 존재로 보강
+        has_more = bool(data.get("has_more"))
+        if not data.get("has_more") and (data.get("next") is not None or data.get("next_page") is not None):
+            has_more = True
+
+        next_page = data.get("next") or data.get("next_page")
 
         if not items:
             dispatcher.utter_message(text="더 이상 결과가 없어요. 다른 분류나 지역으로 찾아볼까요?")
-            return events
+            logger.info("[show_more] no more items → reset slots and restart flow")
+            return events + _reset_and_restart()   # ★ 여기 추가
 
         for it in items:
             title = _md_escape(it.get("title") or "제목 없음")
@@ -390,4 +396,14 @@ class ActionShowMore(Action):
             detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
-        return events + [SlotSet("page", page + 1)]
+        # 마지막/다음 페이지 분기 직전에 힌트 출력 추가
+        if has_more and next_page:
+            dispatcher.utter_message(text="더 볼까요? '더 보기'라고 말해보세요!")
+            logger.info("[show_more] has_more=True → set next page to %s", next_page)
+            return events + [SlotSet("page", int(next_page))]
+
+        # 마지막 페이지 처리
+        dispatcher.utter_message(text="더 이상 결과가 없어요. 다른 분류나 지역으로 찾아볼까요?")
+        logger.info("[show_more] last page reached → reset & restart")
+        return events + _reset_and_restart()
+
