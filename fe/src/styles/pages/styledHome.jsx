@@ -185,6 +185,9 @@ line-height: normal;
 export const MoreBtn = styled.button`
 background: none;
 border: none;
+margin-right: 30px;
+display: flex;
+align-items: center;
 `
 
 export const EventList = styled.div`

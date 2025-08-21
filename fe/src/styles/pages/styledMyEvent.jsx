@@ -44,11 +44,11 @@ export const Wrapper = styled.div`
 display: flex;
 flex-direction: column;
 width: 428px;
-height: 100%;
 flex-shrink: 0;
 background: #FFF;
 margin-top: 30px;
 border-radius: 23px  23px 0px 0px;
+margin-bottom: 63px;
 `
 
 export const Tab = styled.div`

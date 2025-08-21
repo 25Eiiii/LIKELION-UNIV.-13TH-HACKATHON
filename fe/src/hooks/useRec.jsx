@@ -43,7 +43,7 @@ export function useTopEvents(topN = 3) {
 // 월간 Top3
 export function useTop3Monthly() {
   async function fetchTop3() {
-    const url = new URL("/api/top3/monthly/public", API_BASE);
+    const url = new URL("/api/top3/monthly/", API_BASE);
     const res = await fetch(url, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();

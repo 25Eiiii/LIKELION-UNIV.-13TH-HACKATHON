@@ -1,38 +1,44 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import useMyEventStore from "../store/useMyEventStore";
+import useAuthStore from "../store/useAuthStore";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
-const ENDPOINT = "/api/surveys/my-events/";
+const ENDPOINT = "/api/surveys/my-events/"; // ⚠️ 여기 응답에 event(행사ID) 또는 id가 있어야 함
 
-// 서버 응답: title, date, place, main_img, submitted_at
-const fetchMyEvents = async () => {
-  const token =
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    "";
+const pickToken = () =>
+  useAuthStore.getState?.()?.token ||
+  localStorage.getItem("accessToken") ||
+  localStorage.getItem("token") ||
+  "";
 
-  const res = await axios.get(`${API_BASE}${ENDPOINT}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-
-  const raw = Array.isArray(res.data) ? res.data : res.data?.results || [];
-  return raw.map((ev) => ({
-    title: ev.title ?? "",
-    date: ev.date ?? "",
-    place: ev.place ?? "",
-    main_img: ev.main_img ?? "",
-    submitted_at: ev.submitted_at ?? "",
-  }));
-};
-
-export function useMyEvents() {
-  const setEvents = useMyEventStore((s) => s.setEvents);
-
-  return useQuery({
-    queryKey: ["my-events"],
-    queryFn: fetchMyEvents,
-    staleTime: 60_000,
-    onSuccess: (data) => setEvents(data),
+function normalizeList(raw) {
+  const list = Array.isArray(raw) ? raw : raw?.results || [];
+  return list.map((ev) => {
+    const eventId = ev.event ?? ev.id ?? null; // ✅ 행사 ID
+    const start = ev.start_date ?? "";
+    const end = ev.end_date ?? "";
+    return {
+      event: eventId,            // ✅ 이후 전부 이 값만 사용
+      title: ev.title ?? "",
+      main_img: ev.main_img ?? null,
+      place: ev.place ?? "",
+      start_date: start,
+      end_date: end,
+      date: ev.date_text ?? (start && end ? `${start} - ${end}` : start || ""),
+    };
   });
 }
+
+export const useMyEvents = () =>
+  useQuery({
+    queryKey: ["myEvents", ENDPOINT],
+    queryFn: async () => {
+      const token = pickToken();
+      const { data } = await axios.get(`${API_BASE}${ENDPOINT}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return normalizeList(data);
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
