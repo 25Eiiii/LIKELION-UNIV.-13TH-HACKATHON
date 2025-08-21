@@ -3,7 +3,7 @@ import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
-const ENDPOINT = "/api/surveys/my-events/"; // ⚠️ 여기 응답에 event(행사ID) 또는 id가 있어야 함
+const ENDPOINT = "/api/surveys/my-events/"; 
 
 const pickToken = () =>
   useAuthStore.getState?.()?.token ||
@@ -14,11 +14,11 @@ const pickToken = () =>
 function normalizeList(raw) {
   const list = Array.isArray(raw) ? raw : raw?.results || [];
   return list.map((ev) => {
-    const eventId = ev.event ?? ev.id ?? null; // ✅ 행사 ID
+    const eventId = ev.event ?? ev.id ?? null;
     const start = ev.start_date ?? "";
     const end = ev.end_date ?? "";
     return {
-      event: eventId,            // ✅ 이후 전부 이 값만 사용
+      event: eventId,           
       title: ev.title ?? "",
       main_img: ev.main_img ?? null,
       place: ev.place ?? "",

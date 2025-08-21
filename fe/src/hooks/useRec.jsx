@@ -48,7 +48,7 @@ export function useTop3Monthly() {
   async function fetchTop3() {
     const url = token
     ? `${API_BASE}/api/top3/monthly/`
-    : `/api/top3/public`
+    : `$/api/top3/monthly/public`
     ;
 
     const headers = token
@@ -59,7 +59,7 @@ export function useTop3Monthly() {
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-
+    
     return Array.isArray(json) ? json : json?.results || [];
   }
   return useQuery({ queryKey: ["top3-monthly"], queryFn: fetchTop3 });

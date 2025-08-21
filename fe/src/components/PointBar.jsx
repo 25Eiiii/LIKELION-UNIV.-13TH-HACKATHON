@@ -6,7 +6,7 @@ import { usePoint } from "../hooks/usePoint";
 const MAX_POINT = 3000;
 
 const PointBar = () => {
-  const { isLoading, isError } = usePoint();  // ✅ 반드시 호출
+  const { isLoading, isError } = usePoint();  
   const point = Number(usePointStore((s) => s.point)) || 0;
   console.log("PointBar store point:", point);
 
