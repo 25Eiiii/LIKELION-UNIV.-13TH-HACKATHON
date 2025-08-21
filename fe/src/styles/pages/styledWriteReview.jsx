@@ -124,7 +124,6 @@ font-size: 12px;
 display: flex;
 justify-content: flex-start;
 width: 370px;
-margin-bottom: 10px;
 `;
 
 export const Stars = styled.div`
@@ -174,7 +173,6 @@ font-family: Pretendard;
 font-size: 12px;
 font-style: normal;
 font-weight: 500;
-line-height: 25px; /* 208.333% */
 width: 370px;
 display: flex;
 align-items: center;

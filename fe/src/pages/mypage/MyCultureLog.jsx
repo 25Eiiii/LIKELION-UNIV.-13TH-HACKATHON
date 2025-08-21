@@ -2,42 +2,30 @@ import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useMyEvents } from "../../hooks/useMyEvents";
-import { useMyReviews } from "../../hooks/useMyReview"; // 내가 쓴 후기 목록
+import { useMyReviews } from "../../hooks/useMyReview"; 
 
-// 제목 매칭 보조(공백/대소문자 무시)
 const normalize = (s = "") => s.replace(/\s/g, "").toLowerCase();
 
 const MyCultureLog = () => {
   const nav = useNavigate();
   const { data: events = [], isLoading, isError } = useMyEvents();
-  const { data: reviews = [] } = useMyReviews(); // [{ id, title, ... }]
+  const { data: reviews = [] } = useMyReviews();
 
   const reviewedByTitle = new Set(reviews.map((r) => normalize(r.title)));
-
   const hasReview = (ev) => reviewedByTitle.has(normalize(ev.title));
-
-  const handleWrite = (ev) => {
-    const params = new URLSearchParams({
-      ...(ev.id ? { eventId: String(ev.id) } : { ek: ev.eventKey || "" }),
-      title: ev.title ?? "",
-      img: ev.main_img ?? "",
-      sd: ev.start_date ?? "",
-      ed: ev.end_date ?? "",
-      place: ev.place ?? "",
-    });
-    nav(`/reviews/new?${params.toString()}`);
-  };
 
   if (isLoading) return <Wrapper>불러오는 중</Wrapper>;
   if (isError) return <Wrapper>오류 발생</Wrapper>;
   if (!events.length) return <Wrapper>표시할 행사가 없습니다.</Wrapper>;
+  
 
   return (
     <Wrapper>
       {events.map((event) => {
+        console.log("event:", event);
         const done = hasReview(event);
         return (
-          <CardGroup key={(event.id ?? event.eventKey) || event.title}>
+          <CardGroup key={(event.event_id ?? event.eventKey) || event.title}>
             <CultureItem>
               <CultureThumbnail
                 src={event.main_img || `${process.env.PUBLIC_URL}/images/post.svg`}
@@ -54,10 +42,13 @@ const MyCultureLog = () => {
             <ReviewBtn
               $done={done}
               disabled={done}
-              aria-disabled={done}
-              onClick={() => !done && nav(`/write-review/${event.event_id}`, { state: event })}
+              onClick={() => {
+                if (!done) nav(`/write-review/${event.event_id}`, { 
+                  state: { title: event.title, main_img: event.main_img, event_id: event.event_id } 
+                });
+              }}
             >
-              {done ? "후기 작성완료" : "후기 작성하기"}
+              {done ? "후기 작성완료" : "후기 작성하기 + 50P"}
             </ReviewBtn>
           </CardGroup>
         );
@@ -67,6 +58,7 @@ const MyCultureLog = () => {
 };
 
 export default MyCultureLog;
+
 
 const Wrapper = styled.div`
   display: flex;
@@ -81,8 +73,6 @@ flex-direction: column;
 position: relative;
 `
 export const ReviewBtn = styled.button`
-width: 95px;
-height: 27px;
 flex-shrink: 0;
 border-radius: 8px;
 border: 1px solid #BCBCBC;
@@ -92,6 +82,16 @@ align-self: flex-end;
 position: absolute;
 top: 75px;
 box-sizing: border-box;
+background: ${({ $done }) => ($done ? "#CCC" : "#FFF")};
+color: ${({ $done }) => ($done ? "#FFF" : "#9B9B9B")};
+font-family: Pretendard;
+font-size: 12px;
+font-style: normal;
+font-weight: 600;
+line-height: normal;
+width: ${({ $done }) => ($done ? "95px" : "121px")};
+height: 27px;
+flex-shrink: 0;
 `
 
 export const CultureItem = styled.div`
