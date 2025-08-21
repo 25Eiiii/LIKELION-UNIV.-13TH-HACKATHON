@@ -22,13 +22,14 @@ const Home = () => {
   const user = useAuthStore((s) => s.user);
   const { data: events = [], isLoading, error } = useTopEvents(10);
   const { data: top3 = [], isLoading: loadingTop3, error: errorTop3 } = useTop3Monthly();
+  const nickname = useAuthStore((s) => s.nickname);
 
   return (
     <>
       <Container>
         <H.Header>
           <p style={{ fontSize: "20px", color: "#fff" }}>
-            {user ? `${user.nickname}님은 문화 시민` : "문화시민"}
+            {`${nickname}님은 문화 시민`}
           </p>
           <p style={{ fontSize: "38px", color: "#fff" }}>Lv. 5</p>
           <p style={{ fontSize: "20px", color: "#fff" }}>
@@ -64,7 +65,7 @@ const Home = () => {
 
           <H.RecContainer>
             <H.TextWrapper>
-              <H.Text>효민님을 위한 추천 전시 / 행사</H.Text>
+              <H.Text>{`${nickname}`}님을 위한 추천 전시 / 행사</H.Text>
               <H.MoreBtn>
                 더보기 <FiChevronRight />
               </H.MoreBtn>
@@ -84,7 +85,7 @@ const Home = () => {
                 </p>
                 <H.GoLoginBtns>
                   <H.LoginBtn onClick={() => navigate("/login")}>로그인</H.LoginBtn>
-                  <H.SignUpBtn onClick={() => navigate("/login")}>회원가입</H.SignUpBtn>
+                  <H.SignUpBtn onClick={() => navigate("/signup")}>회원가입</H.SignUpBtn>
                 </H.GoLoginBtns>
               </H.GoLoginBox>
             )}
