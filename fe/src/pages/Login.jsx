@@ -15,6 +15,8 @@ const Login = () => {
     // 로그인 시 nickname 저장
     const setNickname = useAuthStore((s) => s.setNickname);
 
+    const setAuth = useAuthStore((s)=> s.login);
+
     const goLogin = async() => {
         try{
             const response = await axios.post(
@@ -30,6 +32,8 @@ const Login = () => {
                     },
                 },
             );
+            const { access_token, user } = response.data;
+            setAuth(access_token, user);
             const nickname = response.data.nickname;
             setNickname(nickname);
             localStorage.setItem("accessToken", response.data.access);

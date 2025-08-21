@@ -6,3 +6,4 @@ const useMyEventStore = create((set) => ({
 }));
 
 export default useMyEventStore;
+

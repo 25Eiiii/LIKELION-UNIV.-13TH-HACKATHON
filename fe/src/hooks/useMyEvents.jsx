@@ -14,11 +14,11 @@ const pickToken = () =>
 function normalizeList(raw) {
   const list = Array.isArray(raw) ? raw : raw?.results || [];
   return list.map((ev) => {
-    const eventId = ev.event ?? ev.id ?? null;
+    const eventId = ev.event ?? ev.event_id ?? null;
     const start = ev.start_date ?? "";
     const end = ev.end_date ?? "";
     return {
-      event: eventId,           
+      event_id: eventId,           
       title: ev.title ?? "",
       main_img: ev.main_img ?? null,
       place: ev.place ?? "",

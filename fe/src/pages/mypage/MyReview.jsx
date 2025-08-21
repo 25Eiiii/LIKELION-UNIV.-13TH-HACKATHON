@@ -102,7 +102,7 @@ const Info = styled.div`
 
 const Top = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   min-height: 14px;
 `;
@@ -112,6 +112,7 @@ const Title = styled.p`
   font-size: 16px;
   font-weight: 600;
   margin: 0;
+  width: 210px;
 `;
 
 const Date = styled.p`
@@ -119,6 +120,7 @@ const Date = styled.p`
   font-size: 11px;
   font-weight: 400;
   margin: 0;
+  margin-top: 5px;
 `;
 
 const Review = styled.p`
