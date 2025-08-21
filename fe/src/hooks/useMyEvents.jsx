@@ -1,27 +1,44 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios"
-import useMyEventStore from "../store/useMyEventStore";
+import axios from "axios";
+import useAuthStore from "../store/useAuthStore";
 
-// 데이터 불러오기 
-const fetchMyEvents = async () =>  {
-    const token =  localStorage.getItem("accessToken");
-    const res = await axios.get("/api/surveys/my-events/", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    console.log("data: ", res.data);
-    return res.data;
-};
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+const ENDPOINT = "/api/surveys/my-events/"; 
 
-// useMyEvents 훅
-export const useMyEvents = () => {
-    const setEvents = useMyEventStore((state) => state.setEvents);
+const pickToken = () =>
+  useAuthStore.getState?.()?.token ||
+  localStorage.getItem("accessToken") ||
+  localStorage.getItem("token") ||
+  "";
 
-    // 데이터 불러오기 
-    return useQuery({
-        queryKey: ["myEvents"],
-        queryFn: fetchMyEvents,
-        onSuccess: (data) => setEvents(data),
-    });
-};
+function normalizeList(raw) {
+  const list = Array.isArray(raw) ? raw : raw?.results || [];
+  return list.map((ev) => {
+    const eventId = ev.event ?? ev.id ?? null;
+    const start = ev.start_date ?? "";
+    const end = ev.end_date ?? "";
+    return {
+      event: eventId,           
+      title: ev.title ?? "",
+      main_img: ev.main_img ?? null,
+      place: ev.place ?? "",
+      start_date: start,
+      end_date: end,
+      date: ev.date_text ?? (start && end ? `${start} - ${end}` : start || ""),
+    };
+  });
+}
+
+export const useMyEvents = () =>
+  useQuery({
+    queryKey: ["myEvents", ENDPOINT],
+    queryFn: async () => {
+      const token = pickToken();
+      const { data } = await axios.get(`${API_BASE}${ENDPOINT}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return normalizeList(data);
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
