@@ -48,6 +48,7 @@ const Category = () => {
     <>
       <Container>
         <C.InnerWrapper>
+          <C.Top>
           <C.Header>
             <C.Back onClick={() => navigate("/home")}>
               <img
@@ -98,7 +99,8 @@ const Category = () => {
             ))}
           </C.AllCategory>
           <C.Line />
-
+          </C.Top>
+          <C.ScrollArea>
           {data.length === 0 && <p style={{ marginLeft: 20 }}>로딩 중..</p>}
           {data.map((item) => (
             <C.ItemBox key={item.id} onClick={() => navigate(`/detailInfo/${item.id}`)}>
@@ -115,6 +117,7 @@ const Category = () => {
             </C.ItemBox>
           ))}
           <C.Box />
+          </C.ScrollArea>
         </C.InnerWrapper>
       </Container>
       <NavBar />

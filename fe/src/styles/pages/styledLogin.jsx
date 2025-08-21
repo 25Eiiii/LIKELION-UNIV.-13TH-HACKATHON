@@ -20,7 +20,7 @@ export const Logo = styled.div`
 display: flex;
 justify-content: center;
 align-items: center;
-margin-top: 144px;
+margin-top: 154px;
 `;
 
 export const Id = styled.input`
@@ -36,7 +36,7 @@ font-weight: 400;
 line-height: normal;
 text-align: center;
 outline: none;
-margin-top: 82px;
+margin-top: 72px;
 margin-bottom: 14px;
 `;
 

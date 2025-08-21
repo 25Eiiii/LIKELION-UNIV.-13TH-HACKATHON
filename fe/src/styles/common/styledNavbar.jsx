@@ -25,7 +25,7 @@ export const Line = styled.div`
 export const Group = styled.div`
     display: flex;
     flex-direction: row;
-    gap: 40px;
+    gap: 50px;
     align-items: flex-end;
 `
 

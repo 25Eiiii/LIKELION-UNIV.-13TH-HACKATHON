@@ -9,8 +9,22 @@ padding-top: 43px
 
 export const InnerWrapper = styled.div`
 width: 428px;
-min-height: 926px;
+height: 100vh;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+`;
 
+export const Top = styled.div`
+position: sticky;
+`;
+
+export const ScrollArea = styled.div`
+overflow-y: auto;
+&::-webkit-scrollbar {      
+    width: 0;
+    height: 0;
+}
 `;
 
 export const Box = styled.div`
@@ -112,7 +126,6 @@ height: 1px;
 flex-shrink: 0;
 background: #D9D9D9;
 display: absolute;
-margin-bottom: 40px;
 `;
 
 export const MiniLine = styled.div`
@@ -127,6 +140,7 @@ export const ItemBox = styled.div`
 display: flex;
 height: 170px;
 align-items: center;
+margin-top: 10px;
 margin-bottom: 10px;
 `;
 

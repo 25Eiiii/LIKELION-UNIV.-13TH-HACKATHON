@@ -20,6 +20,7 @@ import Likes from './pages/Likes';
 import Survey from './pages/Survey';
 import Verify from './pages/Verify';
 import WriteReview from "./pages/mypage/WriteReview";
+import Splash from './pages/Splash';
 
 function App() {
 
@@ -47,6 +48,7 @@ function App() {
         <Route path='/survey/:id' element={<Survey/>}/>
         <Route path='/verify' element={<Verify/>}/>
         <Route path="/write-review/:event_id" element={<WriteReview />} />
+        <Route path="/" element={<Splash/>}/>
       </Routes>
     </BrowserRouter>
   );

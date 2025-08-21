@@ -41,6 +41,7 @@ const Search = () => {
     <>
       <Container>
         <S.InnerWrapper>
+          <S.Top>
           <S.Header>
             <S.Back onClick={() => navigate(-1)}>
               <img
@@ -87,6 +88,8 @@ const Search = () => {
             ))}
           </S.AllCategory>
           <S.Line></S.Line>
+          </S.Top>
+          <S.ScrollArea>
           {data?.results?.map((item) => (
             <S.ItemBox onClick={() => navigate(`/detailInfo/${item.id}`)}>
               <S.ItemImg src={item.main_img} />
@@ -102,6 +105,7 @@ const Search = () => {
             </S.ItemBox>
           ))}
           <S.Box></S.Box>
+          </S.ScrollArea>
         </S.InnerWrapper>
       </Container>
       <NavBar></NavBar>

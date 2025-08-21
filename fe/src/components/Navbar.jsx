@@ -31,16 +31,6 @@ const NavBar = () => {
                 /> 
                 탐색
             </N.Icon>
-            <N.Icon onClick={() => navigate("/coupon")}>
-                <img
-                    id="coupon"
-                    src={`${process.env.PUBLIC_URL}/images/${
-                        location.pathname === "/coupon" ? "coupon_active.svg" : "coupon.svg"
-                    }`}
-                    alt="coupon"
-                />
-                혜택
-            </N.Icon>
             <N.Icon onClick={() => navigate("/likes")}>
                 <img
                     id="like"
