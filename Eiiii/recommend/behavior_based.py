@@ -146,17 +146,17 @@ def calculate_activity_scores(
             SELECT
                 id,
                 title,
-                -- lot=위도, lat=경도 (문자 → 실수 안전 캐스팅)
-                CASE WHEN lot ~ '^-?[0-9]+(\.[0-9]+)?$' THEN lot::double precision ELSE NULL END AS lat,
-                CASE WHEN lat ~ '^-?[0-9]+(\.[0-9]+)?$' THEN lat::double precision ELSE NULL END AS lon,
+                -- lot=위도, lat=경도 (문자/숫자 모두 안전 처리)
+                CASE WHEN lot::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lot::double precision ELSE NULL END AS lat,
+                CASE WHEN lat::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lat::double precision ELSE NULL END AS lon,
                 codename,
                 guname
             FROM search_culturalevent
-            WHERE lot ~ '^-?[0-9]+(\.[0-9]+)?$'
-                AND lat ~ '^-?[0-9]+(\.[0-9]+)?$'
+            WHERE lot IS NOT NULL AND lat IS NOT NULL
+                AND lot::text ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                AND lat::text ~ '^-?[0-9]+(\\.[0-9]+)?$'
                 AND (lot::double precision) BETWEEN :lat_min AND :lat_max   -- 위도
                 AND (lat::double precision) BETWEEN :lon_min AND :lon_max   -- 경도
-                LIMIT :bbox_limit
         """
 
         params = {
@@ -165,14 +165,19 @@ def calculate_activity_scores(
             "bbox_limit": int(bbox_limit),
         }
 
+        # candidate_ids 교집합을 DB 쿼리 단계에서 적용
+        sql = base_sql
         if cand_set:
-            stmt = text(base_sql + " AND id IN :cand_ids ORDER BY id LIMIT :bbox_limit") \
-                   .bindparams(bindparam("cand_ids", expanding=True))
-            params["cand_ids"] = list(cand_set)
-        else:
-            stmt = text(base_sql + " ORDER BY id LIMIT :bbox_limit")
+            ids = list(cand_set)
+            ph = ", ".join([f":id{i}" for i in range(len(ids))]) or ":id0"
+            sql += f" AND id IN ({ph})"
+            for i, v in enumerate(ids):
+                params[f"id{i}"] = int(v)
 
-        rows = conn.execute(stmt, params).fetchall()
+        sql += " ORDER BY id LIMIT :bbox_limit"
+
+        rows = conn.execute(text(sql), params).fetchall()
+
 
         if not rows:
             if cand_set:
