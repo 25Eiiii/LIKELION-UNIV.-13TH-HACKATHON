@@ -21,7 +21,7 @@ def _fetch_user_location(conn, user_id: int):
         return float(row[0]), float(row[1])
     except:
         return None, None
-    
+
 def normalize_lat_lon(lat_raw, lon_raw):
     """
     위도/경도 뒤바뀜을 자동 보정.
@@ -52,10 +52,16 @@ def _fetch_event_meta(conn, event_ids: list[int]):
     if not event_ids:
         return {}
     stmt = text("""
-        SELECT id, title, lat, lot AS lon, place, codename, main_img, date, start_date, end_date
+        SELECT
+            id,
+            title,
+            -- lot는 위도, lat는 경도. 숫자인 경우에만 실수로 캐스팅
+            CASE WHEN lot::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lot::double precision ELSE NULL END AS lat,
+            CASE WHEN lat::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lat::double precision ELSE NULL END AS lon,
+            place, codename, main_img, date, start_date, end_date
         FROM search_culturalevent
         WHERE id IN :ids
-    """).bindparams(bindparam("ids", expanding=True))  
+    """).bindparams(bindparam("ids", expanding=True))
 
     rows = conn.execute(stmt, {"ids": tuple(event_ids)}).fetchall()
 
@@ -68,6 +74,7 @@ def _fetch_event_meta(conn, event_ids: list[int]):
             "start_date": start_date, "end_date": end_date,
         }
     return meta
+
 
 def _f(x, default=0.0) -> float:
     try:
@@ -124,7 +131,7 @@ def get_monthly_top3_for_user(user_id: int, today: date | None = None):
         # 3) 거리 점수 보정
         corrected_distance = _f(d.get("distance_score"))
         distance_km = None
-        if (user_lat is not None and user_lon is not None 
+        if (user_lat is not None and user_lon is not None
                 and md.get("lat") is not None and md.get("lon") is not None):
             try:
                 ev_lat, ev_lon = normalize_lat_lon(md["lat"], md["lon"])
@@ -142,7 +149,7 @@ def get_monthly_top3_for_user(user_id: int, today: date | None = None):
         original_total = _f(d.get("total_score"))
         original_distance = _f(d.get("distance_score"))
         corrected_total = original_total - original_distance + corrected_distance
-        
+
         # 이달 필터
         if not overlaps_month(sd, ed, y, m):
             continue
@@ -218,11 +225,17 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
     engine = get_db_engine()
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT e.id, e.title, e.lat, e.lot AS lon, e.place, e.codename, e.main_img,
-                   e.date, e.start_date, e.end_date,
-                   COALESCE(l.cnt, 0) AS like_count,
-                   COALESCE(rv.avg_rating, 0) AS avg_rating,
-                   COALESCE(rv.cnt, 0) AS review_count
+            SELECT
+                e.id,
+                e.title,
+                -- lot=위도, lat=경도 를 안전 캐스팅
+                CASE WHEN e.lot::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN e.lot::double precision ELSE NULL END AS lat,
+                CASE WHEN e.lat::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN e.lat::double precision ELSE NULL END AS lon,
+                e.place, e.codename, e.main_img,
+                e.date, e.start_date, e.end_date,
+                COALESCE(l.cnt, 0) AS like_count,
+                COALESCE(rv.avg_rating, 0) AS avg_rating,
+                COALESCE(rv.cnt, 0) AS review_count
             FROM search_culturalevent e
             LEFT JOIN (
                 SELECT event_id, COUNT(*) AS cnt
