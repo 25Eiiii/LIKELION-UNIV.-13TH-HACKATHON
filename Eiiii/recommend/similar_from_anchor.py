@@ -2,6 +2,7 @@
 from datetime import date
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 from . import algo  
 
 def _norm_fee(x: str) -> str:
@@ -16,9 +17,8 @@ def similar_to_event_df(anchor_event_id: int, top_n: int = 3, exclude_past: bool
     texts = ev["meta"].fillna("").tolist()
     if not any(t.strip() for t in texts):
         return pd.DataFrame()
-    algo._ensure_vectorizer(texts)
-    vec = algo._VECTORIZER
-    mat = algo._EVENT_TFIDF
+    vec = TfidfVectorizer(ngram_range=(1, 2), min_df=1, max_features=50000)
+    mat = vec.fit_transform(texts)
     if vec is None or mat is None:
         return pd.DataFrame()
 
@@ -92,3 +92,4 @@ def similar_to_event_df(anchor_event_id: int, top_n: int = 3, exclude_past: bool
 
     out = cand.sort_values("score", ascending=False).head(top_n)[keep].reset_index(drop=True)
     return out
+

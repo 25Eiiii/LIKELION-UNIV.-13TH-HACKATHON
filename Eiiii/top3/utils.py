@@ -254,7 +254,7 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
         (eid, title, ev_lat_raw, ev_lon_raw, place, codename, main_img,
          date_text, sd_raw, ed_raw, like_cnt, avg_rating, rv_cnt) = r
         ev_lat, ev_lon = normalize_lat_lon(ev_lat_raw, ev_lon_raw)
-
+        
         # 날짜 정규화
         sd = to_date(sd_raw)
         ed = to_date(ed_raw)
