@@ -21,11 +21,27 @@ import Survey from './pages/Survey';
 import Verify from './pages/Verify';
 import WriteReview from "./pages/mypage/WriteReview";
 import Splash from './pages/Splash';
+import { useEffect } from 'react';
+import useAuthStore from './store/useAuthStore';
+import useChatbotStore from './store/useChatbotStore';
+
+function AuthStateChangeHandler() {
+  const user = useAuthStore((s) => s.user);
+  const clearChatHistory = useChatbotStore((s) => s.clearChatHistory);
+
+  useEffect(() => {
+    console.log("유저 변경 감지됨. 대화 내역 초기화함.");
+    clearChatHistory();
+  }, [user, clearChatHistory]);
+
+  return null;
+}
 
 function App() {
 
   return (
     <BrowserRouter>
+    <AuthStateChangeHandler />
       <Routes>
         <Route path="/home" element={<Home />}></Route>
         <Route path='/chatbot-intro' element={<ChatbotIntroWrapper />}></Route>

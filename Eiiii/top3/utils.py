@@ -52,10 +52,16 @@ def _fetch_event_meta(conn, event_ids: list[int]):
     if not event_ids:
         return {}
     stmt = text("""
-        SELECT id, title, lat, lot AS lon, place, codename, main_img, date, start_date, end_date
+        SELECT
+            id,
+            title,
+            -- lot는 위도, lat는 경도. 숫자인 경우에만 실수로 캐스팅
+            CASE WHEN lot ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lot::double precision ELSE NULL END AS lat,
+            CASE WHEN lat ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN lat::double precision ELSE NULL END AS lon,
+            place, codename, main_img, date, start_date, end_date
         FROM search_culturalevent
         WHERE id IN :ids
-    """).bindparams(bindparam("ids", expanding=True))  
+    """).bindparams(bindparam("ids", expanding=True))
 
     rows = conn.execute(stmt, {"ids": tuple(event_ids)}).fetchall()
 
@@ -68,6 +74,7 @@ def _fetch_event_meta(conn, event_ids: list[int]):
             "start_date": start_date, "end_date": end_date,
         }
     return meta
+
 
 def _f(x, default=0.0) -> float:
     try:
@@ -218,11 +225,17 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
     engine = get_db_engine()
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT e.id, e.title, e.lat, e.lot AS lon, e.place, e.codename, e.main_img,
-                   e.date, e.start_date, e.end_date,
-                   COALESCE(l.cnt, 0) AS like_count,
-                   COALESCE(rv.avg_rating, 0) AS avg_rating,
-                   COALESCE(rv.cnt, 0) AS review_count
+            SELECT
+                e.id,
+                e.title,
+                -- lot=위도, lat=경도 를 안전 캐스팅
+                CASE WHEN e.lot ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN e.lot::double precision ELSE NULL END AS lat,
+                CASE WHEN e.lat ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN e.lat::double precision ELSE NULL END AS lon,
+                e.place, e.codename, e.main_img,
+                e.date, e.start_date, e.end_date,
+                COALESCE(l.cnt, 0) AS like_count,
+                COALESCE(rv.avg_rating, 0) AS avg_rating,
+                COALESCE(rv.cnt, 0) AS review_count
             FROM search_culturalevent e
             LEFT JOIN (
                 SELECT event_id, COUNT(*) AS cnt
@@ -241,7 +254,7 @@ def get_monthly_top3_public(lat=None, lon=None, today: date | None = None):
         (eid, title, ev_lat_raw, ev_lon_raw, place, codename, main_img,
          date_text, sd_raw, ed_raw, like_cnt, avg_rating, rv_cnt) = r
         ev_lat, ev_lon = normalize_lat_lon(ev_lat_raw, ev_lon_raw)
-
+        
         # 날짜 정규화
         sd = to_date(sd_raw)
         ed = to_date(ed_raw)

@@ -1,7 +1,7 @@
 import styled from "styled-components"
 
 export const Container = styled.div`
-background: linear-gradient(180deg, #FFF 0%, #F3FFE6 100%);
+background: linear-gradient(180deg, #FFF 0%, #F0FFF8 100%);
 position: fixed; 
 bottom: 50px;
 left: 50%;
@@ -19,8 +19,7 @@ overflow-y: auto;
 display: none;
 `;
 export const ChatbotImg = styled.div`
-margin-top: 100px;
-margin-bottom: 10px;
+margin-top: 50px;
 `
 
 export const ChatbotName = styled.div`
@@ -87,10 +86,12 @@ cursor: pointer;
 export const Recommend = styled.div`
 display: flex;
 flex-direction: column;
+justify-content: flex-start;
+margin-left: 80px;
 `
 
 export const RecText = styled.p`
-width: 335px;
+width: 370px;
 height: 99px;
 flex-shrink: 0;
 color: #282F56;
@@ -99,10 +100,12 @@ font-size: 20px;
 font-style: normal;
 font-weight: 500;
 line-height: normal;
+margin-bottom: 40px;
 `
 
 export const RecList = styled.div`
 display: flex;
+gap: 15px;
 `
 export const SendWrapper = styled.div`
 width: 428px;

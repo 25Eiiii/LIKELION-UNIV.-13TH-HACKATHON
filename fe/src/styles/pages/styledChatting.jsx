@@ -1,7 +1,7 @@
 import styled from "styled-components"
 
 export const Container = styled.div`
-background: linear-gradient(180deg, #FFF 0%, #F3FFE6 100%);
+background: linear-gradient(180deg, #FFF 0%, #F0FFF8 100%);
 position: fixed; 
 bottom: 50px;
 left: 50%;
@@ -74,9 +74,23 @@ line-height: normal;
     margin: 0;
     }
 `
+
+export const ChatWrapper = styled.div`
+overflow-y: scroll;
+height: 100%;
+flex-grow: 1;
+  &::-webkit-scrollbar {
+    width: 0;
+  }
+margin-bottom: 30px;
+display: flex;
+flex-direction: column;
+width: 100%;
+`
+
 export const MsgWrapper = styled.div`
-width: 90%;
-margin-top: 15px;
+padding: 0px 20px;
+margin-top: 18px;
 box-sizing: border-box;
 display: flex;
 align-items: ${(props) => (props.$isUser ? "flex-end" : "flex-start")};
@@ -84,7 +98,6 @@ flex-direction: column;
 `
 
 export const Message = styled.div`
-height: 45px;
 flex-shrink: 0;
 border-radius:13px;
 border: 2px solid #D9D9D9;
@@ -98,7 +111,7 @@ line-height: normal;
 box-sizing: border-box;
 display: flex;
 align-items: center;
-padding: 0 15px;
+padding: 15px 15px;
 border-top-${(props) => (props.$isUser ? "right" : "left")}-radius: 0;
 `
 
@@ -113,28 +126,31 @@ export const ButtonsWrapper = styled.div`
 
 // 버튼 스타일
 export const Button = styled.button`
-  padding: 8px 12px;
-  border: 1px solid #60C795;
-  border-radius: 20px;
-  background-color: #E8F8EE;
-  color: #60C795;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s, color 0.2s;
+padding: 8px 12px;
+width: 135px;
+height: 36px;
+flex-shrink: 0;
+border: 1px solid #60C795;
+border-radius: 20px;
+background-color: #E8F8EE;
+color: #60C795;
+font-size: 14px;
+font-weight: 500;
+cursor: pointer;
+white-space: nowrap;
+transition: background-color 0.2s, color 0.2s;
 
-  &:hover {
-    background-color: #60C795;
-    color: #fff;
-  }
+&:hover {
+  background-color: #60C795;
+  color: #fff;
+}
 `;
 
 export const SendWrapper = styled.div`
 width: 428px;
 height: 80px;
-position: absolute;
-bottom: 0;
+position: relative;
+bottom: 10px;
 display: flex;
 align-items: center;
 justify-content: center;

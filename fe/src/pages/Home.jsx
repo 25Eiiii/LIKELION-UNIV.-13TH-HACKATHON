@@ -25,23 +25,25 @@ const Home = () => {
   const { data: events = [], isLoading, error } = useTopEvents(10);
   const { data: top3 = [], isLoading: loadingTop3, error: errorTop3 } = useTop3Monthly();
   const nickname = useAuthStore((s) => s.nickname);
+  const token = useAuthStore((s) => s.token);
 
   const [search, setSearch] = useState("");
 
   const [searchParams] = useSearchParams();
-
 
   const SearchCategory = () => {
     // 검색어를 쿼리스트링으로 전달해서 Category 페이지로 이동
     navigate(`/category?search=${encodeURIComponent(search)}`);
   };
 
+  console.log("events:", top3)
+
   return (
     <>
       <Container>
         <H.Header>
           <p style={{ fontSize: "20px", color: "#fff" }}>
-            {`${nickname}님은 문화 시민`}
+            {token ? `${nickname}님은 문화 시민` : '회원님은 문화 시민'}
           </p>
           <p style={{ fontSize: "38px", color: "#fff" }}>Lv. 5</p>
           <p style={{ fontSize: "20px", color: "#fff" }}>
@@ -92,7 +94,7 @@ const Home = () => {
 
           <H.RecContainer>
             <H.TextWrapper>
-              <H.Text>{`${nickname}`}님을 위한 추천 전시 / 행사</H.Text>
+              <H.Text>{token ? `${nickname}님을 위한 추천 전시 / 행사` : '회원님을 위한 추천 전시 / 행사'}</H.Text>
               <H.MoreBtn>
                 더보기 <FiChevronRight />
               </H.MoreBtn>
@@ -127,6 +129,8 @@ const Home = () => {
                     date={event.date_text}
                     image={event.main_img}
                     onClick={() => navigate(`/detailInfo/${event.id}`)}
+                    w={144}
+                    h={168}
                   />
                 ))}
               </H.EventList>
