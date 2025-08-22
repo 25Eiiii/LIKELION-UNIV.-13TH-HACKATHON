@@ -79,7 +79,8 @@ width: 90%;
 margin-top: 15px;
 box-sizing: border-box;
 display: flex;
-justify-content: ${(props) => (props.$isUser ? "flex-end" : "flex-start")};
+align-items: ${(props) => (props.$isUser ? "flex-end" : "flex-start")};
+flex-direction: column;
 `
 
 export const Message = styled.div`
@@ -98,8 +99,36 @@ box-sizing: border-box;
 display: flex;
 align-items: center;
 padding: 0 15px;
-border-top-${(props) => (props.$isUser ? "left" : "right")}-radius: 0;
+border-top-${(props) => (props.$isUser ? "right" : "left")}-radius: 0;
 `
+
+// 버튼 컨테이너 스타일
+export const ButtonsWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  flex-direction: column;
+`;
+
+// 버튼 스타일
+export const Button = styled.button`
+  padding: 8px 12px;
+  border: 1px solid #60C795;
+  border-radius: 20px;
+  background-color: #E8F8EE;
+  color: #60C795;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background-color: #60C795;
+    color: #fff;
+  }
+`;
 
 export const SendWrapper = styled.div`
 width: 428px;
