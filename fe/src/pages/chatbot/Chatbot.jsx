@@ -1,53 +1,100 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as C from "../../styles/pages/styledChatbot";
 import EventCard from "../../components/EventCard";
 import { useNavigate } from "react-router-dom";
 import useChatbotStore from "../../store/useChatbotStore";
+import useAuthStore from "../../store/useAuthStore";
+import { useLocation } from "../../hooks/useLocation";
 
 const Chatbot = () => {
   const [content, setContent] = useState("");
-  const chatbotName = useChatbotStore((state) => state.chatbotName);
   const navigate = useNavigate();
   const { addMessage } = useChatbotStore();
+  const nickname = useAuthStore((s) => s.nickname);
+  const { fetchSuggestions, fetchSimilarEvents, setInitialQuestion, sendMessageToApi } = useChatbotStore();
+  const [suggestions, setSuggestions] = useState([]);
+  const [recommendedEvents, setRecommendedEvents] = useState([]);
+  const [recommendationMessage, setRecommendationMessage] = useState("");
+  const { user } = useAuthStore();
+  const [anchorEvent, setAnchorEvent] = useState(null); 
 
   const handleEnter = (e) => {
     if (e.key === 'Enter' && content.trim()) {
-      addMessage({ sender: "user", text: content });
-      navigate('/chatting');
+      navigate('/chatting', { state: { initialQuestion: content } });
     }
   };
 
   const handleClick = () => {
     if (content.trim()) {
-      addMessage({ sender: "user", text: content });
-      navigate('/chatting');
+      navigate('/chatting', { state: { initialQuestion: content } });
     }
   };
+
+  // 추천 질문 클릭
+  const handleSuggestionClick = (question) => {
+    console.log("클릭된 질문:", question);
+    navigate("/chatting", { state: { initialQuestion: question } });
+  }
+
+  useEffect(() => {
+    const getSuggestions = async () => {
+      const data = await fetchSuggestions();
+      setSuggestions(data.items);
+    };
+    getSuggestions();
+  }, [fetchSuggestions]);
+
+ // 유사 행사 추천 목록을 불러오는 로직
+  useEffect(() => {
+    const loadRecommendations = async () => {
+        if (user?.id) { 
+            const anchorEventId = 71; 
+            const data = await fetchSimilarEvents(user.id, anchorEventId);
+            if (data) {
+                setRecommendationMessage(data.message);
+                setRecommendedEvents(data.items || []);
+            }
+        } else { // 비로그인 처리
+            setRecommendedEvents([]);
+        }
+    };
+    loadRecommendations();
+  }, [user, fetchSimilarEvents]);
 
   return (
     <C.Container>
       <C.ChatbotImg>
         <img src={`${process.env.PUBLIC_URL}/images/chatbot.svg`} alt="챗봇" />
       </C.ChatbotImg>
-      <C.ChatbotName>{chatbotName}</C.ChatbotName>
+      <C.ChatbotName>부기</C.ChatbotName>
       <C.QuestionWrapper>
         <C.QuestionTitle>오늘의 추천 질문</C.QuestionTitle>
         <C.QuestionList>
-          {questions.map((item, idx) => (
-            <C.Question key={idx}>{item.que}</C.Question>
+          {suggestions?.map((item, idx) => (
+            <C.Question 
+              key={idx}
+              onClick={() => handleSuggestionClick(item.label)}
+              >{item.label}</C.Question>
           ))}
         </C.QuestionList>
       </C.QuestionWrapper>
       <C.Recommend>
         <C.RecText>
           <p style={{ margin: "0px" }}>
-            효민님 지난 달 참여하였던<br />
-            <span style={{ color: "#159054" }}>피카소 전시 따라잡기</span> 와 비슷한 행사를 추천해드릴게요
+            {recommendationMessage}
           </p>
         </C.RecText>
         <C.RecList>
-          {recs.map((event, idx) => (
-            <EventCard key={idx} {...event} w={107} h={154} />
+          {recommendedEvents.map((event, idx) => (
+            <EventCard
+              key={event.id}
+              name={event.title}
+              date={event.date_text}
+              image={event.main_img}
+              onClick={() => navigate(`/detailInfo/${event.id}`)}
+              w={144}
+              h={168}
+          />
           ))}
         </C.RecList>
       </C.Recommend>
@@ -66,38 +113,4 @@ const Chatbot = () => {
   );
 };
 
-
 export default Chatbot;
-
-export const questions = [
-    {
-        que: "이번 주 내 근처 문화 활동 추천 해줄래?"
-    },
-    {
-        que: "이번 달 인기 문화 행사가 뭐야?"
-    },
-    {
-        que: "내 활동 리포트 보여줘"
-    },
-]
-
-export const recs = [
-    {
-        name: "제목",
-        place: "장소",
-        date: "2024.01.30 - 4.26",
-        image: "post.svg"
-    },
-    {
-        name: "제목",
-        place: "장소",
-        date: "2024.01.30 - 4.26",
-        image: "post.svg"
-    },
-    {
-        name: "제목",
-        place: "장소",
-        date: "2024.01.30 - 4.26",
-        image: "post.svg"
-    },
-]

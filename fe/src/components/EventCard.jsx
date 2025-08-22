@@ -8,7 +8,7 @@ const EventCard = ({ image, name, date, w, h, onClick }) => {
 
   return (
     <H.EventItem onClick={onClick}>
-      <H.EventPost src={src} alt={name} style={{ width: 144, height: 168, borderRadius: 10 }} />
+      <H.EventPost src={src} alt={name} style={{ width: w, height: h, borderRadius: 10 }}/>
       <H.EventName>{name}</H.EventName>
       <H.EventDate>{date}</H.EventDate>
     </H.EventItem>

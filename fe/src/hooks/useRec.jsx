@@ -1,6 +1,7 @@
 // src/hooks/useTopEvents.js
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
+import { useLocation } from "../hooks/useLocation";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 const authHeaders = () => {
@@ -15,7 +16,7 @@ function fmtDateRange(a = "", b = "") {
 }
 
 async function fetchRecommended(topN = 3) {
-  const token = localStorage.getItem("accessToken") || "";
+  const token = useAuthStore.getState().token;
   const url = new URL("/api/recommend/events/", API_BASE);
   url.searchParams.set("top_n", String(topN));
 
@@ -34,6 +35,21 @@ async function fetchRecommended(topN = 3) {
   }));
 }
 
+async function fetchTop3Monthly({ token, lat, lon }) {
+  const urlPath = token ? "/api/top3/monthly/" : "/api/top3/monthly/public/";
+  const url = new URL(urlPath, API_BASE);
+  
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const params = !token && lat && lon ? { lat, lon } : {}; // 2. 비로그인 시 lat, lon 파라미터 추가
+
+  const res = await fetch(url, { headers, params: new URLSearchParams(params) });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  
+  return Array.isArray(json) ? json : json?.results || [];
+}
+
 export function useTopEvents(topN = 3) {
   return useQuery({
     queryKey: ["recommended-events", topN],
@@ -41,26 +57,21 @@ export function useTopEvents(topN = 3) {
   });
 }
 
-// 월간 Top3
 export function useTop3Monthly() {
   const token = useAuthStore((s) => s.token);
+  console.log("top3 token:", token)
+  const { location, error: locationError, isLoading: isLocationLoading } = useLocation(); // 3. 위치 정보 가져오기
 
-  async function fetchTop3() {
-    const url = token
-    ? `${API_BASE}/api/top3/monthly/`
-    : `/api/top3/monthly/public`
-    ;
-
-    const headers = token
-    ? { Authorization: `Bearer ${token}` }
-    : {};
-
-    const res = await fetch(url, { headers: authHeaders() });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+  return useQuery({
+    queryKey: ["top3-monthly", !!token, location?.latitude, location?.longitude],
     
-    return Array.isArray(json) ? json : json?.results || [];
-  }
-  return useQuery({ queryKey: ["top3-monthly"], queryFn: fetchTop3 });
+    queryFn: () => fetchTop3Monthly({
+      token,
+      lat: location?.latitude,
+      lon: location?.longitude,
+    }),
+    
+
+    enabled: !isLocationLoading, 
+  });
 }

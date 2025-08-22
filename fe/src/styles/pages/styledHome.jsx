@@ -132,7 +132,6 @@ background: rgba(146, 173, 93, 0.24);
 margin-top: 30px;
 display: flex;
 flex-direction: column;
-padding-bottom: 20px;
 border-radius: 20px 0px 0px 20px;
 margin-left: 70px;
 `
@@ -152,6 +151,7 @@ flex-direction: column;
 align-items: center;
 justify-content: center;
 margin-top: 40px;
+margin-bottom: 20px;
 color: #838383;
 text-align: center;
 font-family: Pretendard;
@@ -233,10 +233,13 @@ flex-direction: column;
 align-items: center;
 cursor: pointer;
 align-items: flex-start;
+width: ${props => props.width || 'auto'}; // props로 받은 너비를 적용
 `
 
 export const EventPost = styled.img`
 margin-bottom: 8px;
+width: 100%;
+object: cover;
 `
 
 export const EventName = styled.div`
@@ -246,7 +249,7 @@ font-size: 13px;
 font-style: normal;
 font-weight: 600;
 line-height: normal;
-width: 124px;
+width: 100%;
 `
 export const EventDate = styled.div`
 color: #404040;

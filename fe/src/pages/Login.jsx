@@ -4,18 +4,14 @@ import * as L from "../styles/pages/styledLogin";
 import { Container } from "../styles/common/styledContainer";
 import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
     const navigate = useNavigate();
-
     const [id,setId] = useState("");
     const [password,setPassword] = useState("");
     const [error,setError] = useState(null);
-
-    // 로그인 시 nickname 저장
-    const setNickname = useAuthStore((s) => s.setNickname);
-
-    const setAuth = useAuthStore((s)=> s.login);
+    const { login } = useAuthStore();
 
     const goLogin = async() => {
         try{
@@ -32,10 +28,20 @@ const Login = () => {
                     },
                 },
             );
-            const { access_token, user } = response.data;
-            setAuth(access_token, user);
-            const nickname = response.data.nickname;
-            setNickname(nickname);
+
+            const { access, nickname } = response.data;
+
+            const decodedToken = jwtDecode(access);
+
+            const userId = decodedToken.user
+
+            login(access, userId, nickname);
+            
+
+            console.log("token: ", access);
+            console.log("user id:", userId);
+            console.log("nickname:", nickname);
+            console.log("dta:", response.data);
             localStorage.setItem("accessToken", response.data.access);
             localStorage.setItem("refreshToken",response.data.refresh);
             navigate("/home");

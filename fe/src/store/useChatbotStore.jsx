@@ -1,26 +1,34 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import useAuthStore from "./useAuthStore";
 
 const useChatbotStore = create(
   persist(
     (set, get) => ({
-      chatbotName: "",
-      setChatbotName: (name) => set({ chatbotName: name }),
-      resetChatbotName: () => set({ chatbotName: "" }),
-
+      chatbotName: "부기", 
       messages: [],
+      isLoading: false,
+      initialQuestion: null,
+
       addMessage: (msg) =>
         set((state) => ({ messages: [...state.messages, msg] })),
-      resetMessages: () => set({ messages: [] }),
-    
-      isLoading: false,
-      setIsLoading: (s) => set({ isLoading: s }),
 
-      // 데이터 구성
+      // 대화 내용 삭제
+      clearChatHistory: () => set({ messages: [] }),
+      
+      // 1. 첫 질문 설정 및 이전 대화 기록 삭제 
+      setInitialQuestion: (question) => set({ 
+        messages: [],
+        initialQuestion: question
+      }),
+
+      // 2. 사용자 메시지 추가, API 호출
       sendMessageToApi: async (messageText, senderId, authToken = null) => {
+        // isLoading 상태가 이미 true이면 중복 요청 방지
+        if (get().isLoading) return;
         set({ isLoading: true });
 
-        // 사용자 메세지 추가
+        // 사용자 메시지 추가 (API 호출 전에 화면에 먼저 표시)
         const userMessage = {
           id: Date.now(),
           text: messageText,
@@ -46,7 +54,6 @@ const useChatbotStore = create(
             body: JSON.stringify(requestBody),
           });
 
-          // HTTP 타임 아웃
           if (res.status === 504) {
             throw new Error("timeout");
           }
@@ -55,7 +62,6 @@ const useChatbotStore = create(
             throw new Error(`http error status: ${res.status}`);
           }
 
-          // 응답 배열 순서대로 처리
           const resMessages = await res.json();
           resMessages.forEach((msg) => {
             const botMessage = {
@@ -70,7 +76,7 @@ const useChatbotStore = create(
           console.error("API error:", error);
           const errorMessage = {
             id: Date.now() + 1,
-            text: "네트워크가 불안정합니다.",
+            text: "네트워크가 불안정합니다. 잠시 후 다시 시도해주세요.",
             sender: "bot",
           };
           get().addMessage(errorMessage);
@@ -78,18 +84,61 @@ const useChatbotStore = create(
           set({ isLoading: false });
         }
       },
+      fetchSuggestions: async () => {
+        try {
+          const res = await fetch("/api/chatbot/suggestions/?k=3");
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          const data = await res.json();
+          return data;
+        } catch (error) {
+          console.log("추천 질문 로딩 실패: ", error.message);
+          return [];
+        }
+      },
+      fetchSimilarEvents: async (userId, anchorEventId) => {
+        try {
+            const token = useAuthStore.getState().token;
+            if (!token) {
+              console.error("인증 토큰이 없어 API를 호출할 수 없습니다.");
+              return null;
+            }
+            
+            const res = await fetch(`/api/recommend/similar_from_last/`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (!res.ok) {
+              throw new Error(`서버 에러 발생 상태 코드: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            return data;
+
+        } catch (error) {
+            console.error("유사 추천 행사 로딩 실패:", error.message);
+            return null;
+        }
+      },
     }),
     {
       name: "chatbot-storage",
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !['isLoading'].includes(key))
+        ),
       storage: {
         getItem: (key) => {
-          const value = sessionStorage.getItem(key);
+          const value = localStorage.getItem(key);
           return value ? JSON.parse(value) : null;
         },
         setItem: (key, value) => {
-          sessionStorage.setItem(key, JSON.stringify(value));
+          localStorage.setItem(key, JSON.stringify(value));
         },
-        removeItem: (key) => sessionStorage.removeItem(key),
+        removeItem: (key) => localStorage.removeItem(key),
       },
     }
   )
