@@ -35,4 +35,12 @@ boogi-bot/models/
 
 # models/*.tar.gz
 
+certbot/conf/
+certbot/www/
+staticfiles/
+
+# allow nginx conf
+!nginx/
+nginx/*
+!nginx/*.conf
 
