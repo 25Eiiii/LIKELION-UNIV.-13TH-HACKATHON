@@ -1,4 +1,5 @@
 # actions.py
+
 from typing import Any, Dict, Text, List, Optional
 import logging
 import requests
@@ -14,14 +15,16 @@ from rasa_sdk.events import (
     ActionExecuted,
 )
 from requests.exceptions import ReadTimeout, ConnectTimeout, ConnectionError
+from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
 # ===== 엔드포인트 =====
-BASE_URL = os.getenv("RECO_BASE_URL", "http://127.0.0.1:8000")
-LOGIN_ENDPOINT  = "/api/recommend/chat"         # 로그인 전용
-PUBLIC_ENDPOINT = "/api/pbrecommend/public/"    # 비로그인 전용(팀원 개발 예정)
-
+API_BASE = os.getenv("BACKEND_BASE_URL", "http://web:8000").rstrip("/")
+LOGIN_ENDPOINT  =  urljoin(API_BASE + "/", "api/recommend/chat")       # 로그인 전용
+PUBLIC_ENDPOINT =  urljoin(API_BASE + "/", "api/pbrecommend/public/")   # 비로그인 전용(팀원 개발 예정)
+DEFAULT_INTERNAL_HEADERS = {"X-Forwarded-Proto": "https"}  # 내부 http→https 리다이렉트 회피
+ 
 
 # 엔드포인트 메서드 환경변수 (기본: 로그인=GET, 퍼블릭=GET)
 LOGIN_METHOD  = os.getenv("RECO_LOGIN_METHOD",  "GET").upper()
@@ -87,14 +90,12 @@ def _safe_log_headers(headers: Dict[str, str]) -> Dict[str, str]:
 
 def _choose_endpoint_and_headers_from_token(token: Optional[Text]) -> tuple[str, Dict[str, str], str]:
     """token 유무로 엔드포인트/헤더/모드(login|public) 결정."""
-    if token:
-        url = f"{BASE_URL}{LOGIN_ENDPOINT}"
+    if token: 
         headers = _auth_headers_from_token(token)
-        logger.info("auth_token 감지됨 → LOGIN_ENDPOINT 사용: %s", url)
-        return url, headers, "login"
+        return LOGIN_ENDPOINT, headers, "login"
     url = f"{BASE_URL}{PUBLIC_ENDPOINT}"
-    logger.warning("auth_token 미감지 → PUBLIC_ENDPOINT 사용: %s", url)
-    return url, {}, "public"
+    logger.warning("auth_token 미감지 → PUBLIC_ENDPOINT 사용: %s", PUBLIC_ENDPOINT)
+    return PUBLIC_ENDPOINT, {}, "public"
 
 
 def _toggle_slash(url: str) -> str:
@@ -104,9 +105,10 @@ def _toggle_slash(url: str) -> str:
 
 def _call_once(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any],
                connect_s: int, read_s: int) -> requests.Response:
+    merged = {**DEFAULT_INTERNAL_HEADERS, **(headers or {})}
     if method.upper() == "POST":
-        return requests.post(url, json=params, headers=headers, timeout=(connect_s, read_s))
-    return requests.get(url, params=params, headers=headers, timeout=(connect_s, read_s))
+        return requests.post(url, json=params, headers=merged, timeout=(connect_s, read_s), allow_redirects=False)
+    return requests.get(url, params=params, headers=merged, timeout=(connect_s, read_s), allow_redirects=False)
 
 def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str, Any]) -> requests.Response:
 
@@ -148,9 +150,8 @@ def _call_reco(method: str, url: str, headers: Dict[str, str], params: Dict[str,
 
     # 401/403 퍼블릭 폴백(기존 그대로)
     if r.status_code in (401, 403):
-        pub = f"{BASE_URL}{PUBLIC_ENDPOINT}"
-        logger.warning("401/403 → 퍼블릭 폴백: %s", pub)
-        r = call_with_retries(PUBLIC_METHOD, pub, {}, q=params)
+        logger.warning("401/403 → 퍼블릭 폴백: %s", PUBLIC_ENDPOINT)
+        r = call_with_retries(PUBLIC_METHOD, PUBLIC_ENDPOINT, {}, q=params)
 
     # 4) 최종 상태
     r.raise_for_status()
@@ -315,7 +316,7 @@ class ActionRecommendEvent(Action):
             items = data.get("results", [])
         except Exception as e:
             logger.exception("recommend API 호출 실패: %s", e)
-            dispatcher.utter_message(text="추천 서버와 통신에 문제가 있어요. 잠시 후 다시 시도해 주세요.")
+            dispatcher.utter_message(text="추천 서버와 통신에 문제가 있어요. 잠시 후 다시 시도해주세요.")
             return events
 
         # 결과 처리
@@ -331,7 +332,7 @@ class ActionRecommendEvent(Action):
             title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
-            detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
+            detail_url = it.get("url") or f"{API_BASE}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
         has_next = bool(data.get("next"))
@@ -393,14 +394,18 @@ class ActionShowMore(Action):
             title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
-            detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
+            detail_url = it.get("url") or f"{API_BASE}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
         # 마지막/다음 페이지 분기 직전에 힌트 출력 추가
         if has_more and next_page:
             dispatcher.utter_message(text="더 볼까요? '더 보기'라고 말해보세요!")
             logger.info("[show_more] has_more=True → set next page to %s", next_page)
-            return events + [SlotSet("page", int(next_page))]
+            try:
+                next_page_int = int(next_page)
+            except Exception:
+                next_page_int = (page or 1) + 1
+            return events + [SlotSet("page", next_page_int)]
 
         # 마지막 페이지 처리
         dispatcher.utter_message(text="더 이상 결과가 없어요. 다른 분류나 지역으로 찾아볼까요?")
