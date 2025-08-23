@@ -4,6 +4,7 @@ import * as C from "../styles/pages/styledCategory";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
 import axios from "axios";
+import {api} from "../api/fetcher";
 
 const Category = () => {
   const categoryList = [
@@ -28,13 +29,15 @@ const Category = () => {
   const [search, setSearch] = useState(searchQuery);
   const [data, setData] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = async (categoryQ = isSelected.query, keyword = search) => {
     try {
       const url = `/api/events/events-category/?search=${encodeURIComponent(
         search
       )}`;
       const response = await axios.get(url);
-      setData(response.data.results || []);
+      
+      const {data} = await api.get("/api/events/events-category/",{params : {category: categoryQ, search: keyword}});
+      setData(data?.results || []);
     } catch (error) {
       console.error(error.response?.data || error);
     }
@@ -87,6 +90,7 @@ const Category = () => {
                 onClick={() => {
                   setIsSelected(item);
                   setSearchParams({ search }); // 현재 검색어 유지
+                  fetchData(item.query, search);
                 }}
               >
                 {item.label}
