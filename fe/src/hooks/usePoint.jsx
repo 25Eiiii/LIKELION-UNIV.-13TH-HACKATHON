@@ -3,12 +3,11 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import usePointStore from "../store/usePointStore";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+import { api } from "../api/fetcher"
 
 const fetchPoint = async () => {
   const token = localStorage.getItem("accessToken");
-  const res = await axios.get(`${API_BASE}/api/points/my/`, {
+  const res = await api.get("/api/points/my/", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   const n = Number(res.data?.point) || 0;

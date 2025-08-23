@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Container } from "../../styles/common/styledContainer";
 import * as W from "../../styles/pages/styledWriteReview";
 import useAuthStore from "../../store/useAuthStore";
+import { api } from "../api/fetcher"
 
 const MAX_LEN = 600;
 
@@ -73,7 +74,7 @@ const WriteReview = () => {
 
     try {
       setSubmitting(true);
-      await axios.post(`/api/surveys/review/`, fd, {
+      await api.post("/api/surveys/review/", fd, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       await qc.invalidateQueries({ queryKey: ["my-reviews"] });

@@ -4,8 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/useAuthStore";
 import useMyReviewStore from "../../store/useMyReviewStore";
 import { useMyReviews } from "../../hooks/useMyReview";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+import { api } from "../api/fetcher"
 
 const MyReview = () => {
   const queryClient = useQueryClient();
@@ -20,7 +19,7 @@ const MyReview = () => {
 
   const deleteReview = async (reviewId) => {
     try {
-      await axios.delete(`${API_BASE}/api/surveys/my-reviews/${reviewId}/`, {
+      await api.delete("/api/surveys/my-reviews/${reviewId}/", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       await queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
