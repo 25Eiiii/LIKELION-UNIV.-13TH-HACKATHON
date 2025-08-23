@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailInfo";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import axios from "axios";
+import {api} from "../api/fetcher";
 
 const DetailInfo = () => {
   const [data, setData] = useState(null);
@@ -19,14 +19,14 @@ const DetailInfo = () => {
           accessToken && accessToken !== "null" && accessToken !== "undefined"
             ? { Authorization: `Bearer ${accessToken}` }
             : {};
-        const response = await axios.get(`/api/details/detail/${id}/`, {
+        const response = await api.get(`/api/details/detail/${id}/`, {
           headers,
         });
         setData(response.data);
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
-        if (error.response.status === 401) {
+        if (error?.response?.status === 401) {
           alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
           navigate("/login");
         }
@@ -50,7 +50,7 @@ const DetailInfo = () => {
     const prev = isClicked;
     setIsClicked(!prev);
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `/api/details/detail/${id}/like/`,
         {},
         {
