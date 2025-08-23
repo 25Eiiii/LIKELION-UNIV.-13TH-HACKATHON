@@ -45,7 +45,6 @@ const Home = () => {
           <p style={{ fontSize: "20px", color: "#fff" }}>
             {token ? `${nickname}님은 문화 시민` : '회원님은 문화 시민'}
           </p>
-          <p style={{ fontSize: "38px", color: "#fff" }}>Lv. 5</p>
           <p style={{ fontSize: "20px", color: "#fff" }}>
             이번 주 한 번 더 참여하면 <br /> <span style={{ color: "#FFA90E" }}>300</span>
             <img
@@ -95,9 +94,6 @@ const Home = () => {
           <H.RecContainer>
             <H.TextWrapper>
               <H.Text>{token ? `${nickname}님을 위한 추천 전시 / 행사` : '회원님을 위한 추천 전시 / 행사'}</H.Text>
-              <H.MoreBtn>
-                더보기 <FiChevronRight />
-              </H.MoreBtn>
             </H.TextWrapper>
 
             {isLoading && <p style={{ marginLeft: 20 }}>로딩중…</p>}

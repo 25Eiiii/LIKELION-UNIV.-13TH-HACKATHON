@@ -4,7 +4,7 @@ import * as L from "../styles/pages/styledLogin";
 import { Container } from "../styles/common/styledContainer";
 import {api} from "../api/fetcher";
 import useAuthStore from "../store/useAuthStore";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
     const navigate = useNavigate();

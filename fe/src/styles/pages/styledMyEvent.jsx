@@ -46,9 +46,10 @@ flex-direction: column;
 width: 428px;
 flex-shrink: 0;
 background: #FFF;
-margin-top: 30px;
+margin-top: 50px;
 border-radius: 23px  23px 0px 0px;
 margin-bottom: 63px;
+height: 100%;
 `
 
 export const Tab = styled.div`
