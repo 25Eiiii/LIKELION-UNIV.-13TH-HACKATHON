@@ -1,12 +1,13 @@
 import React from 'react';
 import axios from 'axios';
 import { useMutation } from "@tanstack/react-query"
+import { api } from "../api/fetcher"
 
 const createProfile = async (profileData) => {
     const token = localStorage.getItem("accessToken")
 
     try {
-        const res = await axios.post("/api/profile/create/", profileData, {
+        const res = await api.post("/api/profile/create/", profileData, {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",

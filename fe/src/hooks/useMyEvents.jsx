@@ -1,9 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
-const ENDPOINT = "/api/surveys/my-events/"; 
+import { api } from "../api/fetcher"
 
 const pickToken = () =>
   useAuthStore.getState?.()?.token ||
@@ -31,10 +28,10 @@ function normalizeList(raw) {
 
 export const useMyEvents = () =>
   useQuery({
-    queryKey: ["myEvents", ENDPOINT],
+    queryKey: ["myEvents", "/api/surveys/my-events/"],
     queryFn: async () => {
       const token = pickToken();
-      const { data } = await axios.get(`${API_BASE}${ENDPOINT}`, {
+      const { data } = await api.get("/api/surveys/my-events/", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       return normalizeList(data);

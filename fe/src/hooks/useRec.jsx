@@ -2,8 +2,9 @@
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 import { useLocation } from "../hooks/useLocation";
+import { api } from "../api/fetcher"
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "";
 const authHeaders = () => {
   const t = localStorage.getItem("accessToken");
   return t ? { Authorization: `Bearer ${t}` } : {};
