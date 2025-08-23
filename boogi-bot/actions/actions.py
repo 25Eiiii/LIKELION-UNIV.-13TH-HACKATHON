@@ -20,9 +20,9 @@ from urllib.parse import urljoin
 logger = logging.getLogger(__name__)
 
 # ===== 엔드포인트 =====
-API_BASE = os.getenv("BACKEND_BASE_URL", "http://web:8000").rstrip("/")
-LOGIN_ENDPOINT  =  urljoin(API_BASE + "/", "api/recommend/chat")       # 로그인 전용
-PUBLIC_ENDPOINT =  urljoin(API_BASE + "/", "api/pbrecommend/public/")   # 비로그인 전용(팀원 개발 예정)
+BASE_URL = os.getenv("BACKEND_BASE_URL", "http://web:8000").rstrip("/")
+LOGIN_ENDPOINT  =  urljoin(BASE_URL + "/", "api/recommend/chat")       # 로그인 전용
+PUBLIC_ENDPOINT =  urljoin(BASE_URL + "/", "api/pbrecommend/public/")   # 비로그인 전용(팀원 개발 예정)
 DEFAULT_INTERNAL_HEADERS = {"X-Forwarded-Proto": "https"}  # 내부 http→https 리다이렉트 회피
  
 
@@ -93,7 +93,6 @@ def _choose_endpoint_and_headers_from_token(token: Optional[Text]) -> tuple[str,
     if token: 
         headers = _auth_headers_from_token(token)
         return LOGIN_ENDPOINT, headers, "login"
-    url = f"{BASE_URL}{PUBLIC_ENDPOINT}"
     logger.warning("auth_token 미감지 → PUBLIC_ENDPOINT 사용: %s", PUBLIC_ENDPOINT)
     return PUBLIC_ENDPOINT, {}, "public"
 
@@ -332,7 +331,7 @@ class ActionRecommendEvent(Action):
             title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
-            detail_url = it.get("url") or f"{API_BASE}/events/{it.get('id')}"
+            detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
         has_next = bool(data.get("next"))
@@ -394,7 +393,7 @@ class ActionShowMore(Action):
             title = _md_escape(it.get("title") or "제목 없음")
             place = it.get("place") or "장소 미정"
             date  = it.get("date")  or "일정 미정"
-            detail_url = it.get("url") or f"{API_BASE}/events/{it.get('id')}"
+            detail_url = it.get("url") or f"{BASE_URL}/events/{it.get('id')}"
             dispatcher.utter_message(text=f"• [{title}]({detail_url}) — {place} / {date}")
 
         # 마지막/다음 페이지 분기 직전에 힌트 출력 추가
@@ -411,4 +410,19 @@ class ActionShowMore(Action):
         dispatcher.utter_message(text="더 이상 결과가 없어요. 다른 분류나 지역으로 찾아볼까요?")
         logger.info("[show_more] last page reached → reset & restart")
         return events + _reset_and_restart()
+
+class ActionResetSlotsAndBye(Action):
+    def name(self) -> Text:
+        return "action_reset_slots_and_bye"
+
+    def run(self, dispatcher, tracker, domain):
+        # 슬롯 초기화
+        events = [
+            SlotSet("area", None),
+            SlotSet("category", None),
+            SlotSet("page", None),
+        ]
+        # 종료 멘트
+        dispatcher.utter_message(response="utter_thanks_bye")
+        return events
 
