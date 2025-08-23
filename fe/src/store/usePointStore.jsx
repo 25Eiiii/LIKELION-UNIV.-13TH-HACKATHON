@@ -20,7 +20,6 @@ const usePointStore = create((set, get) => ({
     }),
 }));
 
-// 스토어 변경 구독(개발중만)
 if (process.env.NODE_ENV !== "production") {
   const unsub = usePointStore.subscribe((state) => {
     console.log("[usePointStore] state changed:", state);
