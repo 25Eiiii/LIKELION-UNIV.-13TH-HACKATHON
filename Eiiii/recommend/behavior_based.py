@@ -299,3 +299,4 @@ if __name__ == "__main__":
         print(f"      좋아요점수: {data.get('like_score', 0.0):.3f}")
         print(f"      리뷰점수: {data.get('review_score', 0.0):.3f}")
         print(f"      총점: {data.get('total_score', 0.0):.3f}\n")
+
