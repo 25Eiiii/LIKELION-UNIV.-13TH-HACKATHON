@@ -411,3 +411,18 @@ class ActionShowMore(Action):
         logger.info("[show_more] last page reached → reset & restart")
         return events + _reset_and_restart()
 
+class ActionResetSlotsAndBye(Action):
+    def name(self) -> Text:
+        return "action_reset_slots_and_bye"
+
+    def run(self, dispatcher, tracker, domain):
+        # 슬롯 초기화
+        events = [
+            SlotSet("area", None),
+            SlotSet("category", None),
+            SlotSet("page", None),
+        ]
+        # 종료 멘트
+        dispatcher.utter_message(response="utter_thanks_bye")
+        return events
+

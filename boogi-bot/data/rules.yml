@@ -42,10 +42,10 @@ rules:
     - intent: affirm
     - action: action_determine_next_step
 
-- rule: Say thanks and close on deny
+- rule: Deny anywhere -> clear slots and bye
   steps:
     - intent: deny
-    - action: utter_thanks_bye
+    - action: action_reset_slots_and_bye
     - action: action_listen
 
 # 중복 질문 방지
@@ -58,5 +58,7 @@ rules:
   steps:
     - action: utter_ask_category
     - action: action_listen
+
+
 
 
