@@ -101,6 +101,7 @@ actions:
   - action_recommend_event
   - action_show_more
   - action_session_start
+  - action_reset_slots_and_bye
 
 session_config:
   session_expiration_time: 120    # 분

@@ -44,3 +44,8 @@ staticfiles/
 nginx/*
 !nginx/*.conf
 
+boogi-bot/.keras/
+boogi-bot/.config/
+boogi-bot/actions/*.bak
+boogi-bot/actions/*~
+boogi-bot/actions/!
