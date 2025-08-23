@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as V from "../styles/pages/styledVerify";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
+
 const Verify = () => {
   const [data, setData] = useState();
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const Verify = () => {
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await api.get(`/api/surveys/my-certified/`, {
+        const response = await axios.get(`/api/surveys/my-certified/`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
