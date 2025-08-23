@@ -46,7 +46,7 @@ const useChatbotStore = create(
             requestBody.metadata.auth_token = authToken;
           }
           
-          const res = await fetch("http://localhost:5005/webhooks/rest/webhook", {
+          const res = await fetch('/rasa/webhooks/rest/webhook', {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -105,7 +105,7 @@ const useChatbotStore = create(
               return null;
             }
             
-            const res = await fetch(`/api/recommend/similar_from_last/`, {
+            const res = await fetch("/api/recommend/similar_from_last/", {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
