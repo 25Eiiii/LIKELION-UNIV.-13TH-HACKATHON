@@ -31,8 +31,6 @@ const PointBar = () => {
 
 export default PointBar;
 
-/* styles ... 동일 */
-
 
 const ProgressWrapper = styled.div`
   width: 362px;
