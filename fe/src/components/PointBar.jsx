@@ -13,8 +13,8 @@ const PointBar = () => {
   const progress = Math.min(Math.max((point / MAX_POINT) * 100, 0), 100);
   const remain = Math.max(0, MAX_POINT - point);
 
-  if (isLoading) return <p>포인트 불러오는 중…</p>;
-  if (isError) return <p>포인트를 불러올 수 없어요.</p>;
+  if (isLoading) return <p style={{ color: "white"}}>포인트 불러오는 중…</p>;
+  if (isError) return <p style={{ color: "white"}}>포인트를 불러올 수 없어요.</p>;
 
   return (
     <ProgressWrapper>
