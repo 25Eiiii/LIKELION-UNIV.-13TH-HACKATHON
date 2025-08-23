@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailReview";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import axios from "axios";
+import {api} from "../api/fetcher";
 
 const DetailReview = () => {
   const [isClicked, setIsClicked] = useState();
@@ -21,14 +21,14 @@ const DetailReview = () => {
         const accessToken = localStorage.getItem("accessToken");
         const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
         ? {Authorization:`Bearer ${accessToken}`} : {};
-        const response = await axios.get(
+        const response = await api.get(
           `/api/details/detail/${id}/` ,{headers}
         );
         setData(response.data);
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
-        if (error.response.status === 401) {
+        if (error?.response?.status === 401) {
         alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
         navigate('/login');
       }
@@ -38,12 +38,14 @@ const DetailReview = () => {
     const reviewData = async () => {
       const accessToken = localStorage.getItem("accessToken");
       try {
-        const response = await axios.get(`/api/surveys/reviews/event/${id}/`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
+        ? {Authorization:`Bearer ${accessToken}`} : {};
+        const response = await api.get(`/api/surveys/reviews/event/${id}/`, {
+          headers
         });
         setReview(response.data);
       } catch (error) {
-        console.error(error.response);
+        console.error(error?.response);
       }
     };
     fetchdata();
@@ -60,7 +62,7 @@ const DetailReview = () => {
       const prev = isClicked;
       setIsClicked(!prev);
       try{
-        const response = await axios.post(
+        const response = await api.post(
           `/api/details/detail/${id}/like/`,
           {},
           {

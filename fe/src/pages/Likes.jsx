@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as L from "../styles/pages/styledLikes";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import axios from "axios";
+import {api} from "../api/fetcher";
 import useAuthStore from "../store/useAuthStore";
 
 const Likes = () => {
@@ -19,7 +19,7 @@ const Likes = () => {
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(`/api/details/liked/`, {
+        const response = await api.get(`/api/details/liked/`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
@@ -27,7 +27,8 @@ const Likes = () => {
         });
         setData(response.data);
       } catch (error) {
-        if (error.response.status === 401) {
+        const status = error?.response?.status;
+        if (status === 401) {
           alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
           navigate("/login");
         }
@@ -39,7 +40,7 @@ const Likes = () => {
   const toggleLike = async (id) => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `/api/details/detail/${id}/like/`,
         {},
         {
