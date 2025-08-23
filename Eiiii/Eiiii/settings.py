@@ -28,20 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY") or "CHANGE_ME_FOR_LOCAL_ONLY"
-DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
+SECRET_KEY = 'django-insecure-q$@+gdv-kivlmdef4*ano&)yqts-!h#w&mqjtr0g5hu)^2dgmn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-def _split_env_list(v: str):
-    return [x.strip() for x in v.split(",") if x.strip()]
-
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "true").lower() == "true"
-
-ALLOWED_HOSTS = ["3-38-169-42.sslip.io","3.38.169.42","localhost","127.0.0.1","web","nginx"]
-CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("CSRF_TRUSTED_ORIGINS", ""))
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -67,7 +59,7 @@ INSTALLED_APPS = [
     'profiles',#관심사 입력
     'surveys',#설문폼
     'point',#포인트
-    'recommend',#추천로직
+    'recommend.apps.RecommendConfig',#추천로직
     'top3',#top3 조회
     'chatbot', #챗봇
     'pbrecommend' #비로그인 챗봇 추천
@@ -186,8 +178,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = "/app/staticfiles"
+STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
