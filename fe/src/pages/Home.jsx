@@ -120,7 +120,6 @@ const Home = () => {
 
             {!isLoading && (isAuthed ? !error : true) && (
               <H.EventList>
-                {events.length === 0 && <p style={{ marginLeft: 20 }}>추천 데이터가 없습니다.</p>}
                 {events.map((event) => (
                   <EventCard
                     key={event.id}
