@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as L from "../styles/pages/styledLikes";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
 
 const Likes = () => {
@@ -19,7 +19,7 @@ const Likes = () => {
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await api.get(`/api/details/liked/`, {
+        const response = await axios.get(`/api/details/liked/`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
@@ -40,7 +40,7 @@ const Likes = () => {
   const toggleLike = async (id) => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await api.post(
+      const response = await axios.post(
         `/api/details/detail/${id}/like/`,
         {},
         {

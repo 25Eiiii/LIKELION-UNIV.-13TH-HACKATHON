@@ -4,7 +4,7 @@ import * as C from "../styles/pages/styledCategory";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
 import axios from "axios";
-import {api} from "../api/fetcher";
+
 
 const Category = () => {
   const categoryList = [
@@ -33,7 +33,7 @@ const Category = () => {
 
   const fetchData = async (categoryQ = isSelected.query, keyword = search) => {
     try {
-       const { data } = await api.get("/api/events/events-category/", {
+       const { data } = await axios.get("/api/events/events-category/", {
         params: { category: categoryQ, search: keyword },
         });
       setData(data?.results || []);

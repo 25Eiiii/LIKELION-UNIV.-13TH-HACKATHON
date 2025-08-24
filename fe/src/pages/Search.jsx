@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import * as S from "../styles/pages/styledSearch";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
 
 const Search = () => {
   const categoryList = [
@@ -29,7 +29,7 @@ const Search = () => {
 
   const SearchCategory = async () => {
     try {
-      const response = await api.get(
+      const response = await axios.get(
         `/api/events/events-category/?category=${isSelected.query}&search=${search}`
       );
       setData(response.data);
