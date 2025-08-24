@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/useAuthStore";
 import useMyReviewStore from "../../store/useMyReviewStore";
 import { useMyReviews } from "../../hooks/useMyReview";
-import { api } from "../api/fetcher"
+import { api } from "../../api/fetcher"
 
 const MyReview = () => {
   const queryClient = useQueryClient();
