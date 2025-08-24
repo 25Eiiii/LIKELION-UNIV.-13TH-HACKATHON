@@ -52,7 +52,7 @@ const SignUp = () => {
         }
         
       );
-      
+      localStorage.setItem("survey","1");
       navigate('/login');
     } catch (error) {
       console.error("회원가입 에러: ",error.response);
