@@ -24,6 +24,7 @@ async function fetchRecommended(topN = 3, lat, lon) {
       title: ev.title ?? ev.name ?? "",
       main_img: ev.main_img ?? ev.thumbnail ?? "",
       date_text: ev.period ?? fmtDateRange(ev.start_date, ev.end_date),
+      hmpg_addr: ev.hmpg_addr ?? "",
     }));
   } catch (e) {
     // 로그인은 되어 있는데 추천 소스가 없어 401/403이 떨어질 수도 있으니 UI를 비우는 쪽이 안전
