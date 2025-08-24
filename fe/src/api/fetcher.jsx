@@ -1,7 +1,7 @@
 import useAuthStore from '../store/useAuthStore';
 import axios from "axios";
 
-const API_BASE = process.env.REACT_APP_API_BASE || '';
+const API_BASE_URL = process.env.REACT_APP_API_BASE || '';
 
 /**
  * @param {string} path 
@@ -10,8 +10,7 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
  */
 
 export const api = axios.create({
-  baseURL: API_BASE, // "" 이면 "/api/..."가 같은 도메인으로 붙음
-  withCredentials: false,
+  baseURL: API_BASE_URL, // "" 이면 "/api/..."가 같은 도메인으로 붙음
 });
 
 // 사용 예시: api.get('/api/top3/monthly/')
@@ -21,7 +20,7 @@ export async function apiFetcher(path, options = {}) {
 
   const token = useAuthStore.getState().token;
 
-  const url = new URL(path, API_BASE);
+  const url = new URL(path, API_BASE_URL);
   
 
   const headers = {

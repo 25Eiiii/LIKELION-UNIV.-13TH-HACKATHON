@@ -6,10 +6,8 @@ import EventCard from "../components/EventCard";
 import EventCardS from "../components/EventCardS";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../store/useAuthStore";
-import { useTopEvents, useTop3Monthly } from "../hooks/useRec";
+import { useTopEvents, useTop3Monthly } from "../hooks/useRec"; 
 import { useState } from "react";
-import axios from "axios";
-
 
 const categories = [
   { label: "무대 / 공연", image: "concert.svg" },
@@ -32,7 +30,6 @@ const Home = () => {
   const [searchParams] = useSearchParams();
 
   const SearchCategory = () => {
-    // 검색어를 쿼리스트링으로 전달해서 Category 페이지로 이동
     navigate(`/category?search=${encodeURIComponent(search)}`);
   };
 
@@ -99,20 +96,35 @@ const Home = () => {
             {isLoading && <p style={{ marginLeft: 20 }}>로딩중…</p>}
 
             {error && (
-              <H.GoLoginBox>
-                <p style={{ fontSize: "20px", fontWeight: 600, margin: 0 }}>
-                  로그인이 필요한 서비스입니다.
-                </p>
-                <p style={{ fontSize: "15px", fontWeight: 500, margin: 0 }}>
-                  맞춤형 추천 행사를 확인하시려면
-                  <br />
-                  로그인하세요.
-                </p>
-                <H.GoLoginBtns>
-                  <H.LoginBtn onClick={() => navigate("/login")}>로그인</H.LoginBtn>
-                  <H.SignUpBtn onClick={() => navigate("/signup")}>회원가입</H.SignUpBtn>
-                </H.GoLoginBtns>
-              </H.GoLoginBox>
+              <>
+                {/* 401 에러 */}
+                {error.response?.status === 401 ? (
+                  <H.GoLoginBox>
+                    <p style={{ fontSize: "20px", fontWeight: 600, margin: 0 }}>
+                      로그인이 필요한 서비스입니다.
+                    </p>
+                    <p style={{ fontSize: "15px", fontWeight: 500, margin: 0 }}>
+                      맞춤형 추천 행사를 확인하시려면
+                      <br />
+                      로그인하세요.
+                    </p>
+                    <H.GoLoginBtns>
+                      <H.LoginBtn onClick={() => navigate("/login")}>로그인</H.LoginBtn>
+                      <H.SignUpBtn onClick={() => navigate("/signup")}>회원가입</H.SignUpBtn>
+                    </H.GoLoginBtns>
+                  </H.GoLoginBox>
+                ) : (
+                  // 그 외 다른 에러(서버, 네트워크 문제 등)
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#555' }}>
+                    <p style={{ fontSize: '16px', fontWeight: 500 }}>
+                      네트워크 오류가 발생했습니다.
+                    </p>
+                    <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                      잠시 후 다시 시도해 주세요.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             {!isLoading && !error && (
