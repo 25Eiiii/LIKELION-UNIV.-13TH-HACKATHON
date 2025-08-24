@@ -14,7 +14,7 @@ const MyEvent = () => {
 
   return (
     <>
-      <Container style={{ background: "#282F56" }}>
+      <Container style={{ background: "#282F56", border: "none" }}>
         <E.Header>
           <E.LvWrapper>
             <h1 style={{marginLeft: "-2px", color: "white"}}>{nickname}</h1>
