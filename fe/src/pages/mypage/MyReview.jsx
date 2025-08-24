@@ -1,32 +1,26 @@
 import styled from "styled-components";
 import axios from "axios";
-import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/useAuthStore";
-import useMyReviewStore from "../../store/useMyReviewStore";
 import { useMyReviews } from "../../hooks/useMyReview";
-import { api } from "../api/fetcher"
+import { useDeleteReview } from "../../hooks/useDeleteReview";
+import { api } from "../../api/fetcher"
+
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "";
 
 const MyReview = () => {
-  const queryClient = useQueryClient();
   const token =
     useAuthStore((s) => s.accessToken || s.token || s.access) ||
     localStorage.getItem("accessToken") ||
     localStorage.getItem("token") ||
     localStorage.getItem("access") || "";
 
-  const { isLoading, isError } = useMyReviews();
-  const reviews = useMyReviewStore((state) => state.reviews) || [];
+  const { data: reviews = [], isLoading, isError } = useMyReviews();
 
-  const deleteReview = async (reviewId) => {
-    try {
-      await api.delete("/api/surveys/my-reviews/${reviewId}/", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      await queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
-      alert("후기가 삭제되었습니다.");
-    } catch (error) {
-      console.error(error);
-      alert("삭제 실패");
+  const { mutate: deleteReview } = useDeleteReview();
+
+  const handleDelete = (reviewId) => {
+    if (window.confirm("후기를 삭제하시겠습니까?")) {
+      deleteReview({ reviewId, token });
     }
   };
 
@@ -53,7 +47,7 @@ const MyReview = () => {
               <img
                 src={`${process.env.PUBLIC_URL}/images/trash.svg`}
                 alt="trash"
-                onClick={() => deleteReview(review.id)}
+                onClick={() => handleDelete(review.id)}
                 style={{ cursor: "pointer" }}
               />
             </DelBtn>

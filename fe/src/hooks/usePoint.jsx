@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import usePointStore from "../store/usePointStore";
-import { api } from "../api/fetcher"
+import { api } from "../api/fetcher";
+
 
 const fetchPoint = async () => {
   const token = localStorage.getItem("accessToken");
@@ -23,7 +24,6 @@ export const usePoint = (options = {}) => {
     queryFn: fetchPoint,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    // onSuccess는 '새 fetch' 때만 호출될 수 있음
     onSuccess: (value) => {
       console.log("[usePoint] onSuccess setPoint:", value);
       setPoint(value);
@@ -31,7 +31,6 @@ export const usePoint = (options = {}) => {
     ...options,
   });
 
-  // ✅ 캐시에서 읽어올 때도 스토어 동기화
   useEffect(() => {
     if (q.data != null) {
       console.log("[usePoint] effect setPoint:", q.data);

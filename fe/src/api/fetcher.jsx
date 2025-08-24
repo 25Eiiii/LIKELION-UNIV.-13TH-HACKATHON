@@ -1,7 +1,7 @@
 import useAuthStore from '../store/useAuthStore';
 import axios from "axios";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+const API_BASE_URL = (process.env.REACT_APP_API_BASE || '').trim();
 
 /**
  * @param {string} path 
@@ -10,21 +10,32 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
  */
 
 export const api = axios.create({
-  baseURL: API_BASE, // "" 이면 "/api/..."가 같은 도메인으로 붙음
-  withCredentials: false,
+  baseURL: API_BASE_URL || undefined,
+  headers: { Accept: "application/json" },
 });
 
-// 사용 예시: api.get('/api/top3/monthly/')
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 
 export async function apiFetcher(path, options = {}) {
 
   const token = useAuthStore.getState().token;
 
-  const url = new URL(path, API_BASE);
-  
+  // BASE가 비어있으면 상대경로 그대로 사용
+  const url = /^https?:\/\//.test(path)
+    ? path
+    : (API_BASE_URL ? new URL(path, API_BASE_URL).toString() : path);
+
 
   const headers = {
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
     ...options.headers,
   };
@@ -33,13 +44,13 @@ export async function apiFetcher(path, options = {}) {
   }
 
   try {
-    const response = await fetch(url, { ...options, headers });
-
+    const response = await fetch(url, { ...options, headers, cache: 'no-store' });
     if (response.status === 401) {
-      console.log("토큰 만료 또는 인증 실패. 자동 로그아웃을 실행합니다.");
-      useAuthStore.getState().logout(); 
-      throw new Error('인증이 만료되었습니다.');
+      const err = new Error('unauthorized');
+      err.status = 401;
+      throw err;
     }
+
 
     if (!response.ok) {
       throw new Error(`서버 에러 발생! (상태: ${response.status})`);
@@ -49,10 +60,10 @@ export async function apiFetcher(path, options = {}) {
     if (contentType && contentType.includes("application/json")) {
       return response.json();
     }
-    return null; 
+    return null;
 
   } catch (error) {
     console.error('API 요청 실패:', error);
-    throw error; 
+    throw error;
   }
 }

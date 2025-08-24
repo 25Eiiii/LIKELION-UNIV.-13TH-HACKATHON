@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 import { api } from "../api/fetcher"
+import axios from "axios";
 
 const pickToken = () =>
   useAuthStore.getState?.()?.token ||
@@ -31,7 +32,7 @@ export const useMyEvents = () =>
     queryKey: ["myEvents", "/api/surveys/my-events/"],
     queryFn: async () => {
       const token = pickToken();
-      const { data } = await api.get("/api/surveys/my-events/", {
+      const { data } = await axios.get("/api/surveys/my-events/", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       return normalizeList(data);

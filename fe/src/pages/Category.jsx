@@ -5,6 +5,7 @@ import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
 import axios from "axios";
 
+
 const Category = () => {
   const categoryList = [
     { label: "전체", query: "" },
@@ -20,21 +21,22 @@ const Category = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
 
+  const raw = searchParams.get("category") || "";
+  const normalized = decodeURIComponent(raw).replace(/\s*\/\s*/g, "/").trim();
   const initialCategory = categoryList.find(
-    (item) => item.label === searchParams.get("category")
+    (item) => item.label === normalized || item.query === normalized
   ) || categoryList[0];
 
   const [isSelected, setIsSelected] = useState(initialCategory);
   const [search, setSearch] = useState(searchQuery);
   const [data, setData] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = async (categoryQ = isSelected.query, keyword = search) => {
     try {
-      const url = `/api/events/events-category/?search=${encodeURIComponent(
-        search
-      )}`;
-      const response = await axios.get(url);
-      setData(response.data.results || []);
+       const { data } = await axios.get("/api/events/events-category/", {
+        params: { category: categoryQ, search: keyword },
+        });
+      setData(data?.results || []);
     } catch (error) {
       console.error(error.response?.data || error);
     }
@@ -86,7 +88,8 @@ const Category = () => {
                 key={item.label}
                 onClick={() => {
                   setIsSelected(item);
-                  setSearchParams({ search }); // 현재 검색어 유지
+                  setSearchParams({ category: item.label, search }); // 현재 검색어 유지
+                  fetchData(item.query, search);
                 }}
               >
                 {item.label}

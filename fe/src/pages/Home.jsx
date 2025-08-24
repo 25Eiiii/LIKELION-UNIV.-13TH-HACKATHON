@@ -5,10 +5,9 @@ import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import EventCardS from "../components/EventCardS";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import useAuthStore from "../store/useAuthStore";
+import useAuthStore from '../store/useAuthStore';
 import { useTopEvents, useTop3Monthly } from "../hooks/useRec";
 import { useState } from "react";
-import axios from "axios";
 
 
 const categories = [
@@ -26,6 +25,7 @@ const Home = () => {
   const { data: top3 = [], isLoading: loadingTop3, error: errorTop3 } = useTop3Monthly();
   const nickname = useAuthStore((s) => s.nickname);
   const token = useAuthStore((s) => s.token);
+  const isAuthed = !!token
 
   const [search, setSearch] = useState("");
 
@@ -45,7 +45,6 @@ const Home = () => {
           <p style={{ fontSize: "20px", color: "#fff" }}>
             {token ? `${nickname}님은 문화 시민` : '회원님은 문화 시민'}
           </p>
-          <p style={{ fontSize: "38px", color: "#fff" }}>Lv. 5</p>
           <p style={{ fontSize: "20px", color: "#fff" }}>
             이번 주 한 번 더 참여하면 <br /> <span style={{ color: "#FFA90E" }}>300</span>
             <img
@@ -95,14 +94,11 @@ const Home = () => {
           <H.RecContainer>
             <H.TextWrapper>
               <H.Text>{token ? `${nickname}님을 위한 추천 전시 / 행사` : '회원님을 위한 추천 전시 / 행사'}</H.Text>
-              <H.MoreBtn>
-                더보기 <FiChevronRight />
-              </H.MoreBtn>
             </H.TextWrapper>
 
             {isLoading && <p style={{ marginLeft: 20 }}>로딩중…</p>}
 
-            {error && (
+            {!isAuthed && (
               <H.GoLoginBox>
                 <p style={{ fontSize: "20px", fontWeight: 600, margin: 0 }}>
                   로그인이 필요한 서비스입니다.
@@ -119,9 +115,8 @@ const Home = () => {
               </H.GoLoginBox>
             )}
 
-            {!isLoading && !error && (
+            {!isLoading && (isAuthed ? !error : true) && (
               <H.EventList>
-                {events.length === 0 && <p style={{ marginLeft: 20 }}>추천 데이터가 없습니다.</p>}
                 {events.map((event) => (
                   <EventCard
                     key={event.id}
@@ -145,7 +140,7 @@ const Home = () => {
             {!loadingTop3 && !errorTop3 && (
               <H.CultureList>
                 {top3.length === 0 && <p style={{ marginLeft: 20 }}>데이터 없음</p>}
-                
+
                 {top3.map((event, idx) => (
                   <H.Top3List key={event.id ?? idx}>
                     <p>{idx + 1}</p>

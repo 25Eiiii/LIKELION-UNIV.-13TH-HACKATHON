@@ -26,7 +26,7 @@ const DetailInfo = () => {
         setIsClicked(response.data.is_liked);
       } catch (error) {
         console.error("데이터 불러오기 실패: ", error);
-        if (error.response.status === 401) {
+        if (error?.response?.status === 401) {
           alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
           navigate("/login");
         }

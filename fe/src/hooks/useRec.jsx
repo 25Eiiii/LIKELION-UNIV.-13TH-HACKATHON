@@ -1,87 +1,78 @@
-// fe/src/hooks/useTopEvents.js
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+// src/hooks/useTopEvents.js
+import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 import { useLocation } from "../hooks/useLocation";
-import { api } from "../api/fetcher";
+import { api } from "../api/fetcher"
 
-// 항상 배열로 정규화
-const toArray = (d) => (Array.isArray(d) ? d : (d?.results ?? d?.data ?? []));
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "";
+const authHeaders = () => {
+  const t = localStorage.getItem("accessToken");
+  return t ? { Authorization: `Bearer ${t}` } : {};
+};
 
-// 날짜 문자열 포맷 (백엔드가 date_text 없을 때 대비)
 function fmtDateRange(a = "", b = "") {
   const toDot = (s) =>
     (s || "").replace(/[^\d]/g, "").slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, "$1.$2.$3");
   return a && b ? `${toDot(a)} - ${toDot(b)}` : "";
 }
 
-// 로그인 사용자 맞춤 추천
 async function fetchRecommended(topN = 3) {
-  // api 인스턴스는 인터셉터로 자동 토큰 부착
-  const { data } = await api.get("/api/recommend/events/", { params: { top_n: topN } });
-  const list = toArray(data);
+  const token = useAuthStore.getState().token;
+  const url = new URL("/api/recommend/events/", API_BASE);
+  url.searchParams.set("top_n", String(topN));
+
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const raw = await res.json();
+
+  const list = Array.isArray(raw) ? raw : raw?.results || [];
   return list.map((ev, idx) => ({
     id: ev.id ?? idx,
     title: ev.title ?? ev.name ?? "",
     main_img: ev.main_img ?? ev.thumbnail ?? "",
-    date_text: ev.date_text ?? ev.period ?? fmtDateRange(ev.start_date, ev.end_date),
+    date_text: ev.period ?? fmtDateRange(ev.start_date, ev.end_date),
   }));
 }
 
-// 이달의 Top3 (로그인: private, 비로그인: public + 선택적 위치)
-async function fetchTop3Monthly({ token, lat, lon, topN = 3 }) {
-  if (token) {
-    const { data } = await api.get("/api/top3/monthly/", { params: { top_n: topN } });
-    return toArray(data);
-  }
-  // 비로그인일 때만 위치 파라미터 전달
-  const { data } = await api.get("/api/top3/monthly/public/", {
-    params: {
-      top_n: topN,
-      ...(lat && lon ? { lat, lon } : {}),
-    },
-  });
-  return toArray(data);
+async function fetchTop3Monthly({ token, lat, lon }) {
+  const urlPath = token ? "/api/top3/monthly/" : "/api/top3/monthly/public/";
+  const url = new URL(urlPath, API_BASE);
+  
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const params = !token && lat && lon ? { lat, lon } : {}; // 2. 비로그인 시 lat, lon 파라미터 추가
+
+  const res = await fetch(url, { headers, params: new URLSearchParams(params) });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  
+  return Array.isArray(json) ? json : json?.results || [];
 }
 
 export function useTopEvents(topN = 3) {
-  // 토큰 변화에 반응시키기 위해 Boolean(token)을 queryKey에 포함
-  const token =
-    useAuthStore((s) => s.accessToken || s.token || s.access) ||
-    localStorage.getItem("accessToken") ||
-    "";
-
   return useQuery({
-    queryKey: ["recommended-events", topN, Boolean(token)],
+    queryKey: ["recommended-events", topN],
     queryFn: () => fetchRecommended(topN),
-    select: (rows) => (Array.isArray(rows) ? rows : []),
-    staleTime: 0,
-    refetchOnMount: "always",
-    retry: false,
   });
 }
 
-export function useTop3Monthly(topN = 3) {
-  const token =
-    useAuthStore((s) => s.accessToken || s.token || s.access) ||
-    localStorage.getItem("accessToken") ||
-    "";
-  const { location, isLoading: isLocationLoading } = useLocation();
+export function useTop3Monthly() {
+  const token = useAuthStore((s) => s.token);
+  console.log("top3 token:", token)
+  const { location, error: locationError, isLoading: isLocationLoading } = useLocation(); // 3. 위치 정보 가져오기
 
   return useQuery({
-    // 토큰/위치가 바뀌면 자동 리패치
-    queryKey: ["top3-monthly", topN, Boolean(token), location?.latitude, location?.longitude],
-    queryFn: () =>
-      fetchTop3Monthly({
-        token,
-        lat: location?.latitude,
-        lon: location?.longitude,
-        topN,
-      }),
-    select: (rows) => (Array.isArray(rows) ? rows : []),
-    // 위치 권한 팝업이 끝난 뒤 실행 (권한 거부여도 isLoading=false라 실행됨)
-    enabled: !isLocationLoading,
-    staleTime: 0,
-    refetchOnMount: "always",
-    retry: false,
+    queryKey: ["top3-monthly", !!token, location?.latitude, location?.longitude],
+    
+    queryFn: () => fetchTop3Monthly({
+      token,
+      lat: location?.latitude,
+      lon: location?.longitude,
+    }),
+    
+
+    enabled: !isLocationLoading, 
   });
 }

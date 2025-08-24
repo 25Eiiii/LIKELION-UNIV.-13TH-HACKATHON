@@ -14,8 +14,9 @@ const Likes = () => {
   const togglePoint = (id) => {
     setIsClicked((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
+  const [loading,setLoading] = useState(true);
   useEffect(() => {
+    setLoading(true);
     const fetchdata = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
@@ -27,10 +28,13 @@ const Likes = () => {
         });
         setData(response.data);
       } catch (error) {
-        if (error.response.status === 401) {
+        const status = error?.response?.status;
+        if (status === 401) {
           alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
           navigate("/login");
         }
+      }finally{
+        setLoading(false);
       }
     };
     fetchdata();
@@ -51,7 +55,7 @@ const Likes = () => {
       );
       setData((prev) => prev.filter((it) => it.id !== id));
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error?.response?.status === 401) {
         alert("로그인 유효시간이 지났습니다. 다시 로그인해 주세요.");
         navigate("/login");
       }
@@ -79,8 +83,9 @@ const Likes = () => {
             </p>
           </L.Text>
 
-          {data.length === 0 && <p style={{ marginLeft: 20 }}>로딩 중..</p>}
-          {data?.map((item) => (
+          {loading && <p style={{ marginLeft: 20 }}>로딩 중..</p>}
+          {!loading && data.length === 0 && (<p style={{ marginLeft: 20 }}>아직 좋아요한 행사가 없어요</p>)}
+          {!loading && data?.map((item) => (
             <L.DataBox key={item.id}>
               <L.Img
                 onClick={() => navigate(`/detailInfo/${item.id}`)}
