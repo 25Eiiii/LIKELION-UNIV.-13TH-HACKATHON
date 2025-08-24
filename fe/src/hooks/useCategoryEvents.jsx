@@ -6,7 +6,7 @@ export const useCategoryEvents = (category, search = "") => {
   return useQuery({
     queryKey: ["category-events", category, search],
     queryFn: async () => {
-      const { data } = await api.get("/api/events/events-category/", {
+      const { data } = await axios.get("/api/events/events-category/", {
         params: {
           category,                // ex) "무대/공연"
           ...(search ? { search } : {}),

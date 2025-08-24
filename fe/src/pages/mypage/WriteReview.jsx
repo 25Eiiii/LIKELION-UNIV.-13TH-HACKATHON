@@ -74,7 +74,7 @@ const WriteReview = () => {
 
     try {
       setSubmitting(true);
-      await api.post("/api/surveys/review/", fd, {
+      await axios.post(`/api/surveys/review/`, fd, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       await qc.invalidateQueries({ queryKey: ["my-reviews"] });

@@ -6,6 +6,8 @@ import useMyReviewStore from "../../store/useMyReviewStore";
 import { useMyReviews } from "../../hooks/useMyReview";
 import { api } from "../../api/fetcher"
 
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "";
+
 const MyReview = () => {
   const queryClient = useQueryClient();
   const token =
@@ -19,7 +21,7 @@ const MyReview = () => {
 
   const deleteReview = async (reviewId) => {
     try {
-      await axios.delete("/api/surveys/my-reviews/${reviewId}/", {
+      await axios.delete(`${API_BASE}/api/surveys/my-reviews/${reviewId}/`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       await queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
