@@ -19,6 +19,5 @@ export const useMyReviews = () => {
     return useQuery({
         queryKey: ["my-reviews"],
         queryFn: fetchMyReviews,
-        onSuccess: (data) => setReviews(data),
     });
 };
