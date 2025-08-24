@@ -1,0 +1,64 @@
+version: "3.1"
+rules:
+- rule: Greet
+  steps:
+    - intent: greet
+    - action: utter_greet
+
+- rule: Decide next step for recommendation
+  steps:
+    - intent: ask_recommend
+    - action: action_determine_next_step
+
+- rule: Recommend after area provided
+  condition:
+    - slot_was_set:
+        - area: true
+  steps:
+    - intent: inform_area
+    - action: action_recommend_event
+
+- rule: Recommend after category provided
+  condition:
+    - slot_was_set:
+        - category: true
+  steps:
+    - intent: inform_category
+    - action: action_recommend_event
+
+- rule: Show more results
+  steps:
+    - intent: show_more
+    - action: action_show_more
+
+# 새로 추가: 다른 분류의 행사 추천 동의시 -> action_determine_next_step
+- rule: User affirms while paginating -> action_determine_next_step
+  condition:
+    - slot_was_set:
+        - page: true
+        - area: true
+        - category: true
+  steps:
+    - intent: affirm
+    - action: action_determine_next_step
+
+- rule: Deny anywhere -> clear slots and bye
+  steps:
+    - intent: deny
+    - action: action_reset_slots_and_bye
+    - action: action_listen
+
+# 중복 질문 방지
+- rule: Listen after asking area
+  steps:
+    - action: utter_ask_area
+    - action: action_listen
+
+- rule: Listen after asking category
+  steps:
+    - action: utter_ask_category
+    - action: action_listen
+
+
+
+

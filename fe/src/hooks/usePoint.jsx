@@ -1,0 +1,42 @@
+// hooks/usePoint.js
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import usePointStore from "../store/usePointStore";
+import { api } from "../api/fetcher";
+
+
+const fetchPoint = async () => {
+  const token = localStorage.getItem("accessToken");
+  const res = await api.get("/api/points/my/", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const n = Number(res.data?.point) || 0;
+  console.log("[usePoint] fetchPoint:", n);
+  return n;
+};
+
+export const usePoint = (options = {}) => {
+  const setPoint = usePointStore((s) => s.setPoint);
+
+  const q = useQuery({
+    queryKey: ["point"],
+    queryFn: fetchPoint,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    onSuccess: (value) => {
+      console.log("[usePoint] onSuccess setPoint:", value);
+      setPoint(value);
+    },
+    ...options,
+  });
+
+  useEffect(() => {
+    if (q.data != null) {
+      console.log("[usePoint] effect setPoint:", q.data);
+      setPoint(q.data);
+    }
+  }, [q.data, setPoint]);
+
+  return q;
+};

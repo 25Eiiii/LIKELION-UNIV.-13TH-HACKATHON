@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.pyc
+
+# Django
+*.log
+db.sqlite3
+.env
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
+
+# 가상환경 
+myvenv/
+venv/
+node_modules
+rasaenv/
+myvenv311/
+rasa_env/
+
+# Rasa cache & temp
+boogi-bot/.rasa/cache/
+boogi-bot/.rasa/tmp/
+
+# Rasa trained models (자동 생성 파일)
+boogi-bot/models/
+
+# Rasa outputs
+*.png
+
+# models/*.tar.gz
+
+certbot/conf/
+certbot/www/
+staticfiles/
+
+# allow nginx conf
+!nginx/
+nginx/*
+!nginx/*.conf
+
+boogi-bot/.keras/
+boogi-bot/.config/
+boogi-bot/actions/*.bak
+boogi-bot/actions/*~
+boogi-bot/actions/!

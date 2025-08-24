@@ -1,0 +1,44 @@
+# VCS / IDE
+.git
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+
+# Django runtime
+staticfiles/
+media/
+*.log
+logs/
+
+# Frontend
+**/node_modules/
+fe/build/
+fe/.next/
+fe/dist/
+
+# Host-mounted stuff (이미 Nginx/Certbot는 바인드 마운트)
+certbot/**
+nginx/**
+
+# Rasa 프로젝트(웹 이미지에 불필요)
+boogi-bot/**
+
+# Secrets (compose로 주입 중이면 포함 X)
+.env
+.env.*
+*.pem
+*.key
+*.crt
+.ssh/
+

@@ -1,0 +1,73 @@
+version: "3.1"
+stories:
+# 1) 추천 요청 → 다음 스텝 결정 → (액션 내부에서 질문 발화) → listen
+- story: ask → determine (internal ask_area)
+  steps:
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
+
+# 2) 지역만 주면 추천 실행 (내부에서 카테고리 물을 수 있음)
+- story: inform area → recommend
+  steps:
+    - intent: inform_area
+      entities:
+        - area: 성북구
+    - action: action_recommend_event
+
+# 3) 카테고리만 주면 추천 실행 (내부에서 지역 물을 수 있음)
+- story: inform category → recommend
+  steps:
+    - intent: inform_category
+      entities:
+        - category: 전시/미술
+    - action: action_recommend_event
+
+# 4) 지역+카테고리 한 번에 → 추천
+- story: area & category in one turn → recommend
+  steps:
+    - intent: inform_category
+      entities:
+        - area: 종로구
+        - category: 콘서트
+    - action: action_recommend_event
+
+# 5) ask → determine → area → recommend → 더 보기(명시)
+- story: ask → area → recommend → show more
+  steps:
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
+    - intent: inform_area
+      entities:
+        - area: 동대문구
+    - action: action_recommend_event
+    - intent: show_more
+    - action: action_show_more
+
+# 6) ask → determine → category → recommend → 더 보기 2회(명시)
+- story: ask → category → recommend → show more x2
+  steps:
+    - intent: ask_recommend
+    - action: action_determine_next_step
+    - action: action_listen
+    - intent: inform_category
+      entities:
+        - category: 영화
+    - action: action_recommend_event
+    - intent: show_more
+    - action: action_show_more
+    - intent: show_more
+    - action: action_show_more
+
+# 7) 더 보기 단독(명시)
+- story: show more (explicit)
+  steps:
+    - intent: show_more
+    - action: action_show_more
+
+# 8) 거절 → listen
+- story: deny → listen
+  steps:
+    - intent: deny
+    - action: action_listen
