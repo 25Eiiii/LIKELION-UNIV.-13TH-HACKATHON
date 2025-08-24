@@ -6,7 +6,7 @@ class PublicEventCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CulturalEvent
-        fields = ("id", "title", "place", "main_img", "date")
+        fields = ("id", "title", "place", "main_img", "date", 'hmpg_addr')
 
     def get_date(self, obj):
         if getattr(obj, "start_date", None) and getattr(obj, "end_date", None):
