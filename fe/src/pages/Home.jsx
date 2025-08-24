@@ -5,10 +5,9 @@ import NavBar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import EventCardS from "../components/EventCardS";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import useAuthStore from "../store/useAuthStore";
+import useAuthStore from '../store/useAuthStore';
 import { useTopEvents, useTop3Monthly } from "../hooks/useRec";
 import { useState } from "react";
-import axios from "axios";
 
 
 const categories = [
@@ -26,6 +25,7 @@ const Home = () => {
   const { data: top3 = [], isLoading: loadingTop3, error: errorTop3 } = useTop3Monthly();
   const nickname = useAuthStore((s) => s.nickname);
   const token = useAuthStore((s) => s.token);
+  const isAuthed = !!token
 
   const [search, setSearch] = useState("");
 
@@ -98,7 +98,7 @@ const Home = () => {
 
             {isLoading && <p style={{ marginLeft: 20 }}>로딩중…</p>}
 
-            {error && (
+            {!isAuthed && (
               <H.GoLoginBox>
                 <p style={{ fontSize: "20px", fontWeight: 600, margin: 0 }}>
                   로그인이 필요한 서비스입니다.
@@ -114,8 +114,11 @@ const Home = () => {
                 </H.GoLoginBtns>
               </H.GoLoginBox>
             )}
+            {isAuthed && error && (
+              <p style={{ marginLeft: 20 }}>추천을 불러오지 못했어요.</p>
+            )}
 
-            {!isLoading && !error && (
+            {!isLoading && (isAuthed ? !error : true) && (
               <H.EventList>
                 {events.length === 0 && <p style={{ marginLeft: 20 }}>추천 데이터가 없습니다.</p>}
                 {events.map((event) => (
@@ -141,7 +144,7 @@ const Home = () => {
             {!loadingTop3 && !errorTop3 && (
               <H.CultureList>
                 {top3.length === 0 && <p style={{ marginLeft: 20 }}>데이터 없음</p>}
-                
+
                 {top3.map((event, idx) => (
                   <H.Top3List key={event.id ?? idx}>
                     <p>{idx + 1}</p>
