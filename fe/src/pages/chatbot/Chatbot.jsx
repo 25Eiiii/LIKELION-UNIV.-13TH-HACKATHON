@@ -4,62 +4,79 @@ import EventCard from "../../components/EventCard";
 import { useNavigate } from "react-router-dom";
 import useChatbotStore from "../../store/useChatbotStore";
 import useAuthStore from "../../store/useAuthStore";
-import { useLocation } from "../../hooks/useLocation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Chatbot = () => {
   const [content, setContent] = useState("");
   const navigate = useNavigate();
-  const { addMessage } = useChatbotStore();
-  const nickname = useAuthStore((s) => s.nickname);
-  const { fetchSuggestions, fetchSimilarEvents, setInitialQuestion, sendMessageToApi } = useChatbotStore();
-  const [suggestions, setSuggestions] = useState([]);
-  const [recommendedEvents, setRecommendedEvents] = useState([]);
-  const [recommendationMessage, setRecommendationMessage] = useState("");
-  const { user } = useAuthStore();
-  const [anchorEvent, setAnchorEvent] = useState(null); 
+  const qc = useQueryClient();
+
+  const nickname =
+    useAuthStore((s) => s.nickname) || localStorage.getItem("nickname") || "";
+  const storeToken =
+    useAuthStore((s) => s.token || s.accessToken || s.access) ||
+    localStorage.getItem("accessToken") ||
+    "";
+  const hasToken = Boolean(storeToken);
+
+  const user = useAuthStore((s) => s.user);
+
+  // store에서 API 함수만 꺼내서 사용(내부에서 api 인스턴스 쓰도록)
+  const { fetchSuggestions, fetchSimilarEvents } = useChatbotStore();
+
+  // 1) 오늘의 추천 질문
+  const {
+    data: suggestionList = [],
+  } = useQuery({
+    queryKey: ["chatbot-suggestions", hasToken], // 토큰 변화에 반응
+    queryFn: async () => {
+      const d = await fetchSuggestions();
+      return Array.isArray(d?.items) ? d.items : [];
+    },
+    select: (rows) => (Array.isArray(rows) ? rows : []),
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
+  });
+
+  // 2) 유사 행사 (로그인 필요 시 hasToken && user?.id 가 있을 때만)
+  const anchorEventId = 71; // TODO: 고정값이 맞다면 유지, 아니면 라우트/상태에서 받아오기
+  const {
+    data: similar = { message: "", items: [] },
+  } = useQuery({
+    queryKey: ["chatbot-similar", hasToken, user?.id, anchorEventId],
+    enabled: hasToken && !!user?.id && !!anchorEventId,
+    queryFn: async () => {
+      const d = await fetchSimilarEvents(user.id, anchorEventId);
+      return {
+        message: d?.message ?? "",
+        items: Array.isArray(d?.items) ? d.items : [],
+      };
+    },
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
+  });
+
+  // 로그인/로그아웃 시 즉시 최신화
+  useEffect(() => {
+    qc.invalidateQueries({ queryKey: ["chatbot-suggestions"] });
+    qc.invalidateQueries({ queryKey: ["chatbot-similar"] });
+  }, [qc, hasToken, user?.id]);
 
   const handleEnter = (e) => {
-    if (e.key === 'Enter' && content.trim()) {
-      navigate('/chatting', { state: { initialQuestion: content } });
+    if (e.key === "Enter" && content.trim()) {
+      navigate("/chatting", { state: { initialQuestion: content } });
     }
   };
-
   const handleClick = () => {
     if (content.trim()) {
-      navigate('/chatting', { state: { initialQuestion: content } });
+      navigate("/chatting", { state: { initialQuestion: content } });
     }
   };
-
-  // 추천 질문 클릭
   const handleSuggestionClick = (question) => {
-    console.log("클릭된 질문:", question);
     navigate("/chatting", { state: { initialQuestion: question } });
-  }
-
-  useEffect(() => {
-    const getSuggestions = async () => {
-      const data = await fetchSuggestions();
-      setSuggestions(data.items);
-    };
-    getSuggestions();
-  }, [fetchSuggestions]);
-
- // 유사 행사 추천 목록을 불러오는 로직
-  useEffect(() => {
-    const loadRecommendations = async () => {
-        if (user?.id) { 
-            const anchorEventId = 71; 
-            const data = await fetchSimilarEvents(user.id, anchorEventId);
-            if (data) {
-                setRecommendationMessage(data.message);
-                setRecommendedEvents(data.items || []);
-            }
-        } else { // 비로그인 처리
-            setRecommendedEvents([]);
-        }
-    };
-    loadRecommendations();
-  }, [user, fetchSimilarEvents]);
+  };
 
   return (
     <C.Container>
@@ -67,25 +84,24 @@ const Chatbot = () => {
         <img src={`${process.env.PUBLIC_URL}/images/chatbot.svg`} alt="챗봇" />
       </C.ChatbotImg>
       <C.ChatbotName>부기</C.ChatbotName>
+
       <C.QuestionWrapper>
         <C.QuestionTitle>오늘의 추천 질문</C.QuestionTitle>
         <C.QuestionList>
-          {suggestions?.map((item, idx) => (
-            <C.Question 
-              key={idx}
-              onClick={() => handleSuggestionClick(item.label)}
-              >{item.label}</C.Question>
+          {suggestionList.map((item, idx) => (
+            <C.Question key={idx} onClick={() => handleSuggestionClick(item.label)}>
+              {item.label}
+            </C.Question>
           ))}
         </C.QuestionList>
       </C.QuestionWrapper>
+
       <C.Recommend>
         <C.RecText>
-          <p style={{ margin: "0px" }}>
-            {recommendationMessage}
-          </p>
+          <p style={{ margin: 0 }}>{similar.message}</p>
         </C.RecText>
         <C.RecList>
-          {recommendedEvents.map((event, idx) => (
+          {similar.items.map((event) => (
             <EventCard
               key={event.id}
               name={event.title}
@@ -94,10 +110,11 @@ const Chatbot = () => {
               onClick={() => navigate(`/detailInfo/${event.id}`)}
               w={144}
               h={168}
-          />
+            />
           ))}
         </C.RecList>
       </C.Recommend>
+
       <C.SendWrapper>
         <C.SendInput
           placeholder="메시지를 입력해주세요"
@@ -106,7 +123,7 @@ const Chatbot = () => {
           onKeyDown={handleEnter}
         />
         <C.SendBtn onClick={handleClick}>
-            <img src={`${process.env.PUBLIC_URL}/images/send.svg`} alt="send" />
+          <img src={`${process.env.PUBLIC_URL}/images/send.svg`} alt="send" />
         </C.SendBtn>
       </C.SendWrapper>
     </C.Container>
