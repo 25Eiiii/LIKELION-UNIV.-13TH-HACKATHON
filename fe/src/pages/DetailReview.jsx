@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailReview";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
 
 const DetailReview = () => {
   const [isClicked, setIsClicked] = useState();
@@ -21,7 +21,7 @@ const DetailReview = () => {
         const accessToken = localStorage.getItem("accessToken");
         const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
         ? {Authorization:`Bearer ${accessToken}`} : {};
-        const response = await api.get(
+        const response = await axios.get(
           `/api/details/detail/${id}/` ,{headers}
         );
         setData(response.data);
@@ -40,7 +40,7 @@ const DetailReview = () => {
       try {
         const headers = accessToken&& accessToken!=="null" && accessToken!=="undefined"
         ? {Authorization:`Bearer ${accessToken}`} : {};
-        const response = await api.get(`/api/surveys/reviews/event/${id}/`, {
+        const response = await axios.get(`/api/surveys/reviews/event/${id}/`, {
           headers
         });
         setReview(response.data);
@@ -62,7 +62,7 @@ const DetailReview = () => {
       const prev = isClicked;
       setIsClicked(!prev);
       try{
-        const response = await api.post(
+        const response = await axios.post(
           `/api/details/detail/${id}/like/`,
           {},
           {

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as S from "../styles/pages/styledSurvey";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
 
 const Survey = () => {
   const firstList = [
@@ -37,7 +37,7 @@ const Survey = () => {
           accessToken && accessToken !== "null" && accessToken !== "undefined"
             ? { Authorization: `Bearer ${accessToken}` }
             : {};
-        const response = await api.get(`/api/details/detail/${id}/`, {
+        const response = await axios.get(`/api/details/detail/${id}/`, {
           headers,
         });
         setData(response.data);
@@ -55,7 +55,7 @@ const Survey = () => {
   const submit = async () => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await api.post(
+      const response = await axios.post(
         `/api/surveys/submit/`,
         { event: Number(id) },
         {

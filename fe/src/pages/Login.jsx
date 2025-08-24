@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as L from "../styles/pages/styledLogin";
 import { Container } from "../styles/common/styledContainer";
-import {api} from "../api/fetcher";
+import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
 import { jwtDecode } from "jwt-decode";
 
@@ -15,7 +15,7 @@ const Login = () => {
 
     const goLogin = async() => {
         try{
-            const response = await api.post(
+            const response = await axios.post(
                 "/api/accounts/login/",
                 
                 {

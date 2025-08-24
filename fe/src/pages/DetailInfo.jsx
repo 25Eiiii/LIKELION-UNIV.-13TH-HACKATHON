@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import * as D from "../styles/pages/styledDetailInfo";
 import { Container } from "../styles/common/styledContainer";
 import NavBar from "../components/Navbar";
-import {api} from "../api/fetcher";
+import axios from "axios";
 
 const DetailInfo = () => {
   const [data, setData] = useState(null);
@@ -19,7 +19,7 @@ const DetailInfo = () => {
           accessToken && accessToken !== "null" && accessToken !== "undefined"
             ? { Authorization: `Bearer ${accessToken}` }
             : {};
-        const response = await api.get(`/api/details/detail/${id}/`, {
+        const response = await axios.get(`/api/details/detail/${id}/`, {
           headers,
         });
         setData(response.data);
@@ -50,7 +50,7 @@ const DetailInfo = () => {
     const prev = isClicked;
     setIsClicked(!prev);
     try {
-      const response = await api.post(
+      const response = await axios.post(
         `/api/details/detail/${id}/like/`,
         {},
         {
