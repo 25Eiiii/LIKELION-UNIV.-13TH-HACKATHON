@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "../styles/pages/StyledSignUp";
 import { Container } from "../styles/common/styledContainer";
-import {api} from "../api/fetcher";
+import axios from "axios";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const SignUp = () => {
 
   const goCheck = async () => {
     try {
-      const response = await api.get(
+      const response = await axios.get(
         `/api/accounts/check-username/?username=${id}`
       );
 
@@ -36,7 +36,7 @@ const SignUp = () => {
 
   const goSignup = async () => {
     try {
-      const response = await api.post(
+      const response = await axios.post(
         "/api/accounts/signup/",
         {
           username: id,
