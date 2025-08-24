@@ -7,7 +7,7 @@ import { api } from "../api/fetcher"
 const fetchMyReviews = async () => {
     const { setReviews } = useMyReviewStore.getState();
     const token = localStorage.getItem("accessToken");
-    const res = await api.get("/api/surveys/my-reviews/", {
+    const res = await axios.get("/api/surveys/my-reviews/", {
         headers: {
             Authorization: `Bearer ${token}`,
         },

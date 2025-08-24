@@ -7,7 +7,7 @@ const createProfile = async (profileData) => {
     const token = localStorage.getItem("accessToken")
 
     try {
-        const res = await api.post("/api/profile/create/", profileData, {
+        const res = await axios.post("/api/profile/create/", profileData, {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",
