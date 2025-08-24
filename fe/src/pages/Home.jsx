@@ -114,7 +114,7 @@ const Home = () => {
                     </H.GoLoginBtns>
                   </H.GoLoginBox>
                 ) : (
-                  // 그 외 다른 에러(서버, 네트워크 문제 등)
+                  // 다른 에러(서버, 네트워크 문제 등)
                   <div style={{ padding: '40px 20px', textAlign: 'center', color: '#555' }}>
                     <p style={{ fontSize: '16px', fontWeight: 500 }}>
                       네트워크 오류가 발생했습니다.
