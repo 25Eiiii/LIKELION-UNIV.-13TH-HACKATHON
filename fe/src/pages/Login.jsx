@@ -44,7 +44,10 @@ const Login = () => {
             console.log("dta:", response.data);
             localStorage.setItem("accessToken", response.data.access);
             localStorage.setItem("refreshToken",response.data.refresh);
-            navigate("/home");
+            const mustSurvey = localStorage.getItem("survey")==="1";
+            localStorage.removeItem("survey");
+            navigate(mustSurvey ? "/survey/step1":"/home",{replace: true});
+            
         }catch(error){
             console.log(error.response);
             setError("아이디 또는 비밀번호를 다시 확인해주세요");
