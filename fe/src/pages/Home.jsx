@@ -114,9 +114,6 @@ const Home = () => {
                 </H.GoLoginBtns>
               </H.GoLoginBox>
             )}
-            {isAuthed && error && (
-              <p style={{ marginLeft: 20 }}>추천을 불러오지 못했어요.</p>
-            )}
 
             {!isLoading && (isAuthed ? !error : true) && (
               <H.EventList>
