@@ -5,30 +5,36 @@ import { useNavigate } from "react-router-dom";
 import useChatbotStore from "../../store/useChatbotStore";
 import useAuthStore from "../../store/useAuthStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { jwtDecode } from "jwt-decode"; // ✅ 추가
 
 const Chatbot = () => {
   const [content, setContent] = useState("");
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  // 닉네임/토큰 파생
   const nickname =
     useAuthStore((s) => s.nickname) || localStorage.getItem("nickname") || "";
-  const storeToken =
+  const rawToken =
     useAuthStore((s) => s.token || s.accessToken || s.access) ||
     localStorage.getItem("accessToken") ||
     "";
-  const hasToken = Boolean(storeToken);
+  const hasToken = Boolean(rawToken);
 
-  const user = useAuthStore((s) => s.user);
+  // ✅ 토큰에서 user_id 직접 추출 (스토어 user 채워지기 전에도 사용 가능)
+  let decodedUserId = undefined;
+  try {
+    const payload = rawToken ? jwtDecode(rawToken) : null;
+    decodedUserId = payload?.user_id || payload?.id || payload?.sub;
+  } catch (e) {
+    decodedUserId = undefined;
+  }
 
-  // store에서 API 함수만 꺼내서 사용(내부에서 api 인스턴스 쓰도록)
   const { fetchSuggestions, fetchSimilarEvents } = useChatbotStore();
 
   // 1) 오늘의 추천 질문
-  const {
-    data: suggestionList = [],
-  } = useQuery({
-    queryKey: ["chatbot-suggestions", hasToken], // 토큰 변화에 반응
+  const { data: suggestionList = [] } = useQuery({
+    queryKey: ["chatbot-suggestions", hasToken],
     queryFn: async () => {
       const d = await fetchSuggestions();
       return Array.isArray(d?.items) ? d.items : [];
@@ -39,15 +45,15 @@ const Chatbot = () => {
     retry: false,
   });
 
-  // 2) 유사 행사 (로그인 필요 시 hasToken && user?.id 가 있을 때만)
-  const anchorEventId = 71; // TODO: 고정값이 맞다면 유지, 아니면 라우트/상태에서 받아오기
-  const {
-    data: similar = { message: "", items: [] },
-  } = useQuery({
-    queryKey: ["chatbot-similar", hasToken, user?.id, anchorEventId],
-    enabled: hasToken && !!user?.id && !!anchorEventId,
+  // 2) 유사 행사 (✅ user?.id 대신 decodedUserId 사용)
+  const anchorEventId = 71; // 필요시 외부에서 주입하도록 변경 가능
+  const { data: similar = { message: "", items: [] } } = useQuery({
+    queryKey: ["chatbot-similar", hasToken, decodedUserId, anchorEventId],
+    // ✅ 토큰만 있으면 일단 시도 → 백엔드가 토큰에서 사용자 식별
+    enabled: hasToken && !!anchorEventId,
     queryFn: async () => {
-      const d = await fetchSimilarEvents(user.id, anchorEventId);
+      const uid = decodedUserId; // 없으면 백엔드가 토큰으로 식별
+      const d = await fetchSimilarEvents(uid, anchorEventId);
       return {
         message: d?.message ?? "",
         items: Array.isArray(d?.items) ? d.items : [],
@@ -62,7 +68,7 @@ const Chatbot = () => {
   useEffect(() => {
     qc.invalidateQueries({ queryKey: ["chatbot-suggestions"] });
     qc.invalidateQueries({ queryKey: ["chatbot-similar"] });
-  }, [qc, hasToken, user?.id]);
+  }, [qc, hasToken, decodedUserId]);
 
   const handleEnter = (e) => {
     if (e.key === "Enter" && content.trim()) {
