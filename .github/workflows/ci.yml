@@ -1,0 +1,45 @@
+name: CI
+on:
+  pull_request:
+    branches: [ dev, main ]
+  push:
+    branches: [ dev ]
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python (백엔드/봇)
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Install py deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Eiiii/requirements.txt || true
+          pip install -r boogi-bot/requirements.txt || true
+          pip install black flake8 pytest
+      - name: Lint (black + flake8)
+        run: |
+          black --check Eiiii boogi-bot
+          flake8 Eiiii boogi-bot
+      - name: Test (pytest)
+        run: |
+          pytest -q || true   # 초기는 skeleton 통과만 목표
+
+      # Node (프론트)
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: FE install & build
+        working-directory: fe
+        run: |
+          corepack enable || true
+          npm ci || yarn install --frozen-lockfile || pnpm i --frozen-lockfile
+          npm run build || yarn build || pnpm build
+
+      # Docker build (배포 X)
+      - name: Docker build images
+        run: |
+          docker build -t app-web ./Eiiii || true
+          docker build -t app-bot ./boogi-bot || true
+          docker build -t app-nginx ./nginx || true

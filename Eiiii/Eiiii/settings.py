@@ -15,34 +15,34 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 from celery.schedules import crontab
+import dj_database_url
 
 load_dotenv()
-KAKAO_API_KEY = os.environ.get("KAKAO_API_KEY")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Util
+def _split_env_list(v: str | None, sep: str = ","):
+    if not v:
+        return []
+    return [x.strip() for x in v.split(sep) if x.strip()]
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+def _env_bool(name: str, default: bool = False):
+    return os.getenv(name, str(default)).lower() in ("1", "true", "yes", "y")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY") or "CHANGE_ME_FOR_LOCAL_ONLY"
-DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
+# Core
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or os.getenv("SECRET_KEY") or "CHANGE_ME_FOR_LOCAL_ONLY"
+DEBUG = _env_bool("DJANGO_DEBUG", False)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-def _split_env_list(v: str):
-    return [x.strip() for x in v.split(",") if x.strip()]
+ALLOWED_HOSTS = _split_env_list(os.getenv("ALLOWED_HOSTS")) or [
+    "localhost", "127.0.0.1", "web", "nginx"
+]
+CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("CSRF_TRUSTED_ORIGINS"))
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "true").lower() == "true"
-
-ALLOWED_HOSTS = ["3-38-169-42.sslip.io","3.38.169.42","localhost","127.0.0.1","web","nginx"]
-CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("CSRF_TRUSTED_ORIGINS", ""))
-
+SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", False if DEBUG else True)
 
 # Application definition
 
@@ -129,28 +129,24 @@ WSGI_APPLICATION = 'Eiiii.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-print("DB_NAME:", os.getenv("DB_NAME"))
-print("DB_HOST:", os.getenv("DB_HOST"))
 
+
+# 예: postgres://USER:PASS@HOST:PORT/DB
 DATABASES = {
-    #'default': {
-    #    'ENGINE': 'django.db.backends.sqlite3',
-    #    'NAME': BASE_DIR / 'db.sqlite3',
-    #}
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
+    "default": dj_database_url.parse(
+        os.getenv("DATABASE_URL", ""), conn_max_age=600, ssl_require=False
+    ) if os.getenv("DATABASE_URL")
+    else {
+        # 일단 지금 DATABASE_URL 없으니까 로컬 개발 편의용 SQLite
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
 # api key
-API_KEY = os.getenv("API_KEY")
-OPENAPI_BASE_URL = os.getenv("OPENAPI_BASE_URL")
-
+SEOUL_OPENAPI_KEY = os.getenv("SEOUL_OPENAPI_KEY")
+OPENAPI_BASE_URL = os.getenv("SEOUL_OPENAPI_BASE_URL")
+KAKAO_API_KEY = os.getenv("KAKAO_REST_API_KEY")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -200,7 +196,9 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+# Cache / Celery
+
+REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL") or "redis://localhost:6379/0"
 
 CACHES = {
     "default": {
@@ -212,3 +210,16 @@ CACHES = {
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
+
+# Structured Logging (JSON) — G0에서 로그 모양 통일
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {"()": "pythonjsonlogger.jsonlogger.JsonFormatter"}
+    },
+    "handlers": {
+        "stdout": {"class": "logging.StreamHandler", "formatter": "json"}
+    },
+    "root": {"handlers": ["stdout"], "level": "INFO" if not DEBUG else "DEBUG"},
+}

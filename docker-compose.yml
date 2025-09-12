@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  actions:
+    build:
+      context: ./boogi-bot
+      dockerfile: actions.Dockerfile
+    env_file: .env
+    command: >
+      bash -lc "
+        python -m rasa_sdk.endpoint
+          --actions actions
+          --port ${ACTIONS_PORT:-5055}
+          --debug
+      "
+    ports:
+      - "${ACTIONS_PORT:-5055}:${ACTIONS_PORT:-5055}"
+
+  rasa:
+    image: rasa/rasa:3.6.2
+    working_dir: /app
+    env_file: .env
+    volumes:
+      - ./boogi-bot/endpoints.yml:/app/endpoints.yml:ro
+      - ./boogi-bot:/app/boogi-bot:ro
+      - ./boogi-bot/config.yml:/app/config.yml:ro
+      - ./boogi-bot/domain.yml:/app/domain.yml:ro
+      - ./boogi-bot/data:/app/data:ro
+      - ./models:/app/models            
+    command: >
+      bash -lc "
+        #if [ ! -f ${RASA_MODEL:-./models/latest.tar.gz} ]; then
+        #  rasa train --domain /app/domain.yml --data /app/data --config /app/config.yml \
+        #    --out /app/models --fixed-model-name latest;
+        #fi &&
+        rasa run --enable-api -m ${RASA_MODEL:-./models/latest.tar.gz} \
+          -p ${RASA_PORT:-5005} --endpoints /app/endpoints.yml --cors '*'
+      "
+    ports:
+      - "${RASA_PORT:-5005}:${RASA_PORT:-5005}"
+    depends_on:
+      actions:
+        condition: service_started
+
+  web:
+    build:
+      context: ./Eiiii
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"       
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  db_data:

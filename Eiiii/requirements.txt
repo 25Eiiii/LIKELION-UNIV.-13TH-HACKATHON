@@ -7,6 +7,11 @@ gunicorn
 sqlparse==0.5.3
 tzdata==2025.2
 asgiref==3.9.1
+dj-database-url
+django-redis
+python-dotenv
+python-json-logger
+psycopg2-binary
 
 # DB / Auth / Utils
 psycopg2-binary==2.9.10

@@ -18,6 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+
+def health(_):
+    return HttpResponse("ok")  # 200 OK
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +37,7 @@ urlpatterns = [
     path("api/chatbot/", include("chatbot.urls")),
     path("api/recommend/", include("recommend.urls")),
     path("api/pbrecommend/", include("pbrecommend.urls")),
+    path("health", health),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

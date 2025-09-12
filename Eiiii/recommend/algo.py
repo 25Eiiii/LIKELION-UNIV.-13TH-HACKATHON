@@ -1,14 +1,38 @@
 # recommend/algo.py
 from __future__ import annotations
 
+import logging
+logger = logging.getLogger(__name__)
+
+def _lazy_surprise():
+    """
+    Surprise 의존성은 함수 내부에서만 임포트한다.
+    (모듈 로드시 임포트 금지)
+    """
+    try:
+        from surprise import SVD, Dataset, Reader, KNNBasic, accuracy
+        from surprise.model_selection import train_test_split
+        return {
+            "SVD": SVD,
+            "Dataset": Dataset,
+            "Reader": Reader,
+            "KNNBasic": KNNBasic,
+            "accuracy": accuracy,
+            "train_test_split": train_test_split,
+        }
+    except Exception as e:
+        logger.warning("[recommend.algo] surprise not available: %s", e)
+        return None
+
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import create_engine
 import pandas as pd
-from surprise import SVD, Dataset, Reader
-from surprise.model_selection import train_test_split
-from surprise import KNNBasic
-from surprise import accuracy
+#from surprise import SVD, Dataset, Reader
+#from surprise.model_selection import train_test_split
+#from surprise import KNNBasic
+#from surprise import accuracy
 from typing import List, Optional
 
 from .behavior_based import calculate_activity_scores
@@ -301,19 +325,73 @@ def load_ratings():
     df = df.sort_values("created_at").drop_duplicates(["user_id", "event_id"], keep="last")
     return df[["user_id", "event_id", "rating"]]
 
+#def prepare_dataset(df):
+#    reader = Reader(rating_scale=(0, 5))
+#    return Dataset.load_from_df(df[["user_id", "event_id", "rating"]], reader)
+#G0용으로 교체
 def prepare_dataset(df):
-    reader = Reader(rating_scale=(0, 5))
-    return Dataset.load_from_df(df[["user_id", "event_id", "rating"]], reader)
+    s = _lazy_surprise()
+    if not s:
+        raise RuntimeError("Surprise not installed; cannot prepare dataset")
+    Reader = s["Reader"]
+    Dataset = s["Dataset"]
+    return Dataset.load_from_df(df[["user_id", "event_id", "rating"]], Reader(rating_scale=(0, 5)))
 
 def get_unrated_events(user_id, ratings_df, all_event_ids):
     rated = ratings_df[ratings_df["user_id"] == user_id]["event_id"].tolist()
     return [i for i in all_event_ids if i not in rated]
 
+#def collaborative_filtering_recommend(user_id, top_n=5):
+#    # (참고용) 온라인 학습: 실서비스 경로에선 사용하지 않음
+#    ratings_df = load_ratings()
+#    if ratings_df.empty:
+#        return []
+#    if user_id not in set(ratings_df["user_id"].unique()):
+#        cb = content_based_recommend_df(user_id, top_n)
+#        if cb.empty:
+#            return []
+#        cb = cb.copy()
+#        cb.rename(columns={"similarity": "pred_rating"}, inplace=True)
+#        return cb
+#
+#    reader = Reader(rating_scale=(0, 5))
+#    data = Dataset.load_from_df(ratings_df[["user_id", "event_id", "rating"]], reader)
+#    trainset = data.build_full_trainset()
+#
+#    algo = SVD(n_factors=10, n_epochs=30, reg_all=0.05, random_state=42)
+#    algo.fit(trainset)
+#
+#    all_items = set(ratings_df["event_id"].unique())
+#    seen = set(ratings_df.loc[ratings_df["user_id"] == user_id, "event_id"].unique())
+#    candidates = list(all_items - seen)
+#    if not candidates:
+#        return []
+#
+#    scored = [(iid, algo.predict(user_id, iid, clip=False).est) for iid in candidates]
+#    top_preds = sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]
+#    ids_ordered = [int(eid) for eid, _ in top_preds]
+#
+#    eng = get_db_engine()
+#    ph = ", ".join(["%s"] * len(ids_ordered))
+#    q = f"""
+#        SELECT id, title, codename, guname, use_fee, main_img, place, start_date, end_date
+#        FROM search_culturalevent
+#        WHERE id IN ({ph})
+#    """
+#    ev = pd.read_sql(q, eng, params=tuple(ids_ordered))
+#    ev["__order"] = pd.Categorical(ev["id"], ids_ordered, ordered=True)
+#    ev = ev.sort_values("__order").drop(columns="__order")
+#
+#    pred_df = pd.DataFrame(top_preds, columns=["id", "pred_rating"])
+#    return ev.merge(pred_df, on="id")
+#G0으로 아래로 교체
 def collaborative_filtering_recommend(user_id, top_n=5):
     # (참고용) 온라인 학습: 실서비스 경로에선 사용하지 않음
     ratings_df = load_ratings()
     if ratings_df.empty:
         return []
+
+    # 유저 기록 없으면 CB로 폴백
     if user_id not in set(ratings_df["user_id"].unique()):
         cb = content_based_recommend_df(user_id, top_n)
         if cb.empty:
@@ -321,6 +399,20 @@ def collaborative_filtering_recommend(user_id, top_n=5):
         cb = cb.copy()
         cb.rename(columns={"similarity": "pred_rating"}, inplace=True)
         return cb
+
+    # Surprise 없는 경우 폴백(CB)
+    s = _lazy_surprise()
+    if not s:
+        cb = content_based_recommend_df(user_id, top_n)
+        if cb.empty:
+            return []
+        cb = cb.copy()
+        cb.rename(columns={"similarity": "pred_rating"}, inplace=True)
+        return cb
+
+    SVD = s["SVD"]
+    Dataset = s["Dataset"]
+    Reader = s["Reader"]
 
     reader = Reader(rating_scale=(0, 5))
     data = Dataset.load_from_df(ratings_df[["user_id", "event_id", "rating"]], reader)
@@ -353,8 +445,29 @@ def collaborative_filtering_recommend(user_id, top_n=5):
     pred_df = pd.DataFrame(top_preds, columns=["id", "pred_rating"])
     return ev.merge(pred_df, on="id")
 
+#def evaluate_cf_rmse_mae(ratings_df):
+#    data = prepare_dataset(ratings_df)
+#    trainset, testset = train_test_split(data, test_size=0.2)
+#    algo = KNNBasic(sim_options={"name": "cosine", "user_based": True})
+#    algo.fit(trainset)
+#    preds = algo.test(testset)
+#    rmse = accuracy.rmse(preds, verbose=False)
+#    mae = accuracy.mae(preds, verbose=False)
+#    return {"RMSE": rmse, "MAE": mae}
+#G0으로 아래로 교체
 def evaluate_cf_rmse_mae(ratings_df):
-    data = prepare_dataset(ratings_df)
+    s = _lazy_surprise()
+    if not s:
+        # Surprise 미설치면 지표는 계산 불가 → None 반환
+        return {"RMSE": None, "MAE": None}
+
+    Dataset = s["Dataset"]
+    Reader = s["Reader"]
+    KNNBasic = s["KNNBasic"]
+    accuracy = s["accuracy"]
+    train_test_split = s["train_test_split"]
+
+    data = Dataset.load_from_df(ratings_df[["user_id", "event_id", "rating"]], Reader(rating_scale=(0, 5)))
     trainset, testset = train_test_split(data, test_size=0.2)
     algo = KNNBasic(sim_options={"name": "cosine", "user_based": True})
     algo.fit(trainset)
