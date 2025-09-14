@@ -198,18 +198,24 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cache / Celery
 
-REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL") or "redis://localhost:6379/0"
+USE_REDIS = os.getenv("USE_REDIS", "1").lower() in ("1","true","yes","y")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+if USE_REDIS:
+    REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL") or "redis://localhost:6379/0"
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
     }
-}
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "local"}}
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache+memory://"
 
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
 
 # Structured Logging (JSON) — G0에서 로그 모양 통일
 LOGGING = {
