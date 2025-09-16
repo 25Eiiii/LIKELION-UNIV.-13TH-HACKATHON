@@ -182,8 +182,43 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = "/app/staticfiles"
+# === Static/Media via CloudFront (G1) ===
+# 로컬 개발일 때는 기존처럼 /static/, /media/ 경로를 그대로 사용합니다.
+# (즉, .env에 CF_STATIC_DOMAIN, CF_MEDIA_DOMAIN이 비어있으면 로컬 동작)
+# 배포 환경에서는 CloudFront 도메인을 환경변수로 주입해서 CDN 경유로 전환합니다.
+
+# CloudFront 도메인 (예: dxxxxx.cloudfront.net)
+CF_STATIC_DOMAIN = os.getenv("CF_STATIC_DOMAIN")  # 정적(static/) 파일용
+CF_MEDIA_DOMAIN  = os.getenv("CF_MEDIA_DOMAIN")   # 미디어(media/) 파일용 (없으면 STATIC 도메인과 동일하게 써도 됨)
+
+# 정적/미디어 URL → CDN 도메인 기반으로 생성
+STATIC_URL = f"https://{CF_STATIC_DOMAIN}/" if CF_STATIC_DOMAIN else "/static/"
+STATIC_ROOT = "/app/staticfiles"  # collectstatic 실행 시 파일이 모이는 로컬 경로
+
+MEDIA_URL  = f"https://{CF_MEDIA_DOMAIN}/" if CF_MEDIA_DOMAIN else "/media/"
+MEDIA_ROOT = BASE_DIR / 'media'   # 업로드 파일이 저장되는 기본 경로 (S3에 업로드됨)
+
+# === django-storages (S3 연동) ===
+# django-storages + boto3를 통해 정적/미디어 파일을 자동으로 S3 버킷에 업로드하고,
+# CloudFront가 그 파일을 캐싱/서빙할 수 있게 만듭니다.
+
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")  # 예: myproj-app-assets
+AWS_S3_REGION_NAME = os.getenv("AWS_REGION", "ap-northeast-2")  # 서울 리전 기본값
+AWS_S3_SIGNATURE_VERSION = "s3v4"  # 권장 서명 방식
+AWS_DEFAULT_ACL = None              # ACL은 비활성화 (OAC를 통해 접근 제어)
+AWS_S3_ADDRESSING_STYLE = "virtual" # 가상 호스팅 스타일 권장
+
+# === Django 앱 설정에 storages 추가 ===
+INSTALLED_APPS += ["storages"]
+
+# === Django STORAGES 백엔드 지정 ===
+# staticfiles → StaticStorage (무조건 덮어쓰기, immutable 캐시)
+# default → MediaStorage (파일명 유지, 캐시 없음)
+STORAGES = {
+    "staticfiles": {"BACKEND": "config.storages.StaticStorage"},
+    "default":     {"BACKEND": "config.storages.MediaStorage"},
+}
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -193,8 +228,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Cache / Celery
 

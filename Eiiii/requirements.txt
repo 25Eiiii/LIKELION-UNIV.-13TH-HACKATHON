@@ -41,6 +41,11 @@ celery==5.5.3
 django-redis==6.0.0
 redis==6.4.0
 
+#S3
+django-storages
+boto3
+
+
 
 # cython>=0.29
 # scikit-surprise>=1.1.4
