@@ -78,7 +78,7 @@
         <img src="https://avatars.githubusercontent.com/yejinkyo" width="120" />
       </a><br/>
       고예진<br/>
-      프론트엔드<br/>
+      프론트엔드, 사용자-아이템 기반 협업 필터링<br/>
       <small> </small>
     </td>
     <td align="center">
