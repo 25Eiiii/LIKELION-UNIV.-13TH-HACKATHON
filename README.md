@@ -44,7 +44,7 @@
 ## 기술 스택
 
 ### 프론트엔드
-
+- React
 
 ### 백엔드
 - Django
@@ -87,7 +87,7 @@
       </a><br/>
       신채영<br/>
       프론트엔드<br/>
-      <small> </small>
+      <small>회원가입/로그인, 상세페이지, 카테고리 및 검색, 좋아요 기록 페이지 </small>
     </td>
         <td align="center">
       <a href="https://github.com/mang3858">
